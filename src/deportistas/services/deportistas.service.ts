@@ -77,7 +77,7 @@ export class DeportistasService {
   ): Promise<Deportista> {
     const deportista = await this.buscarPorId(id);
     if (dto.email && dto.email !== deportista.email) {
-      await this.cheqUser(dto.email);
+      await this.cheqUser(String(dto.email));
     }
     Object.assign(deportista, dto);
     return this.deportistaRepository.save(deportista);

@@ -1,6 +1,18 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { DeportistasService } from '../services/deportistas.service';
 import { CreateDeportistaDto } from '../dto/create-deportista.dto';
+import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
+import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
+import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
 
 @Controller('deportistas')
 export class DeportistasController {
@@ -17,5 +29,28 @@ export class DeportistasController {
     @Query('email') email?: string,
   ) {
     return this.deportistasService.listar(nombre, email);
+  }
+
+  @Post('buscar')
+  buscarAvanzado(@Body() dto: BuscarDeportistasDto) {
+    return this.deportistasService.buscarAvanzado(dto);
+  }
+
+  @Get(':id')
+  buscarPorId(@Param('id') id: string) {
+    return this.deportistasService.buscarPorId(id);
+  }
+
+  @Put(':id')
+  reemplazar(@Param('id') id: string, @Body() dto: ReemplazarDeportistaDto) {
+    return this.deportistasService.reemplazar(id, dto);
+  }
+
+  @Patch(':id')
+  actualizarParcial(
+    @Param('id') id: string,
+    @Body() dto: ActualizarParcialDeportistaDto,
+  ) {
+    return this.deportistasService.actualizarParcial(id, dto);
   }
 }
