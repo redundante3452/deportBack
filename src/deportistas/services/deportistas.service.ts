@@ -1,8 +1,15 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
 import { Deportista } from '../entities/deportista.entity';
 import { ILike, Repository } from 'typeorm';
 import { CreateDeportistaDto } from '../dto/create-deportista.dto';
+import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
+import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
+import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
 
 @Injectable()
 export class DeportistasService {
@@ -21,7 +28,7 @@ export class DeportistasService {
   }
 
   async create(deportistadto: CreateDeportistaDto): Promise<Deportista> {
-    await this.cheqUser(deportistadto.email);
+    await this.cheqUser(String(deportistadto.email));
     const deportista = this.deportistaRepository.create(deportistadto);
     return this.deportistaRepository.save(deportista);
   }
@@ -33,5 +40,46 @@ export class DeportistasService {
         ...(email ? { email: ILike(`%${email}%`) } : {}),
       },
     });
+  }
+
+  async buscarAvanzado(
+    buscarDeportistasDto: BuscarDeportistasDto,
+  ): Promise<Deportista[]> {
+    return this.listar(buscarDeportistasDto.nombre, buscarDeportistasDto.email);
+  }
+
+  async buscarPorId(id: string): Promise<Deportista> {
+    const deportista = await this.deportistaRepository.findOne({
+      where: { id },
+    });
+    if (!deportista) {
+      throw new NotFoundException(`Deportista ${id} no encontrado`);
+    }
+    return deportista;
+  }
+
+  async reemplazar(
+    id: string,
+    dto: ReemplazarDeportistaDto,
+  ): Promise<Deportista> {
+    const deportista = await this.buscarPorId(id);
+    if (dto.email !== deportista.email) {
+      await this.cheqUser(dto.email);
+    }
+    deportista.nombre = dto.nombre;
+    deportista.email = dto.email;
+    return this.deportistaRepository.save(deportista);
+  }
+
+  async actualizarParcial(
+    id: string,
+    dto: ActualizarParcialDeportistaDto,
+  ): Promise<Deportista> {
+    const deportista = await this.buscarPorId(id);
+    if (dto.email && dto.email !== deportista.email) {
+      await this.cheqUser(dto.email);
+    }
+    Object.assign(deportista, dto);
+    return this.deportistaRepository.save(deportista);
   }
 }
