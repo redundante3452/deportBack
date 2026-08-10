@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { DeportistasService } from '../services/deportistas.service';
 import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 
@@ -9,5 +9,13 @@ export class DeportistasController {
   @Post()
   crearDeportista(@Body() createDeportistaDto: CreateDeportistaDto) {
     return this.deportistasService.create(createDeportistaDto);
+  }
+
+  @Get()
+  listarDeportistas(
+    @Query('nombre') nombre?: string,
+    @Query('email') email?: string,
+  ) {
+    return this.deportistasService.listar(nombre, email);
   }
 }

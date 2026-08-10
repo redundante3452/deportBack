@@ -1,7 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
 import { Deportista } from '../entities/deportista.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 
 @Injectable()
@@ -24,5 +24,14 @@ export class DeportistasService {
     await this.cheqUser(deportistadto.email);
     const deportista = this.deportistaRepository.create(deportistadto);
     return this.deportistaRepository.save(deportista);
+  }
+
+  async listar(nombre: string, email: string): Promise<Deportista[]> {
+    return this.deportistaRepository.find({
+      where: {
+        ...(nombre ? { nombre: ILike(`%${nombre}%`) } : {}),
+        ...(email ? { email: ILike(`%${email}%`) } : {}),
+      },
+    });
   }
 }
