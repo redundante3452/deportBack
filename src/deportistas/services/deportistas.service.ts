@@ -82,4 +82,9 @@ export class DeportistasService {
     Object.assign(deportista, dto);
     return this.deportistaRepository.save(deportista);
   }
+
+  async eliminar(id: string): Promise<void> {
+    const deportista = await this.buscarPorId(id);
+    await this.deportistaRepository.remove(deportista);
+  }
 }

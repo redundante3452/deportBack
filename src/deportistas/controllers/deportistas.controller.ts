@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -52,5 +53,10 @@ export class DeportistasController {
     @Body() dto: ActualizarParcialDeportistaDto,
   ) {
     return this.deportistasService.actualizarParcial(id, dto);
+  }
+
+  @Delete(':id')
+  eliminar(@Param('id') id: string) {
+    return this.deportistasService.eliminar(id);
   }
 }
