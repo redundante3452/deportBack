@@ -31,6 +31,22 @@
 $ pnpm install
 ```
 
+## Local database with Docker
+
+```bash
+# create your local env file
+copy .env.local.example .env.local
+
+# start postgres
+docker compose up -d
+```
+
+Then run the API with:
+
+```bash
+pnpm run start:dev
+```
+
 ## Compile and run the project
 
 ```bash
