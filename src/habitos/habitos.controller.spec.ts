@@ -1,30 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DeportistasController } from './controllers/deportistas.controller';
-import { DeportistasService } from './services/deportistas.service';
+import { HabitosController } from './controllers/habitos.controller';
+import { HabitosService } from './services/habitos.service';
 
-describe('DeportistasController', () => {
-  let controller: DeportistasController;
+describe('HabitosController', () => {
+  let controller: HabitosController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [DeportistasController],
+      controllers: [HabitosController],
       providers: [
         {
-          provide: DeportistasService,
+          provide: HabitosService,
           useValue: {
             create: jest.fn(),
             listar: jest.fn(),
             buscarAvanzado: jest.fn(),
             buscarPorId: jest.fn(),
             reemplazar: jest.fn(),
-            actualizarParcial: jest.fn(),
-            eliminar: jest.fn(),
           },
         },
       ],
     }).compile();
 
-    controller = module.get<DeportistasController>(DeportistasController);
+    controller = module.get<HabitosController>(HabitosController);
   });
 
   it('should be defined', () => {

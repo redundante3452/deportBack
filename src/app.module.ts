@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DeportistasModule } from './deportistas/deportistas.module';
+import { HabitosModule } from './habitos/habitos.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { DeportistasModule } from './deportistas/deportistas.module';
       }),
     }),
     DeportistasModule,
+    HabitosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
