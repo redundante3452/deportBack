@@ -5,13 +5,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DeportistasModule } from './deportistas/deportistas.module';
 import { HabitosModule } from './habitos/habitos.module';
+import { LogrosModule } from './logros/logros.module';
 import { RegistrosModule } from './registros/registros.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env', '.env.local'],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -41,6 +42,7 @@ import { RegistrosModule } from './registros/registros.module';
     DeportistasModule,
     HabitosModule,
     RegistrosModule,
+    LogrosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
