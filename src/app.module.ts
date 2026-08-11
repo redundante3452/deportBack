@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DeportistasModule } from './deportistas/deportistas.module';
 import { HabitosModule } from './habitos/habitos.module';
+import { RegistrosModule } from './registros/registros.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { HabitosModule } from './habitos/habitos.module';
     }),
     DeportistasModule,
     HabitosModule,
+    RegistrosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
