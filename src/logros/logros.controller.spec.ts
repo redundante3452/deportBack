@@ -48,4 +48,3 @@ describe('LogrosController', () => {
     expect(res).toEqual(mockLogros);
   });
 });
-

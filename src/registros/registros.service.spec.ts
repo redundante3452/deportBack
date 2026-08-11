@@ -4,7 +4,7 @@ import { Registro } from './entities/registro.entity';
 import { Habito } from '../habitos/entities/habito.entity';
 import { RegistrosService } from './services/registros.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 
 describe('RegistrosService', () => {
   let service: RegistrosService;
@@ -21,7 +21,7 @@ describe('RegistrosService', () => {
     deportistaId: 'dep-1',
     creadoEn: new Date(),
     actualizadoEn: new Date(),
-    deportista: null as any,
+    deportista: null,
     registros: [],
   };
 
@@ -131,9 +131,24 @@ describe('RegistrosService', () => {
       habitoRepo.findOne.mockResolvedValue(mockHabito);
 
       const reg1 = { ...mockRegistro, fecha: '2026-08-01', completado: true };
-      const reg2 = { ...mockRegistro, id: 'reg-2', fecha: '2026-08-02', completado: true };
-      const reg3 = { ...mockRegistro, id: 'reg-3', fecha: '2026-08-03', completado: false };
-      const reg4 = { ...mockRegistro, id: 'reg-4', fecha: '2026-08-04', completado: true };
+      const reg2 = {
+        ...mockRegistro,
+        id: 'reg-2',
+        fecha: '2026-08-02',
+        completado: true,
+      };
+      const reg3 = {
+        ...mockRegistro,
+        id: 'reg-3',
+        fecha: '2026-08-03',
+        completado: false,
+      };
+      const reg4 = {
+        ...mockRegistro,
+        id: 'reg-4',
+        fecha: '2026-08-04',
+        completado: true,
+      };
 
       registroRepo.find.mockResolvedValue([reg1, reg2, reg3, reg4]);
 
@@ -152,7 +167,12 @@ describe('RegistrosService', () => {
       habitoRepo.findOne.mockResolvedValue(mockHabito);
 
       const reg1 = { ...mockRegistro, fecha: '2026-08-01', completado: true };
-      const reg2 = { ...mockRegistro, id: 'reg-2', fecha: '2026-08-05', completado: true };
+      const reg2 = {
+        ...mockRegistro,
+        id: 'reg-2',
+        fecha: '2026-08-05',
+        completado: true,
+      };
 
       registroRepo.find.mockResolvedValue([reg1, reg2]);
       registroRepo.findOne.mockResolvedValue(reg2);
@@ -173,7 +193,9 @@ describe('RegistrosService', () => {
         andWhere: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([mockRegistro]),
       };
-      registroRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      registroRepo.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as unknown as SelectQueryBuilder<Registro>,
+      );
 
       const result = await service.historial({
         habitoId: 'hab-1',
@@ -204,7 +226,9 @@ describe('RegistrosService', () => {
   describe('actualizarParcial', () => {
     it('debe actualizar duracionMinutos y notas', async () => {
       registroRepo.findOne.mockResolvedValue({ ...mockRegistro });
-      registroRepo.save.mockImplementation(async (r) => r as Registro);
+      registroRepo.save.mockImplementation((r) =>
+        Promise.resolve(r as Registro),
+      );
 
       const result = await service.actualizarParcial('reg-1', {
         duracionMinutos: 45,
@@ -232,4 +256,3 @@ describe('RegistrosService', () => {
     });
   });
 });
-

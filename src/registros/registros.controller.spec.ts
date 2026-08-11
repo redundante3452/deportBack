@@ -101,4 +101,3 @@ describe('RegistrosController', () => {
     expect(service.eliminar).toHaveBeenCalledWith('reg-1');
   });
 });
-

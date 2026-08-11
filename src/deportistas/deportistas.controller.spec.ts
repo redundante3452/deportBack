@@ -96,4 +96,3 @@ describe('DeportistasController', () => {
     expect(service.eliminar).toHaveBeenCalledWith('dep-1');
   });
 });
-

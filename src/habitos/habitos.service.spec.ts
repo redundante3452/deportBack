@@ -19,7 +19,7 @@ describe('HabitosService', () => {
     deportistaId: 'dep-1',
     creadoEn: new Date(),
     actualizadoEn: new Date(),
-    deportista: null as any,
+    deportista: null,
     registros: [],
   };
 
@@ -67,9 +67,7 @@ describe('HabitosService', () => {
 
     it('no debe lanzar excepción si el hábito no existe', async () => {
       repository.findOne.mockResolvedValue(null);
-      await expect(
-        service.cheqHabito('Nuevo', 'dep-1'),
-      ).resolves.not.toThrow();
+      await expect(service.cheqHabito('Nuevo', 'dep-1')).resolves.not.toThrow();
     });
   });
 
@@ -178,7 +176,9 @@ describe('HabitosService', () => {
   describe('actualizarFrecuencia', () => {
     it('debe actualizar únicamente la frecuencia del hábito', async () => {
       repository.findOne.mockResolvedValue({ ...mockHabito });
-      repository.save.mockImplementation(async (entity) => entity as Habito);
+      repository.save.mockImplementation((entity) =>
+        Promise.resolve(entity as Habito),
+      );
 
       const result = await service.actualizarFrecuencia('hab-1', {
         frecuencia: 'Semanal',
@@ -199,4 +199,3 @@ describe('HabitosService', () => {
     });
   });
 });
-

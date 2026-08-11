@@ -34,7 +34,9 @@ describe('API endpoints (e2e)', () => {
       .expect(200)
       .expect((res) => {
         expect(Array.isArray(res.body)).toBe(true);
-        expect(res.body.some((item: { id: string }) => item.id === deportistaId)).toBe(true);
+        expect(
+          res.body.some((item: { id: string }) => item.id === deportistaId),
+        ).toBe(true);
       });
 
     await request(app.getHttpServer())
@@ -61,7 +63,9 @@ describe('API endpoints (e2e)', () => {
       .query({ frecuencia: 'Dia' })
       .expect(200)
       .expect((res) => {
-        expect(res.body.some((item: { id: string }) => item.id === habitoId)).toBe(true);
+        expect(
+          res.body.some((item: { id: string }) => item.id === habitoId),
+        ).toBe(true);
       });
 
     await request(app.getHttpServer())
@@ -134,7 +138,11 @@ describe('API endpoints (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/registros')
-      .query({ habitoId: habito.body.id, desde: '2026-08-01', hasta: '2026-08-31' })
+      .query({
+        habitoId: habito.body.id,
+        desde: '2026-08-01',
+        hasta: '2026-08-31',
+      })
       .expect(200)
       .expect((res) => {
         expect(res.body).toHaveLength(2);
@@ -313,7 +321,8 @@ describe('API endpoints (e2e)', () => {
 
     // 15. Eliminar hábito y deportista
     await request(app.getHttpServer()).delete(`/habitos/${habId}`).expect(200);
-    await request(app.getHttpServer()).delete(`/deportistas/${depId}`).expect(200);
+    await request(app.getHttpServer())
+      .delete(`/deportistas/${depId}`)
+      .expect(200);
   });
 });
-

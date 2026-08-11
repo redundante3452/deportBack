@@ -71,7 +71,11 @@ describe('HabitosController', () => {
 
   it('debe buscar avanzado', async () => {
     service.buscarAvanzado.mockResolvedValue([mockHabito]);
-    const dto = { nombre: 'Correr', frecuencia: 'Diaria', deportistaId: 'dep-1' };
+    const dto = {
+      nombre: 'Correr',
+      frecuencia: 'Diaria',
+      deportistaId: 'dep-1',
+    };
     const res = await controller.buscarAvanzado(dto);
     expect(service.buscarAvanzado).toHaveBeenCalledWith(dto);
     expect(res).toEqual([mockHabito]);
@@ -113,4 +117,3 @@ describe('HabitosController', () => {
     expect(service.eliminar).toHaveBeenCalledWith('hab-1');
   });
 });
-

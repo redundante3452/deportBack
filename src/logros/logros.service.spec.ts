@@ -21,7 +21,7 @@ describe('LogrosService', () => {
     deportistaId: 'dep-1',
     creadoEn: new Date(),
     actualizadoEn: new Date(),
-    deportista: null as any,
+    deportista: null,
     registros: [],
   };
 
@@ -143,4 +143,3 @@ describe('LogrosService', () => {
     });
   });
 });
-

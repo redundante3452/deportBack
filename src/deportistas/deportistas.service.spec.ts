@@ -62,7 +62,9 @@ describe('DeportistasService', () => {
 
     it('no debe lanzar excepción si el email no existe', async () => {
       repository.findOne.mockResolvedValue(null);
-      await expect(service.cheqUser('nuevo@example.com')).resolves.not.toThrow();
+      await expect(
+        service.cheqUser('nuevo@example.com'),
+      ).resolves.not.toThrow();
     });
   });
 
@@ -164,7 +166,9 @@ describe('DeportistasService', () => {
       repository.findOne
         .mockResolvedValueOnce({ ...mockDeportista }) // buscarPorId
         .mockResolvedValueOnce(null); // cheqUser
-      repository.save.mockImplementation(async (entity) => entity as Deportista);
+      repository.save.mockImplementation((entity) =>
+        Promise.resolve(entity as Deportista),
+      );
 
       const result = await service.actualizarParcial('dep-1', {
         email: 'cambio@example.com',
@@ -175,7 +179,9 @@ describe('DeportistasService', () => {
 
     it('debe actualizar parcialmente solo nombre sin chequear email', async () => {
       repository.findOne.mockResolvedValue({ ...mockDeportista });
-      repository.save.mockImplementation(async (entity) => entity as Deportista);
+      repository.save.mockImplementation((entity) =>
+        Promise.resolve(entity as Deportista),
+      );
 
       const result = await service.actualizarParcial('dep-1', {
         nombre: 'Nuevo Nombre',
@@ -196,4 +202,3 @@ describe('DeportistasService', () => {
     });
   });
 });
-
