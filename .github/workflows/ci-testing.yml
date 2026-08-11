@@ -1,0 +1,74 @@
+name: CI — Ambiente Testing
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  test:
+    name: Pruebas + Cobertura (>= 60%)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Construir imagen Docker de pruebas
+        run: docker compose -f docker-compose.test.yml build unit-tests
+
+      - name: Ejecutar ESLint
+        run: |
+          docker compose -f docker-compose.test.yml run --rm unit-tests \
+            sh -c "pnpm lint"
+
+      - name: Ejecutar pruebas unitarias en Docker
+        run: |
+          docker compose -f docker-compose.test.yml run --rm unit-tests \
+            sh -c "pnpm test:cov --coverageReporters=json-summary --forceExit"
+
+      - name: Verificar cobertura mínima (Quality Gate)
+        run: |
+          COVERAGE=$(jq '.total.statements.pct' coverage/coverage-summary.json)
+          echo "Cobertura actual: $COVERAGE%"
+          THRESHOLD=60
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "Cobertura $COVERAGE% es menor al $THRESHOLD% requerido para Testing"
+            exit 1
+          fi
+          echo "Quality Gate aprobado: $COVERAGE% >= $THRESHOLD%"
+
+      - name: Ejecutar pruebas E2E en Docker
+        run: docker compose -f docker-compose.test.yml run --rm e2e-tests
+        env:
+          DB_HOST: ${{ secrets.DB_HOST_TESTING }}
+          DB_PORT: 5432
+          DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
+          DB_NAME: ${{ secrets.DB_NAME_TESTING }}
+          DB_SSL: "true"
+
+      - name: Limpiar contenedores Docker
+        if: always()
+        run: docker compose -f docker-compose.test.yml down --volumes --remove-orphans
+
+  deploy:
+    name: Deploy a Testing
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy a Railway (Testing)
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE_TESTING }} --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
