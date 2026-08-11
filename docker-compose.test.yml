@@ -1,4 +1,19 @@
 services:
+  # ─────────────────────────────────────────────────────────────
+  # Pruebas unitarias — no necesitan base de datos
+  # Ejecutar: pnpm test:unit:docker
+  # ─────────────────────────────────────────────────────────────
+  unit-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      NODE_ENV: test
+    # CMD del Dockerfile.test ya corre "pnpm test:cov"
+
+  # ─────────────────────────────────────────────────────────────
+  # Base de datos de prueba — usada solo por e2e-tests
+  # ─────────────────────────────────────────────────────────────
   db-test:
     image: postgres:16-alpine
     environment:
@@ -11,7 +26,11 @@ services:
       timeout: 5s
       retries: 10
 
-  tests:
+  # ─────────────────────────────────────────────────────────────
+  # Pruebas E2E — requieren la BD levantada
+  # Ejecutar: pnpm test:e2e:docker
+  # ─────────────────────────────────────────────────────────────
+  e2e-tests:
     build:
       context: .
       dockerfile: Dockerfile.test
@@ -26,4 +45,4 @@ services:
     depends_on:
       db-test:
         condition: service_healthy
-    command: sh -c "pnpm test && pnpm test:e2e"
+    command: sh -c "pnpm test:e2e"

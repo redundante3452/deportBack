@@ -9,4 +9,5 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-CMD ["pnpm", "test"]
+# Por defecto corre las pruebas unitarias con cobertura
+CMD ["pnpm", "test:cov"]
