@@ -9,10 +9,11 @@ services:
       dockerfile: Dockerfile.test
     environment:
       NODE_ENV: test
-    # CMD del Dockerfile.test ya corre "pnpm test:cov"
+    # CMD del Dockerfile.test corre "pnpm test:cov"
 
   # ─────────────────────────────────────────────────────────────
-  # Base de datos de prueba — usada solo por e2e-tests
+  # Base de datos de prueba local — solo para entorno local
+  # En CI/CD se usa la BD de Supabase via variables de entorno
   # ─────────────────────────────────────────────────────────────
   db-test:
     image: postgres:16-alpine
@@ -27,7 +28,9 @@ services:
       retries: 10
 
   # ─────────────────────────────────────────────────────────────
-  # Pruebas E2E — requieren la BD levantada
+  # Pruebas E2E
+  # - Local: usa db-test (PostgreSQL en Docker)
+  # - CI/CD: usa variables de entorno de GitHub Secrets (BD Supabase)
   # Ejecutar: pnpm test:e2e:docker
   # ─────────────────────────────────────────────────────────────
   e2e-tests:
@@ -35,14 +38,15 @@ services:
       context: .
       dockerfile: Dockerfile.test
     environment:
-      DB_HOST: db-test
-      DB_PORT: 5432
-      DB_USERNAME: deport_test
-      DB_PASSWORD: deport_test
-      DB_NAME: deport_test_db
-      DB_SSL: "false"
+      # Si no se proveen variables externas, usa la BD local de Docker
+      DB_HOST: ${DB_HOST:-db-test}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME:-deport_test}
+      DB_PASSWORD: ${DB_PASSWORD:-deport_test}
+      DB_NAME: ${DB_NAME:-deport_test_db}
+      DB_SSL: ${DB_SSL:-false}
       NODE_ENV: test
     depends_on:
       db-test:
         condition: service_healthy
-    command: sh -c "pnpm test:e2e"
+    command: sh -c "pnpm test:e2e --forceExit"
