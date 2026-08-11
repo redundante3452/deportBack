@@ -25,11 +25,17 @@ export class Registro {
   @Column({ type: 'date' })
   fecha: string;
 
+  @Column({ type: 'boolean', default: true })
+  completado: boolean;
+
   @Column({ type: 'int' })
   duracionMinutos: number;
 
   @Column({ type: 'int' })
   rpe: number;
+
+  @Column({ type: 'text', nullable: true })
+  notas?: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   creadoEn: Date;

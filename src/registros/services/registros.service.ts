@@ -9,6 +9,8 @@ import { Registro } from '../entities/registro.entity';
 import { CrearRegistroDto } from '../dto/crear-registro.dto';
 import { BuscarRegistrosDto } from '../dto/buscar-registros.dto';
 import { Habito } from '../../habitos/entities/habito.entity';
+import { ActualizarRegistroDto } from '../dto/actualizar-registro.dto';
+import { ActualizarParcialRegistroDto } from '../dto/actualizar-parcial-registro.dto';
 
 @Injectable()
 export class RegistrosService {
@@ -18,6 +20,56 @@ export class RegistrosService {
     @InjectRepository(Habito)
     private readonly habitoRepository: Repository<Habito>,
   ) {}
+
+  private toDayIndex(fecha: string): number {
+    const parsed = new Date(`${fecha}T00:00:00Z`);
+    return Math.floor(parsed.getTime() / 86400000);
+  }
+
+  private async recalcularRachas(habitoId: string): Promise<void> {
+    const habito = await this.habitoRepository.findOne({
+      where: { id: habitoId },
+    });
+    if (!habito) {
+      throw new NotFoundException(`Hábito ${habitoId} no encontrado`);
+    }
+
+    const registros = await this.registroRepository.find({
+      where: { habitoId },
+      order: { fecha: 'ASC' },
+    });
+
+    let rachaActual = 0;
+    let rachaMaxima = 0;
+    let ultimaFechaCumplida: number | null = null;
+
+    for (const registro of registros) {
+      if (!registro.completado) {
+        rachaActual = 0;
+        ultimaFechaCumplida = null;
+        continue;
+      }
+
+      const fechaRegistro = this.toDayIndex(registro.fecha);
+      if (
+        ultimaFechaCumplida !== null &&
+        fechaRegistro === ultimaFechaCumplida + 1
+      ) {
+        rachaActual += 1;
+      } else {
+        rachaActual = 1;
+      }
+
+      ultimaFechaCumplida = fechaRegistro;
+      if (rachaActual > rachaMaxima) {
+        rachaMaxima = rachaActual;
+      }
+    }
+
+    habito.rachaActual = rachaActual;
+    habito.rachaMaxima = rachaMaxima;
+    await this.habitoRepository.save(habito);
+  }
 
   async create(dto: CrearRegistroDto): Promise<Registro> {
     const habito = await this.habitoRepository.findOne({
@@ -31,7 +83,9 @@ export class RegistrosService {
       where: { habitoId: dto.habitoId, fecha: dto.fecha },
     });
     if (duplicado) {
-      throw new ConflictException('Ya existe un registro para ese hábito en esa fecha');
+      throw new ConflictException(
+        'Ya existe un registro para ese hábito en esa fecha',
+      );
     }
 
     const registro = this.registroRepository.create({
@@ -39,7 +93,9 @@ export class RegistrosService {
       habito,
     });
 
-    return this.registroRepository.save(registro);
+    const guardado = await this.registroRepository.save(registro);
+    await this.recalcularRachas(dto.habitoId);
+    return guardado;
   }
 
   async historial(dto: BuscarRegistrosDto): Promise<Registro[]> {
@@ -62,5 +118,45 @@ export class RegistrosService {
     }
 
     return query.getMany();
+  }
+
+  async buscarPorId(id: string): Promise<Registro> {
+    const registro = await this.registroRepository.findOne({ where: { id } });
+    if (!registro) {
+      throw new NotFoundException(`Registro ${id} no encontrado`);
+    }
+    return registro;
+  }
+
+  async actualizarCompleto(
+    id: string,
+    dto: ActualizarRegistroDto,
+  ): Promise<Registro> {
+    const registro = await this.buscarPorId(id);
+    registro.fecha = dto.fecha ?? registro.fecha;
+    registro.completado = dto.completado ?? registro.completado;
+    registro.duracionMinutos = dto.duracionMinutos ?? registro.duracionMinutos;
+    registro.rpe = dto.rpe ?? registro.rpe;
+    registro.notas = dto.notas ?? registro.notas;
+
+    const guardado = await this.registroRepository.save(registro);
+    await this.recalcularRachas(registro.habitoId);
+    return guardado;
+  }
+
+  async actualizarParcial(
+    id: string,
+    dto: ActualizarParcialRegistroDto,
+  ): Promise<Registro> {
+    const registro = await this.buscarPorId(id);
+    registro.duracionMinutos = dto.duracionMinutos ?? registro.duracionMinutos;
+    registro.notas = dto.notas ?? registro.notas;
+    return this.registroRepository.save(registro);
+  }
+
+  async eliminar(id: string): Promise<void> {
+    const registro = await this.buscarPorId(id);
+    await this.registroRepository.remove(registro);
+    await this.recalcularRachas(registro.habitoId);
   }
 }

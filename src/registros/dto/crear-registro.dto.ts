@@ -1,4 +1,4 @@
-import { IsDateString, IsInt, IsUUID, Max, Min } from 'class-validator';
+import { IsBoolean, IsDateString, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
 
 export class CrearRegistroDto {
   @IsUUID()
@@ -6,6 +6,9 @@ export class CrearRegistroDto {
 
   @IsDateString()
   fecha: string;
+
+  @IsBoolean()
+  completado: boolean;
 
   @IsInt()
   @Min(1)
@@ -15,4 +18,7 @@ export class CrearRegistroDto {
   @Min(1)
   @Max(10)
   rpe: number;
+
+  @IsOptional()
+  notas?: string;
 }

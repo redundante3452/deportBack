@@ -1,4 +1,10 @@
-import { IsDateString, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsBooleanString,
+  IsDateString,
+  IsNumberString,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 
 export class BuscarRegistrosDto {
   @IsOptional()
@@ -12,4 +18,16 @@ export class BuscarRegistrosDto {
   @IsOptional()
   @IsDateString()
   hasta?: string;
+
+  @IsOptional()
+  @IsBooleanString()
+  completado?: string;
+
+  @IsOptional()
+  @IsNumberString()
+  rpeMin?: string;
+
+  @IsOptional()
+  @IsNumberString()
+  duracionMinima?: string;
 }
