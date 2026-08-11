@@ -7,6 +7,7 @@ import { DeportistasModule } from './deportistas/deportistas.module';
 <<<<<<< HEAD
 =======
 import { HabitosModule } from './habitos/habitos.module';
+import { LogrosModule } from './logros/logros.module';
 import { RegistrosModule } from './registros/registros.module';
 >>>>>>> feature/hu-02-crud-habito
 
@@ -14,7 +15,7 @@ import { RegistrosModule } from './registros/registros.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env', '.env.local'],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -46,7 +47,11 @@ import { RegistrosModule } from './registros/registros.module';
 =======
     HabitosModule,
     RegistrosModule,
+<<<<<<< HEAD
 >>>>>>> feature/hu-02-crud-habito
+=======
+    LogrosModule,
+>>>>>>> feature/hu-03-rachas-logros
   ],
   controllers: [AppController],
   providers: [AppService],
