@@ -4,8 +4,11 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DeportistasModule } from './deportistas/deportistas.module';
+<<<<<<< HEAD
+=======
 import { HabitosModule } from './habitos/habitos.module';
 import { RegistrosModule } from './registros/registros.module';
+>>>>>>> feature/hu-02-crud-habito
 
 @Module({
   imports: [
@@ -39,8 +42,11 @@ import { RegistrosModule } from './registros/registros.module';
       },
     }),
     DeportistasModule,
+<<<<<<< HEAD
+=======
     HabitosModule,
     RegistrosModule,
+>>>>>>> feature/hu-02-crud-habito
   ],
   controllers: [AppController],
   providers: [AppService],
