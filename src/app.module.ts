@@ -4,12 +4,9 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DeportistasModule } from './deportistas/deportistas.module';
-<<<<<<< HEAD
-=======
 import { HabitosModule } from './habitos/habitos.module';
 import { LogrosModule } from './logros/logros.module';
 import { RegistrosModule } from './registros/registros.module';
->>>>>>> feature/hu-02-crud-habito
 
 @Module({
   imports: [
@@ -43,15 +40,9 @@ import { RegistrosModule } from './registros/registros.module';
       },
     }),
     DeportistasModule,
-<<<<<<< HEAD
-=======
     HabitosModule,
     RegistrosModule,
-<<<<<<< HEAD
->>>>>>> feature/hu-02-crud-habito
-=======
     LogrosModule,
->>>>>>> feature/hu-03-rachas-logros
   ],
   controllers: [AppController],
   providers: [AppService],

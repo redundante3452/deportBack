@@ -71,6 +71,9 @@ $ pnpm run test:e2e
 
 # test coverage
 $ pnpm run test:cov
+
+# tests in docker
+$ pnpm run test:docker
 ```
 
 ## Deployment
