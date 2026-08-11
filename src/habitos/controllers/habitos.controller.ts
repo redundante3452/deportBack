@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { HabitosService } from '../services/habitos.service';
 import { CrearHabitoDto } from '../dto/crear-habito.dto';
 import { BuscarHabitosDto } from '../dto/buscar-habitos.dto';
 import { ReemplazarHabitoDto } from '../dto/reemplazar-habito.dto';
+import { ActualizarFrecuenciaHabitoDto } from '../dto/actualizar-frecuencia-habito.dto';
 
 @Controller('habitos')
 export class HabitosController {
@@ -34,5 +45,18 @@ export class HabitosController {
   @Put(':id')
   reemplazar(@Param('id') id: string, @Body() dto: ReemplazarHabitoDto) {
     return this.habitosService.reemplazar(id, dto);
+  }
+
+  @Patch(':id/frecuencia')
+  actualizarFrecuencia(
+    @Param('id') id: string,
+    @Body() dto: ActualizarFrecuenciaHabitoDto,
+  ) {
+    return this.habitosService.actualizarFrecuencia(id, dto);
+  }
+
+  @Delete(':id')
+  eliminar(@Param('id') id: string) {
+    return this.habitosService.eliminar(id);
   }
 }

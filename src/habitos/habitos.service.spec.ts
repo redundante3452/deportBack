@@ -17,6 +17,7 @@ describe('HabitosService', () => {
             create: jest.fn(),
             save: jest.fn(),
             find: jest.fn(),
+            remove: jest.fn(),
           },
         },
       ],

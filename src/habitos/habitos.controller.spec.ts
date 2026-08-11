@@ -17,6 +17,8 @@ describe('HabitosController', () => {
             buscarAvanzado: jest.fn(),
             buscarPorId: jest.fn(),
             reemplazar: jest.fn(),
+            actualizarFrecuencia: jest.fn(),
+            eliminar: jest.fn(),
           },
         },
       ],
