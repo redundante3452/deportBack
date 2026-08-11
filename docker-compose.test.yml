@@ -1,0 +1,29 @@
+services:
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: deport_test
+      POSTGRES_PASSWORD: deport_test
+      POSTGRES_DB: deport_test_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deport_test -d deport_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      DB_HOST: db-test
+      DB_PORT: 5432
+      DB_USERNAME: deport_test
+      DB_PASSWORD: deport_test
+      DB_NAME: deport_test_db
+      DB_SSL: "false"
+      NODE_ENV: test
+    depends_on:
+      db-test:
+        condition: service_healthy
+    command: sh -c "pnpm test && pnpm test:e2e"
