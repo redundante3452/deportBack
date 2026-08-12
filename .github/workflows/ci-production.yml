@@ -68,13 +68,6 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Comentar cobertura en Pull Request
-        if: github.event_name == 'pull_request' && always()
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: cobertura
-          path: coverage/coverage-summary.json
-
       - name: Ejecutar pruebas E2E en Docker
         run: docker compose -f docker-compose.test.yml run --rm e2e-tests
         env:
