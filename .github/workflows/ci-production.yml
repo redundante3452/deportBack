@@ -68,6 +68,21 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Verificar credenciales de base de datos
+        run: |
+          if [ -z "$DB_HOST" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ]; then
+            echo "::error::Faltan secrets de base de datos. Configura DB_HOST_TESTING, DB_USERNAME_TESTING, DB_PASSWORD_TESTING y DB_NAME_TESTING en Settings > Secrets."
+            exit 1
+          fi
+          echo "Conectando a: $DB_HOST:$DB_PORT/$DB_NAME como $DB_USERNAME (SSL=$DB_SSL)"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST_TESTING }}
+          DB_PORT: 5432
+          DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
+          DB_NAME: ${{ secrets.DB_NAME_TESTING }}
+          DB_SSL: "true"
+
       - name: Ejecutar pruebas E2E en Docker
         run: docker compose -f docker-compose.test.yml run --rm e2e-tests
         env:
