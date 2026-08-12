@@ -29,8 +29,6 @@ import { RegistrosModule } from './registros/registros.module';
           database: configService.get<string>('DB_NAME'),
           autoLoadEntities: true,
           synchronize: true,
-          // Forzar resolución IPv4 evita ENETUNREACH en runners
-          // que resuelven primero AAAA y no tienen ruta IPv6 saliente.
           extra: {
             family: 4,
           },
