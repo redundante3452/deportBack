@@ -80,7 +80,6 @@ jobs:
           echo "Quality Gate aprobado: $COVERAGE% >= $THRESHOLD%"
 
       - name: Publicar resumen de cobertura
-        if: always()
         run: |
           if [ -f coverage/coverage-summary.json ]; then
             {
@@ -91,7 +90,6 @@ jobs:
           fi
 
       - name: Subir artefacto de cobertura
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-testing
