@@ -33,7 +33,7 @@ jobs:
       - name: Verificar credenciales de base de datos
         run: |
           if [ -z "$DB_HOST" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ]; then
-            echo "::error::Faltan secrets de base de datos. Configura DB_HOST_TESTING, DB_USERNAME_TESTING, DB_PASSWORD_TESTING y DB_NAME_TESTING en Settings > Secrets."
+            echo "::error::Faltan secrets de base de datos. Configura DB_HOST_TESTING, DB_PORT_TESTING, DB_USERNAME_TESTING, DB_PASSWORD_TESTING y DB_NAME_TESTING en Settings > Secrets."
             exit 1
           fi
           echo "Conectando a: $DB_HOST:$DB_PORT/$DB_NAME como $DB_USERNAME (SSL=$DB_SSL)"
@@ -43,7 +43,7 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
           DB_NAME: ${{ secrets.DB_NAME_TESTING }}
-          DB_SSL: "true"
+          DB_SSL: "false"
 
       - name: Ejecutar pruebas E2E con cobertura
         run: |
@@ -55,10 +55,14 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
           DB_NAME: ${{ secrets.DB_NAME_TESTING }}
-          DB_SSL: "true"
+          DB_SSL: "false"
 
       - name: Combinar cobertura de unitarios + e2e
-        run: pnpm test:cov:merge
+        run: |
+          docker compose -f docker-compose.test.yml run --rm \
+            -v "$PWD/coverage:/app/coverage" \
+            -v "$PWD/coverage-e2e:/app/coverage-e2e" \
+            unit-tests sh -c "pnpm test:cov:merge"
 
       - name: Verificar cobertura mínima (Quality Gate)
         run: |
@@ -76,6 +80,7 @@ jobs:
           echo "Quality Gate aprobado: $COVERAGE% >= $THRESHOLD%"
 
       - name: Publicar resumen de cobertura
+        if: always()
         run: |
           if [ -f coverage/coverage-summary.json ]; then
             {
@@ -86,6 +91,7 @@ jobs:
           fi
 
       - name: Subir artefacto de cobertura
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-testing
