@@ -28,18 +28,52 @@ jobs:
       - name: Ejecutar pruebas unitarias en Docker
         run: |
           docker compose -f docker-compose.test.yml run --rm -v "$PWD/coverage:/app/coverage" unit-tests \
-            sh -c "pnpm test:cov --coverageReporters=json-summary --forceExit"
+            sh -c "pnpm test:cov --coverageReporters=text --coverageReporters=lcov --coverageReporters=json-summary --coverageReporters=clover --forceExit"
 
       - name: Verificar cobertura mínima (Quality Gate)
         run: |
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "::error::No se encontró coverage/coverage-summary.json"
+            exit 1
+          fi
           COVERAGE=$(jq '.total.statements.pct' coverage/coverage-summary.json)
+          BRANCHES=$(jq '.total.branches.pct' coverage/coverage-summary.json)
+          FUNCTIONS=$(jq '.total.functions.pct' coverage/coverage-summary.json)
+          LINES=$(jq '.total.lines.pct' coverage/coverage-summary.json)
           echo "Cobertura actual: $COVERAGE%"
           THRESHOLD=85
           if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-            echo "Cobertura $COVERAGE% es menor al $THRESHOLD% requerido"
+            echo "::error::Cobertura $COVERAGE% es menor al $THRESHOLD% requerido"
             exit 1
           fi
           echo "Quality Gate aprobado: $COVERAGE% >= $THRESHOLD%"
+
+      - name: Publicar resumen de cobertura
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            {
+              echo "### Cobertura (Produccion)"
+              echo "Statements: $(jq -r '.total.statements.pct' coverage/coverage-summary.json)% | Branches: $(jq -r '.total.branches.pct' coverage/coverage-summary.json)% | Functions: $(jq -r '.total.functions.pct' coverage/coverage-summary.json)% | Lines: $(jq -r '.total.lines.pct' coverage/coverage-summary.json)%"
+              echo "Umbral requerido: >= 85%"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Subir artefacto de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-production
+          path: coverage/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Comentar cobertura en Pull Request
+        if: github.event_name == 'pull_request' && always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: cobertura
+          path: coverage/coverage-summary.json
 
       - name: Ejecutar pruebas E2E en Docker
         run: docker compose -f docker-compose.test.yml run --rm e2e-tests
