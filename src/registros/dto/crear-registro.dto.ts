@@ -1,4 +1,12 @@
-import { IsBoolean, IsDateString, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CrearRegistroDto {
   @IsUUID()

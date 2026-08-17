@@ -18,38 +18,84 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Construir imagen Docker de pruebas
-        run: docker compose -f docker-compose.test.yml build unit-tests
+        run: docker compose -f docker-compose.test.yml build unit-tests e2e-tests
 
       - name: Ejecutar ESLint
         run: |
           docker compose -f docker-compose.test.yml run --rm unit-tests \
             sh -c "pnpm lint"
 
-      - name: Ejecutar pruebas unitarias en Docker
+      - name: Ejecutar pruebas unitarias con cobertura
         run: |
-          docker compose -f docker-compose.test.yml run --rm unit-tests \
-            sh -c "pnpm test:cov --coverageReporters=json-summary --forceExit"
+          docker compose -f docker-compose.test.yml run --rm -v "$PWD/coverage:/app/coverage" unit-tests \
+            sh -c "pnpm test:cov --coverageReporters=json --forceExit"
+
+      - name: Verificar credenciales de base de datos
+        run: |
+          if [ -z "$DB_HOST" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ]; then
+            echo "::error::Faltan secrets de base de datos de pruebas. Configura DB_HOST_TESTING, DB_PORT_TESTING, DB_USERNAME_TESTING, DB_PASSWORD_TESTING y DB_NAME_TESTING en Settings > Secrets."
+            exit 1
+          fi
+          echo "Conectando a: $DB_HOST:$DB_PORT/$DB_NAME como $DB_USERNAME (SSL=$DB_SSL)"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST_TESTING }}
+          DB_PORT: ${{ secrets.DB_PORT_TESTING }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
+          DB_NAME: ${{ secrets.DB_NAME_TESTING }}
+          DB_SSL: "false"
+
+      - name: Ejecutar pruebas E2E con cobertura
+        run: |
+          docker compose -f docker-compose.test.yml run --rm -v "$PWD/coverage-e2e:/app/coverage-e2e" e2e-tests \
+            sh -c "pnpm test:e2e --coverage --forceExit"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST_TESTING }}
+          DB_PORT: ${{ secrets.DB_PORT_TESTING }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
+          DB_NAME: ${{ secrets.DB_NAME_TESTING }}
+          DB_SSL: "false"
+
+      - name: Combinar cobertura de unitarios + e2e
+        run: |
+          docker compose -f docker-compose.test.yml run --rm \
+            -v "$PWD/coverage:/app/coverage" \
+            -v "$PWD/coverage-e2e:/app/coverage-e2e" \
+            unit-tests sh -c "pnpm test:cov:merge"
 
       - name: Verificar cobertura mínima (Quality Gate)
         run: |
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "::error::No se encontró coverage/coverage-summary.json"
+            exit 1
+          fi
           COVERAGE=$(jq '.total.statements.pct' coverage/coverage-summary.json)
-          echo "Cobertura actual: $COVERAGE%"
+          echo "Cobertura combinada actual: $COVERAGE%"
           THRESHOLD=85
           if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-            echo "Cobertura $COVERAGE% es menor al $THRESHOLD% requerido"
+            echo "::error::Cobertura $COVERAGE% es menor al $THRESHOLD% requerido"
             exit 1
           fi
           echo "Quality Gate aprobado: $COVERAGE% >= $THRESHOLD%"
 
-      - name: Ejecutar pruebas E2E en Docker
-        run: docker compose -f docker-compose.test.yml run --rm e2e-tests
-        env:
-          DB_HOST: ${{ secrets.DB_HOST_TESTING }}
-          DB_PORT: 5432
-          DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
-          DB_NAME: ${{ secrets.DB_NAME_TESTING }}
-          DB_SSL: "true"
+      - name: Publicar resumen de cobertura
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            {
+              echo "### Cobertura combinada (Produccion)"
+              echo "Statements: $(jq -r '.total.statements.pct' coverage/coverage-summary.json)% | Branches: $(jq -r '.total.branches.pct' coverage/coverage-summary.json)% | Functions: $(jq -r '.total.functions.pct' coverage/coverage-summary.json)% | Lines: $(jq -r '.total.lines.pct' coverage/coverage-summary.json)%"
+              echo "Umbral requerido: >= 85%"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Subir artefacto de cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-production
+          path: coverage/
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Limpiar contenedores Docker
         if: always()

@@ -2,9 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Deportista } from '../../deportistas/entities/deportista.entity';
 
 @Entity('habitos')
 export class Habito {
@@ -22,6 +25,12 @@ export class Habito {
 
   @Column({ type: 'uuid' })
   deportistaId: string;
+
+  @ManyToOne(() => Deportista, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'deportistaId' })
+  deportista: Deportista;
 
   @Column({ type: 'int', default: 0 })
   rachaActual: number;
