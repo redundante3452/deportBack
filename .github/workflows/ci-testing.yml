@@ -117,4 +117,4 @@ jobs:
       - name: Deploy a Railway (Testing)
         run: railway up --service ${{ secrets.RAILWAY_SERVICE_TESTING }} --detach
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
