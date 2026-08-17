@@ -17,14 +17,18 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:unit:docker": "docker compose -f docker-compose.test.yml run --build --rm unit-tests",
+    "test:e2e:docker": "docker compose -f docker-compose.test.yml run --build --rm e2e-tests",
+    "test:docker": "docker compose -f docker-compose.test.yml run --build --rm unit-tests && docker compose -f docker-compose.test.yml run --build --rm e2e-tests",
+    "test:cov:merge": "mkdir -p .nyc_output coverage-merged && cp coverage/coverage-final.json .nyc_output/from-unit.json && cp coverage-e2e/coverage-final.json .nyc_output/from-e2e.json && npx nyc merge .nyc_output coverage-merged/coverage-final.json && npx nyc report --temp-dir=coverage-merged --report-dir=coverage --reporter=json-summary --reporter=text"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/mapped-types": "*",
-    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-fastify": "^11.2.1",
     "@nestjs/swagger": "^11.4.6",
     "@nestjs/typeorm": "^11.0.3",
     "class-transformer": "^0.5.1",
@@ -33,7 +37,6 @@
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "swagger-ui-express": "^5.0.1",
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
@@ -51,6 +54,7 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
     "jest": "^30.0.0",
+    "nyc": "^18.0.0",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
@@ -73,7 +77,9 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/main.ts",
+      "!**/*.module.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

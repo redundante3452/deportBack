@@ -4,17 +4,15 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DeportistasModule } from './deportistas/deportistas.module';
-<<<<<<< HEAD
-=======
 import { HabitosModule } from './habitos/habitos.module';
+import { LogrosModule } from './logros/logros.module';
 import { RegistrosModule } from './registros/registros.module';
->>>>>>> feature/hu-02-crud-habito
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env', '.env.local'],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -31,6 +29,9 @@ import { RegistrosModule } from './registros/registros.module';
           database: configService.get<string>('DB_NAME'),
           autoLoadEntities: true,
           synchronize: true,
+          extra: {
+            family: 4,
+          },
           ...(useSsl
             ? {
                 ssl: {
@@ -42,11 +43,9 @@ import { RegistrosModule } from './registros/registros.module';
       },
     }),
     DeportistasModule,
-<<<<<<< HEAD
-=======
     HabitosModule,
     RegistrosModule,
->>>>>>> feature/hu-02-crud-habito
+    LogrosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
