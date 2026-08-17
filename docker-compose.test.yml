@@ -37,6 +37,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
+    env_file:
+      - path: .env.test
+        required: false
     environment:
       # Si no se proveen variables externas, usa la BD local de Docker
       DB_HOST: ${DB_HOST:-db-test}
