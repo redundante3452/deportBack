@@ -117,4 +117,4 @@ jobs:
       - name: Deploy a Railway (Producción)
         run: railway up --service ${{ secrets.RAILWAY_SERVICE_PRODUCTION }} --detach
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
