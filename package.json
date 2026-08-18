@@ -24,10 +24,12 @@
     "test:cov:merge": "mkdir -p .nyc_output coverage-merged && cp coverage/coverage-final.json .nyc_output/from-unit.json && cp coverage-e2e/coverage-final.json .nyc_output/from-e2e.json && npx nyc merge .nyc_output coverage-merged/coverage-final.json && npx nyc report --temp-dir=coverage-merged --report-dir=coverage --reporter=json-summary --reporter=text"
   },
   "dependencies": {
+    "@fastify/static": "^10.1.3",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/mapped-types": "*",
+    "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-fastify": "^11.2.1",
     "@nestjs/swagger": "^11.4.6",
     "@nestjs/typeorm": "^11.0.3",
