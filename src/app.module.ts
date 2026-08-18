@@ -29,6 +29,9 @@ import { RegistrosModule } from './registros/registros.module';
           database: configService.get<string>('DB_NAME'),
           autoLoadEntities: true,
           synchronize: true,
+          extra: {
+            family: 4,
+          },
           ...(useSsl
             ? {
                 ssl: {
