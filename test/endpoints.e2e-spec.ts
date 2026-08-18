@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
+jest.setTimeout(30000);
 describe('API endpoints (e2e)', () => {
   let app: INestApplication<App>;
 

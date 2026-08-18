@@ -6,7 +6,6 @@ import {
 import { ValidationPipe } from '@nestjs/common';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { DeportistasService } from './deportistas/services/deportistas.service';
 import { BuscarDeportistasDto } from './deportistas/dto/buscar-deportistas.dto';
@@ -29,50 +28,9 @@ async function bootstrap() {
     }),
   );
 
-  // ──────────────────────────────────────────────────
-  // Configuración de Swagger (OpenAPI 3.0)
-  // UI disponible en:   GET /api-docs
-  // JSON spec en:       GET /api-docs-json
-  // ──────────────────────────────────────────────────
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('DeportBack API')
-    .setDescription(
-      `API REST para la gestión de deportistas, hábitos deportivos,
-registros de entrenamiento y logros.
-
-**Nota sobre el método HTTP QUERY (RFC 10008):**
-Los endpoints \`QUERY /deportistas\`, \`QUERY /habitos\` y \`QUERY /registros\`
-permiten enviar filtros complejos en el body con semántica de lectura.
-Como Swagger/OpenAPI no soporta QUERY de forma nativa, estos endpoints
-se documentan como \`POST /{recurso}/buscar\` que son funcionalmente equivalentes.`,
-    )
-    .setVersion('1.0.0')
-    .addTag('Deportistas', 'Gestión de deportistas registrados en el sistema')
-    .addTag('Hábitos', 'Gestión de hábitos deportivos por deportista')
-    .addTag('Registros de entrenamiento', 'Historial de sesiones de entrenamiento')
-    .addTag('Logros', 'Logros desbloqueados por rendimiento y consistencia')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-
-  SwaggerModule.setup('api-docs', app, document, {
-    jsonDocumentUrl: 'api-docs-json',
-    swaggerOptions: {
-      persistAuthorization: true,
-      docExpansion: 'list',
-      filter: true,
-      showRequestDuration: true,
-    },
-    customSiteTitle: 'DeportBack – API Docs',
-  });
-
   registrarRutasQuery(app);
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
-
-  const url = `http://localhost:${process.env.PORT ?? 3000}`;
-  console.log(`🚀  Aplicación corriendo en:  ${url}`);
-  console.log(`📖  Documentación Swagger en:  ${url}/api-docs`);
 }
 
 /**
