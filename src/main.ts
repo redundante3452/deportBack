@@ -49,7 +49,10 @@ se documentan como \`POST /{recurso}/buscar\` que son funcionalmente equivalente
     .setVersion('1.0.0')
     .addTag('Deportistas', 'Gestión de deportistas registrados en el sistema')
     .addTag('Hábitos', 'Gestión de hábitos deportivos por deportista')
-    .addTag('Registros de entrenamiento', 'Historial de sesiones de entrenamiento')
+    .addTag(
+      'Registros de entrenamiento',
+      'Historial de sesiones de entrenamiento',
+    )
     .addTag('Logros', 'Logros desbloqueados por rendimiento y consistencia')
     .build();
 
