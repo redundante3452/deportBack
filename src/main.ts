@@ -5,6 +5,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { DeportistasService } from './deportistas/services/deportistas.service';
