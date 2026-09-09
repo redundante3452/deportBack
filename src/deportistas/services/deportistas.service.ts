@@ -12,6 +12,11 @@ import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
 import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
 import { ConfigService } from '@nestjs/config';
 import { HttpExternoService } from '../../common/http-externo/http-externo.service';
+import { ResultadoHttpExterno } from '../../common/http-externo/http-externo.types';
+
+function datoOError(resultado: ResultadoHttpExterno): unknown {
+  return resultado.ok ? resultado.data : { error: resultado.error };
+}
 
 @Injectable()
 export class DeportistasService {
@@ -90,5 +95,23 @@ export class DeportistasService {
   async eliminar(id: string): Promise<void> {
     const deportista = await this.buscarPorId(id);
     await this.deportistaRepository.remove(deportista);
+  }
+
+  async obtenerApisExternas(): Promise<{
+    api_fastify: unknown;
+    inventario_u: unknown;
+  }> {
+    const apiFastifyUrl = this.configService.get<string>('API_FASTIFY_URL');
+    const inventarioUUrl = this.configService.get<string>('INVENTARIO_U_URL');
+
+    const [articulos, skus] = await Promise.all([
+      this.httpExternoService.obtenerJson(`${apiFastifyUrl}/articulos`),
+      this.httpExternoService.obtenerJson(`${inventarioUUrl}/skus`),
+    ]);
+
+    return {
+      api_fastify: datoOError(articulos),
+      inventario_u: datoOError(skus),
+    };
   }
 }
