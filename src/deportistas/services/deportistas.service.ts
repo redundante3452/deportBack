@@ -105,13 +105,26 @@ export class DeportistasService {
     const inventarioUUrl = this.configService.get<string>('INVENTARIO_U_URL');
 
     const [articulos, skus] = await Promise.all([
-      this.httpExternoService.obtenerJson(`${apiFastifyUrl}/articulos`),
-      this.httpExternoService.obtenerJson(`${inventarioUUrl}/skus`),
+      this.consultarSiHayUrl(apiFastifyUrl, '/articulos'),
+      this.consultarSiHayUrl(inventarioUUrl, '/skus'),
     ]);
 
     return {
       api_fastify: datoOError(articulos),
       inventario_u: datoOError(skus),
     };
+  }
+
+  private consultarSiHayUrl(
+    baseUrl: string | undefined,
+    ruta: string,
+  ): Promise<ResultadoHttpExterno> {
+    if (!baseUrl) {
+      return Promise.resolve({
+        ok: false,
+        error: `no hay URL configurada para ${ruta}`,
+      });
+    }
+    return this.httpExternoService.obtenerJson(`${baseUrl}${ruta}`);
   }
 }
