@@ -4,6 +4,8 @@ import { ResultadoHttpExterno } from './http-externo.types';
 @Injectable()
 export class HttpExternoService {
   async obtenerJson(url: string): Promise<ResultadoHttpExterno> {
-    return { ok: false, error: 'no implementado' };
+    const respuesta = await fetch(url);
+    const data = await respuesta.json();
+    return { ok: true, data };
   }
 }
