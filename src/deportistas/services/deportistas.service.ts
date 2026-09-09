@@ -10,12 +10,16 @@ import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
 import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
 import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
+import { ConfigService } from '@nestjs/config';
+import { HttpExternoService } from '../../common/http-externo/http-externo.service';
 
 @Injectable()
 export class DeportistasService {
   constructor(
     @InjectRepository(Deportista)
     private readonly deportistaRepository: Repository<Deportista>,
+    private readonly httpExternoService: HttpExternoService,
+    private readonly configService: ConfigService,
   ) {}
 
   async cheqUser(email: string): Promise<void> {
