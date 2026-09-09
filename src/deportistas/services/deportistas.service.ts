@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
@@ -20,6 +21,8 @@ function datoOError(resultado: ResultadoHttpExterno): unknown {
 
 @Injectable()
 export class DeportistasService {
+  private readonly logger = new Logger(DeportistasService.name);
+
   constructor(
     @InjectRepository(Deportista)
     private readonly deportistaRepository: Repository<Deportista>,
