@@ -1,3 +1,5 @@
-export type ResultadoHttpExterno =
-  | { ok: true; data: unknown }
-  | { ok: false; error: string };
+export interface ResultadoHttpExterno {
+  ok: boolean;
+  data?: unknown;
+  error?: string;
+}
