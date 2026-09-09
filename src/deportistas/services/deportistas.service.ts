@@ -112,6 +112,13 @@ export class DeportistasService {
       this.consultarSiHayUrl(inventarioUUrl, '/skus'),
     ]);
 
+    if (!articulos.ok) {
+      this.logger.warn(`api-fastify no respondió: ${articulos.error}`);
+    }
+    if (!skus.ok) {
+      this.logger.warn(`Inventario-U no respondió: ${skus.error}`);
+    }
+
     return {
       api_fastify: datoOError(articulos),
       inventario_u: datoOError(skus),
