@@ -43,26 +43,16 @@ export class DeportistasController {
   @Get()
   @ApiOperation({
     summary: 'Listar deportistas',
-    description:
-      'Devuelve todos los deportistas junto con la información de las APIs externas (api-fastify e Inventario-U). Permite filtrar por nombre y/o email.',
+    description: 'Devuelve todos los deportistas. Permite filtrar por nombre y/o email.',
   })
   @ApiQuery({ name: 'nombre', required: false, description: 'Filtro por nombre del deportista', example: 'Juan' })
   @ApiQuery({ name: 'email', required: false, description: 'Filtro por correo electrónico', example: 'juan@ejemplo.com' })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Lista de deportistas, más los datos crudos de api-fastify (/articulos) e Inventario-U (/skus) en apis_externas.',
-  })
-  async listarDeportistas(
+  @ApiResponse({ status: 200, description: 'Lista de deportistas.' })
+  listarDeportistas(
     @Query('nombre') nombre?: string,
     @Query('email') email?: string,
   ) {
-    const [deportistas, apisExternas] = await Promise.all([
-      this.deportistasService.listar(nombre, email),
-      this.deportistasService.obtenerApisExternas(),
-    ]);
-
-    return { deportistas, apis_externas: apisExternas };
+    return this.deportistasService.listar(nombre, email);
   }
 
   @Post('buscar')
