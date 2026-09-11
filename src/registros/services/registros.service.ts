@@ -117,6 +117,34 @@ export class RegistrosService {
       query.andWhere('registro.fecha <= :hasta', { hasta: dto.hasta });
     }
 
+    if (dto.completado !== undefined && dto.completado !== null) {
+      const completadoBool =
+        typeof dto.completado === 'string'
+          ? dto.completado === 'true'
+          : !!dto.completado;
+      query.andWhere('registro.completado = :completado', {
+        completado: completadoBool,
+      });
+    }
+
+    if (dto.rpeMin !== undefined && dto.rpeMin !== null) {
+      const rpeMinVal =
+        typeof dto.rpeMin === 'number'
+          ? dto.rpeMin
+          : parseInt(dto.rpeMin as string, 10);
+      query.andWhere('registro.rpe >= :rpeMin', { rpeMin: rpeMinVal });
+    }
+
+    if (dto.duracionMinima !== undefined && dto.duracionMinima !== null) {
+      const durMinVal =
+        typeof dto.duracionMinima === 'number'
+          ? dto.duracionMinima
+          : parseInt(dto.duracionMinima as string, 10);
+      query.andWhere('registro.duracionMinutos >= :duracionMinima', {
+        duracionMinima: durMinVal,
+      });
+    }
+
     return query.getMany();
   }
 

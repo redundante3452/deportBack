@@ -213,7 +213,7 @@ describe('API endpoints (e2e)', () => {
     await request(app.getHttpServer())
       .post('/deportistas/buscar')
       .send({ nombre: 'Carlos', email })
-      .expect(201)
+      .expect(200)
       .expect((res) => {
         expect(res.body.some((d: { id: string }) => d.id === depId)).toBe(true);
       });
@@ -270,7 +270,7 @@ describe('API endpoints (e2e)', () => {
     await request(app.getHttpServer())
       .post('/habitos/buscar')
       .send({ nombre: 'Ciclismo', deportistaId: depId })
-      .expect(201)
+      .expect(200)
       .expect((res) => {
         expect(res.body.some((h: { id: string }) => h.id === habId)).toBe(true);
       });
