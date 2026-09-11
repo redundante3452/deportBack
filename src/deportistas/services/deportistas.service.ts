@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
@@ -10,12 +11,23 @@ import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
 import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
 import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
+import { ConfigService } from '@nestjs/config';
+import { HttpExternoService } from '../../common/http-externo/http-externo.service';
+import { ResultadoHttpExterno } from '../../common/http-externo/http-externo.types';
+
+function datoOError(resultado: ResultadoHttpExterno): unknown {
+  return resultado.ok ? resultado.data : { error: resultado.error };
+}
 
 @Injectable()
 export class DeportistasService {
+  private readonly logger = new Logger(DeportistasService.name);
+
   constructor(
     @InjectRepository(Deportista)
     private readonly deportistaRepository: Repository<Deportista>,
+    private readonly httpExternoService: HttpExternoService,
+    private readonly configService: ConfigService,
   ) {}
 
   async cheqUser(email: string): Promise<void> {
@@ -86,5 +98,43 @@ export class DeportistasService {
   async eliminar(id: string): Promise<void> {
     const deportista = await this.buscarPorId(id);
     await this.deportistaRepository.remove(deportista);
+  }
+
+  async obtenerApisExternas(): Promise<{
+    api_fastify: unknown;
+    inventario_u: unknown;
+  }> {
+    const apiFastifyUrl = this.configService.get<string>('API_FASTIFY_URL');
+    const inventarioUUrl = this.configService.get<string>('INVENTARIO_U_URL');
+
+    const [articulos, skus] = await Promise.all([
+      this.consultarSiHayUrl(apiFastifyUrl, '/articulos'),
+      this.consultarSiHayUrl(inventarioUUrl, '/skus'),
+    ]);
+
+    if (!articulos.ok) {
+      this.logger.warn(`api-fastify no respondió: ${articulos.error}`);
+    }
+    if (!skus.ok) {
+      this.logger.warn(`Inventario-U no respondió: ${skus.error}`);
+    }
+
+    return {
+      api_fastify: datoOError(articulos),
+      inventario_u: datoOError(skus),
+    };
+  }
+
+  private consultarSiHayUrl(
+    baseUrl: string | undefined,
+    ruta: string,
+  ): Promise<ResultadoHttpExterno> {
+    if (!baseUrl) {
+      return Promise.resolve({
+        ok: false,
+        error: `no hay URL configurada para ${ruta}`,
+      });
+    }
+    return this.httpExternoService.obtenerJson(`${baseUrl}${ruta}`);
   }
 }

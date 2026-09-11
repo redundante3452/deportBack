@@ -60,6 +60,29 @@ $ pnpm run start:dev
 $ pnpm run start:prod
 ```
 
+## Integración con APIs externas (v2)
+
+`GET /api/v2/deportistas/:id` es un controller aparte (`DeportistasV2Controller`) que, además del deportista, trae pegada la respuesta cruda de las APIs de los otros 2 equipos: `api-fastify` (`/articulos`) e `Inventario-U` (`/skus`). Si alguna de las dos no responde, no rompe la respuesta: queda un `{ error }` en esa clave y el resto sigue funcionando. El `GET /deportistas` y `GET /deportistas/:id` normales (v1) no cambian.
+
+Variables de entorno necesarias (agregar en `.env` / `.env.local`):
+
+```
+API_FASTIFY_URL=http://localhost:3001
+INVENTARIO_U_URL=http://localhost:8000
+```
+
+Ejemplo de respuesta:
+
+```json
+{
+  "deportista": { /* ... */ },
+  "apis_externas": {
+    "api_fastify": [ /* artículos de api-fastify, o { "error": "..." } */ ],
+    "inventario_u": [ /* skus de Inventario-U, o { "error": "..." } */ ]
+  }
+}
+```
+
 ## Run tests
 
 ```bash
