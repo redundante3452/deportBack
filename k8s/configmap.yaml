@@ -6,8 +6,8 @@ metadata:
 data:
   NODE_ENV: "production"
   PORT: "3000"
-  # postgres corre como pod dentro del mismo cluster (ver postgres-service.yaml)
-  DB_HOST: "postgres"
+  # el Cloud SQL Auth Proxy corre como sidecar y escucha en localhost
+  DB_HOST: "127.0.0.1"
   DB_PORT: "5432"
   DB_SSL: "false"
   # URLs públicas de las otras 2 APIs del seguimiento (no son secretas)
