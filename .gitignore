@@ -49,5 +49,3 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # notas locales
 CLAUDE.md
-# secretos reales de k8s (usar secret.example.yaml como plantilla)
-k8s/secret.yaml
