@@ -112,24 +112,24 @@ $ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-## Despliegue en Oracle Cloud (OKE)
+## Despliegue en Google Cloud (GKE)
 
-Manifiestos de Kubernetes en `k8s/` para desplegar en Oracle Kubernetes Engine (OKE), pensados para
-la capa **Always Free** de OCI (nada de esto tiene costo). Postgres corre como un pod más dentro del
-mismo cluster — no se usa un servicio de base de datos administrado (esos no son gratis en OCI).
+Manifiestos de Kubernetes en `k8s/` para desplegar en Google Kubernetes Engine (GKE Autopilot),
+usando el crédito gratis de $300 de GCP. Postgres corre como un pod más dentro del mismo cluster —
+no se usa un servicio de base de datos administrado (no hace falta para un despliegue único).
 
 - `namespace.yaml`, `configmap.yaml` — configuración no sensible (incluye `DB_HOST: postgres`, el nombre del Service interno)
 - `secret.example.yaml` — plantilla; copiar a `k8s/secret.yaml` (gitignored) con usuario/password/db que tú elijas
 - `postgres-pvc.yaml`, `postgres-deployment.yaml`, `postgres-service.yaml` — Postgres autogestionado con almacenamiento persistente
 - `deployment.yaml` — 2 réplicas de la app, probes en `GET /`, requests/limits de CPU y memoria
-- `service.yaml` — `LoadBalancer` (shape flexible 10Mbps, el único gratuito) para exponer la app
+- `service.yaml` — `LoadBalancer` para exponer la app
 - `hpa.yaml` — autoescala de 2 a 5 réplicas al 70% de CPU
 
-Build y push de la imagen (reemplazar región/namespace de OCIR):
+Build y push de la imagen a Artifact Registry (reemplazar región/proyecto):
 
 ```bash
-docker build -t <region>.ocir.io/<tenancy-namespace>/deport-back:latest .
-docker push <region>.ocir.io/<tenancy-namespace>/deport-back:latest
+docker build -t <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest .
+docker push <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest
 ```
 
 Aplicar en el cluster:
