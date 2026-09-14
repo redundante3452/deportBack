@@ -127,12 +127,13 @@ With Mau, you can deploy your application in just a few clicks, allowing you to 
 
 Manifiestos de Kubernetes en `k8s/` para desplegar en Google Kubernetes Engine (GKE Autopilot),
 usando el crédito gratis de $300 de GCP. La base de datos es **Cloud SQL for PostgreSQL** (gestionada
-de verdad), a la que se conecta vía el **Cloud SQL Auth Proxy** como sidecar; las credenciales viven
-en **Secret Manager** y se sincronizan a un Secret de k8s con el add-on de Secret Manager para GKE.
+de verdad), a la que se conecta vía el **Cloud SQL Auth Proxy** como sidecar. Las credenciales viven
+en **Secret Manager**; el Secret de k8s se crea a mano leyéndolas de ahí (el add-on de sincronización
+automática de GKE quedó bloqueado por falta de capacidad de Google en la región — se puede volver a
+intentar más adelante, ver comando abajo).
 
 - `namespace.yaml`, `configmap.yaml` — configuración no sensible (`DB_HOST: 127.0.0.1`, donde escucha el proxy)
 - `serviceaccount.yaml` — ServiceAccount con Workload Identity (roles `cloudsql.client` y `secretmanager.secretAccessor`)
-- `secretproviderclass.yaml` — sincroniza `db-username`/`db-password`/`db-name`/`team-api-key` de Secret Manager al Secret `deport-back-db`
 - `deployment.yaml` — 2 réplicas de la app + sidecar del Cloud SQL Auth Proxy, probes en `GET /`, requests/limits
 - `service.yaml` — `LoadBalancer` para exponer la app
 - `hpa.yaml` — autoescala de 2 a 5 réplicas al 70% de CPU
@@ -162,16 +163,33 @@ gcloud iam service-accounts add-iam-policy-binding \
   --member "serviceAccount:<project-id>.svc.id.goog[deport-back/deport-back-sa]"
 ```
 
+Crear el Secret de k8s leyendo los valores directo de Secret Manager (`db-username`, `db-password`,
+`db-name`, `team-api-key` ya creados ahí):
+
+```bash
+kubectl create secret generic deport-back-db -n deport-back \
+  --from-literal=DB_USERNAME="$(gcloud secrets versions access latest --secret=db-username)" \
+  --from-literal=DB_PASSWORD="$(gcloud secrets versions access latest --secret=db-password)" \
+  --from-literal=DB_NAME="$(gcloud secrets versions access latest --secret=db-name)" \
+  --from-literal=TEAM_API_KEY="$(gcloud secrets versions access latest --secret=team-api-key)"
+```
+
 Aplicar en el cluster:
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/serviceaccount.yaml
-kubectl apply -f k8s/secretproviderclass.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 kubectl apply -f k8s/hpa.yaml
+```
+
+Si más adelante el add-on de Secret Manager para GKE deja de estar bloqueado por capacidad, se
+puede volver a sincronizar automático con:
+
+```bash
+gcloud container clusters update deport-back-cluster --location=us-central1 --enable-secret-manager
 ```
 
 ## Resources
