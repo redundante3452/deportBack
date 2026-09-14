@@ -14,10 +14,14 @@ import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deport
 import { ConfigService } from '@nestjs/config';
 import { HttpExternoService } from '../../common/http-externo/http-externo.service';
 import { ResultadoHttpExterno } from '../../common/http-externo/http-externo.types';
+import { CacheDistribuidaService } from '../../common/cache-distribuida/cache-distribuida.service';
 
 function datoOError(resultado: ResultadoHttpExterno): unknown {
   return resultado.ok ? resultado.data : { error: resultado.error };
 }
+
+const CLAVE_CACHE_APIS_EXTERNAS = 'apis-externas:articulos-skus';
+const TTL_CACHE_APIS_EXTERNAS_SEGUNDOS = 30;
 
 @Injectable()
 export class DeportistasService {
@@ -28,6 +32,7 @@ export class DeportistasService {
     private readonly deportistaRepository: Repository<Deportista>,
     private readonly httpExternoService: HttpExternoService,
     private readonly configService: ConfigService,
+    private readonly cacheDistribuidaService: CacheDistribuidaService,
   ) {}
 
   async cheqUser(email: string): Promise<void> {
@@ -104,6 +109,15 @@ export class DeportistasService {
     api_fastify: unknown;
     inventario_u: unknown;
   }> {
+    const enCache = await this.cacheDistribuidaService.obtener<{
+      api_fastify: unknown;
+      inventario_u: unknown;
+    }>(CLAVE_CACHE_APIS_EXTERNAS);
+
+    if (enCache) {
+      return enCache;
+    }
+
     const apiFastifyUrl = this.configService.get<string>('API_FASTIFY_URL');
     const inventarioUUrl = this.configService.get<string>('INVENTARIO_U_URL');
 
@@ -119,10 +133,22 @@ export class DeportistasService {
       this.logger.warn(`Inventario-U no respondió: ${skus.error}`);
     }
 
-    return {
+    const resultado = {
       api_fastify: datoOError(articulos),
       inventario_u: datoOError(skus),
     };
+
+    // solo cacheamos si ambas respondieron bien: un error transitorio no debe
+    // quedar "congelado" 30 segundos para todos los que llamen al v2 mientras tanto
+    if (articulos.ok && skus.ok) {
+      await this.cacheDistribuidaService.guardar(
+        CLAVE_CACHE_APIS_EXTERNAS,
+        resultado,
+        TTL_CACHE_APIS_EXTERNAS_SEGUNDOS,
+      );
+    }
+
+    return resultado;
   }
 
   private consultarSiHayUrl(
