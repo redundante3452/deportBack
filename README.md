@@ -112,6 +112,36 @@ $ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
+## Despliegue en Oracle Cloud (OKE)
+
+Manifiestos de Kubernetes en `k8s/` para desplegar en Oracle Kubernetes Engine (OKE):
+
+- `namespace.yaml`, `configmap.yaml` — configuración no sensible
+- `secret.example.yaml` — plantilla; copiar a `k8s/secret.yaml` (gitignored) con las credenciales reales de OCI Database with PostgreSQL
+- `deployment.yaml` — 2 réplicas, probes en `GET /`, requests/limits de CPU y memoria
+- `service.yaml` — `LoadBalancer` para exponer la app
+- `hpa.yaml` — autoescala de 2 a 5 réplicas al 70% de CPU
+
+Build y push de la imagen (reemplazar región/namespace de OCIR):
+
+```bash
+docker build -t <region>.ocir.io/<tenancy-namespace>/deport-back:latest .
+docker push <region>.ocir.io/<tenancy-namespace>/deport-back:latest
+```
+
+Aplicar en el cluster:
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secret.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/hpa.yaml
+```
+
+No hay pipeline de CI/CD para esto — el deploy es manual.
+
 ## Resources
 
 Check out a few resources that may come in handy when working with NestJS:
