@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -7,6 +8,7 @@ import { DeportistasModule } from './deportistas/deportistas.module';
 import { HabitosModule } from './habitos/habitos.module';
 import { LogrosModule } from './logros/logros.module';
 import { RegistrosModule } from './registros/registros.module';
+import { TeamApiKeyGuard } from './common/team-api-key/team-api-key.guard';
 
 @Module({
   imports: [
@@ -48,6 +50,6 @@ import { RegistrosModule } from './registros/registros.module';
     LogrosModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: TeamApiKeyGuard }],
 })
 export class AppModule {}
