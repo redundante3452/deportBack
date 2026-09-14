@@ -13,3 +13,5 @@ data:
   # URLs públicas de las otras 2 APIs del seguimiento (no son secretas)
   API_FASTIFY_URL: "http://CAMBIAR-api-fastify"
   INVENTARIO_U_URL: "http://CAMBIAR-inventario-u"
+  REDIS_HOST: "CAMBIAR-redis-host"
+  REDIS_PORT: "6379"
