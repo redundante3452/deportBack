@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deport-back
+  namespace: deport-back
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: deport-back
+  template:
+    metadata:
+      labels:
+        app: deport-back
+    spec:
+      imagePullSecrets:
+        - name: ocirsecret
+      containers:
+        - name: deport-back
+          # CAMBIAR: <region-key>.ocir.io/<tenancy-namespace>/deport-back:latest
+          image: CAMBIAR.ocir.io/CAMBIAR/deport-back:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: deport-back-config
+            - secretRef:
+                name: deport-back-db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
