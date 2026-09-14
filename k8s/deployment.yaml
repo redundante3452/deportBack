@@ -13,6 +13,7 @@ spec:
       labels:
         app: deport-back
     spec:
+      serviceAccountName: deport-back-sa
       containers:
         - name: deport-back
           # CAMBIAR: <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest
@@ -24,6 +25,10 @@ spec:
                 name: deport-back-config
             - secretRef:
                 name: deport-back-db
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
           resources:
             requests:
               cpu: "100m"
@@ -43,3 +48,23 @@ spec:
               port: 3000
             initialDelaySeconds: 15
             periodSeconds: 20
+        - name: cloud-sql-proxy
+          # CAMBIAR: instance connection name, ej. mi-proyecto:us-central1:deport-back-db
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0
+          args:
+            - "--port=5432"
+            - "CAMBIAR-instance-connection-name"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: deport-back-db
