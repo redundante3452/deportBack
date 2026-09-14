@@ -135,6 +135,12 @@ export class DeportistasService {
         error: `no hay URL configurada para ${ruta}`,
       });
     }
-    return this.httpExternoService.obtenerJson(`${baseUrl}${ruta}`);
+    const teamApiKey = this.configService.get<string>('TEAM_API_KEY');
+    const headers = teamApiKey ? { 'X-Api-Key': teamApiKey } : undefined;
+    return this.httpExternoService.obtenerJson(
+      `${baseUrl}${ruta}`,
+      undefined,
+      headers,
+    );
   }
 }
