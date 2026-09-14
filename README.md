@@ -94,6 +94,22 @@ sigue funcionando abierta (para no bloquear a nadie mientras cada equipo la va a
 TEAM_API_KEY=<la key compartida por el equipo>
 ```
 
+### Caché distribuida (Redis)
+
+Las respuestas de `api-fastify` e `Inventario-U` que trae `GET /api/v2/deportistas/:id` se
+guardan 30 segundos en Redis (`CacheDistribuidaService`), para no golpear a las 2 APIs externas
+en cada request. Si Redis no está configurado o no responde, el endpoint sigue funcionando igual,
+simplemente sin caché (no rompe nada, solo pierde el ahorro).
+
+```
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+En producción `REDIS_HOST` apunta a la IP interna de una instancia de **Memorystore for Redis**
+(ver sección de despliegue en GKE más abajo) — es la misma caché para las 2 réplicas de la app,
+por eso es "distribuida" y no un cache en memoria de cada pod por separado.
+
 ## Run tests
 
 ```bash
@@ -132,7 +148,7 @@ en **Secret Manager**; el Secret de k8s se crea a mano leyéndolas de ahí (el a
 automática de GKE quedó bloqueado por falta de capacidad de Google en la región — se puede volver a
 intentar más adelante, ver comando abajo).
 
-- `namespace.yaml`, `configmap.yaml` — configuración no sensible (`DB_HOST: 127.0.0.1`, donde escucha el proxy)
+- `namespace.yaml`, `configmap.yaml` — configuración no sensible (`DB_HOST: 127.0.0.1`, donde escucha el proxy; `REDIS_HOST`, la IP interna de Memorystore)
 - `serviceaccount.yaml` — ServiceAccount con Workload Identity (roles `cloudsql.client` y `secretmanager.secretAccessor`)
 - `deployment.yaml` — 2 réplicas de la app + sidecar del Cloud SQL Auth Proxy, probes en `GET /`, requests/limits
 - `service.yaml` — `LoadBalancer` para exponer la app
@@ -161,6 +177,19 @@ gcloud iam service-accounts add-iam-policy-binding \
   deport-back-sa@<project-id>.iam.gserviceaccount.com \
   --role roles/iam.workloadIdentityUser \
   --member "serviceAccount:<project-id>.svc.id.goog[deport-back/deport-back-sa]"
+```
+
+Crear la instancia de Memorystore for Redis (caché distribuida) y anotar su IP interna
+(la usa `configmap.yaml` en `REDIS_HOST`; tiene que estar en la misma región/red que el cluster):
+
+```bash
+gcloud services enable redis.googleapis.com
+gcloud redis instances create deport-back-cache \
+  --size=1 \
+  --region=us-central1 \
+  --tier=basic \
+  --redis-version=redis_7_0
+gcloud redis instances describe deport-back-cache --region=us-central1 --format='value(host)'
 ```
 
 Crear el Secret de k8s leyendo los valores directo de Secret Manager (`db-username`, `db-password`,
