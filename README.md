@@ -114,12 +114,15 @@ With Mau, you can deploy your application in just a few clicks, allowing you to 
 
 ## Despliegue en Oracle Cloud (OKE)
 
-Manifiestos de Kubernetes en `k8s/` para desplegar en Oracle Kubernetes Engine (OKE):
+Manifiestos de Kubernetes en `k8s/` para desplegar en Oracle Kubernetes Engine (OKE), pensados para
+la capa **Always Free** de OCI (nada de esto tiene costo). Postgres corre como un pod más dentro del
+mismo cluster — no se usa un servicio de base de datos administrado (esos no son gratis en OCI).
 
-- `namespace.yaml`, `configmap.yaml` — configuración no sensible
-- `secret.example.yaml` — plantilla; copiar a `k8s/secret.yaml` (gitignored) con las credenciales reales de OCI Database with PostgreSQL
-- `deployment.yaml` — 2 réplicas, probes en `GET /`, requests/limits de CPU y memoria
-- `service.yaml` — `LoadBalancer` para exponer la app
+- `namespace.yaml`, `configmap.yaml` — configuración no sensible (incluye `DB_HOST: postgres`, el nombre del Service interno)
+- `secret.example.yaml` — plantilla; copiar a `k8s/secret.yaml` (gitignored) con usuario/password/db que tú elijas
+- `postgres-pvc.yaml`, `postgres-deployment.yaml`, `postgres-service.yaml` — Postgres autogestionado con almacenamiento persistente
+- `deployment.yaml` — 2 réplicas de la app, probes en `GET /`, requests/limits de CPU y memoria
+- `service.yaml` — `LoadBalancer` (shape flexible 10Mbps, el único gratuito) para exponer la app
 - `hpa.yaml` — autoescala de 2 a 5 réplicas al 70% de CPU
 
 Build y push de la imagen (reemplazar región/namespace de OCIR):
@@ -135,6 +138,9 @@ Aplicar en el cluster:
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/secret.yaml
+kubectl apply -f k8s/postgres-pvc.yaml
+kubectl apply -f k8s/postgres-deployment.yaml
+kubectl apply -f k8s/postgres-service.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 kubectl apply -f k8s/hpa.yaml
