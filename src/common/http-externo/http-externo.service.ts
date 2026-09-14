@@ -8,12 +8,16 @@ export class HttpExternoService {
   async obtenerJson(
     url: string,
     timeoutMs = TIMEOUT_MS_DEFAULT,
+    headers?: Record<string, string>,
   ): Promise<ResultadoHttpExterno> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const respuesta = await fetch(url, { signal: controller.signal });
+      const respuesta = await fetch(url, {
+        signal: controller.signal,
+        headers,
+      });
 
       if (!respuesta.ok) {
         return { ok: false, error: `respuesta ${respuesta.status} de ${url}` };
