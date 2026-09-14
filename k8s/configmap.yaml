@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: deport-back-config
+  namespace: deport-back
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  # el Cloud SQL Auth Proxy corre como sidecar y escucha en localhost
+  DB_HOST: "127.0.0.1"
+  DB_PORT: "5432"
+  DB_SSL: "false"
+  # URLs públicas de las otras 2 APIs del seguimiento (no son secretas)
+  API_FASTIFY_URL: "http://CAMBIAR-api-fastify"
+  INVENTARIO_U_URL: "http://CAMBIAR-inventario-u"
