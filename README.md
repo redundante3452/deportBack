@@ -83,6 +83,17 @@ Ejemplo de respuesta:
 }
 ```
 
+### API key compartida entre los 3 equipos
+
+Si `TEAM_API_KEY` está configurada, todos los endpoints exigen el header `X-Api-Key` con ese
+mismo valor (401 si falta o no coincide) — y `deportistas.service.ts` lo manda automáticamente
+al llamar a `api-fastify` e `Inventario-U`. Si `TEAM_API_KEY` **no** está configurada, la API
+sigue funcionando abierta (para no bloquear a nadie mientras cada equipo la va armando).
+
+```
+TEAM_API_KEY=<la key compartida por el equipo>
+```
+
 ## Run tests
 
 ```bash
@@ -121,7 +132,7 @@ en **Secret Manager** y se sincronizan a un Secret de k8s con el add-on de Secre
 
 - `namespace.yaml`, `configmap.yaml` — configuración no sensible (`DB_HOST: 127.0.0.1`, donde escucha el proxy)
 - `serviceaccount.yaml` — ServiceAccount con Workload Identity (roles `cloudsql.client` y `secretmanager.secretAccessor`)
-- `secretproviderclass.yaml` — sincroniza `db-username`/`db-password`/`db-name` de Secret Manager al Secret `deport-back-db`
+- `secretproviderclass.yaml` — sincroniza `db-username`/`db-password`/`db-name`/`team-api-key` de Secret Manager al Secret `deport-back-db`
 - `deployment.yaml` — 2 réplicas de la app + sidecar del Cloud SQL Auth Proxy, probes en `GET /`, requests/limits
 - `service.yaml` — `LoadBalancer` para exponer la app
 - `hpa.yaml` — autoescala de 2 a 5 réplicas al 70% de CPU
