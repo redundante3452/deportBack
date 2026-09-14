@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deport-back
+  namespace: deport-back
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: deport-back
+  template:
+    metadata:
+      labels:
+        app: deport-back
+    spec:
+      serviceAccountName: deport-back-sa
+      containers:
+        - name: deport-back
+          # CAMBIAR: <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest
+          image: CAMBIAR-docker.pkg.dev/CAMBIAR/deport-back/deport-back:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: deport-back-config
+            - secretRef:
+                name: deport-back-db
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+        - name: cloud-sql-proxy
+          # CAMBIAR: instance connection name, ej. mi-proyecto:us-central1:deport-back-db
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0
+          args:
+            - "--port=5432"
+            - "CAMBIAR-instance-connection-name"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: deport-back-db
