@@ -115,15 +115,18 @@ With Mau, you can deploy your application in just a few clicks, allowing you to 
 ## Despliegue en Google Cloud (GKE)
 
 Manifiestos de Kubernetes en `k8s/` para desplegar en Google Kubernetes Engine (GKE Autopilot),
-usando el crédito gratis de $300 de GCP. Postgres corre como un pod más dentro del mismo cluster —
-no se usa un servicio de base de datos administrado (no hace falta para un despliegue único).
+usando el crédito gratis de $300 de GCP. La base de datos es **Cloud SQL for PostgreSQL** (gestionada
+de verdad), a la que se conecta vía el **Cloud SQL Auth Proxy** como sidecar; las credenciales viven
+en **Secret Manager** y se sincronizan a un Secret de k8s con el add-on de Secret Manager para GKE.
 
-- `namespace.yaml`, `configmap.yaml` — configuración no sensible (incluye `DB_HOST: postgres`, el nombre del Service interno)
-- `secret.example.yaml` — plantilla; copiar a `k8s/secret.yaml` (gitignored) con usuario/password/db que tú elijas
-- `postgres-pvc.yaml`, `postgres-deployment.yaml`, `postgres-service.yaml` — Postgres autogestionado con almacenamiento persistente
-- `deployment.yaml` — 2 réplicas de la app, probes en `GET /`, requests/limits de CPU y memoria
+- `namespace.yaml`, `configmap.yaml` — configuración no sensible (`DB_HOST: 127.0.0.1`, donde escucha el proxy)
+- `serviceaccount.yaml` — ServiceAccount con Workload Identity (roles `cloudsql.client` y `secretmanager.secretAccessor`)
+- `secretproviderclass.yaml` — sincroniza `db-username`/`db-password`/`db-name` de Secret Manager al Secret `deport-back-db`
+- `deployment.yaml` — 2 réplicas de la app + sidecar del Cloud SQL Auth Proxy, probes en `GET /`, requests/limits
 - `service.yaml` — `LoadBalancer` para exponer la app
 - `hpa.yaml` — autoescala de 2 a 5 réplicas al 70% de CPU
+
+No hay pipeline de CI/CD para esto — el deploy es manual.
 
 Build y push de la imagen a Artifact Registry (reemplazar región/proyecto):
 
@@ -132,21 +135,33 @@ docker build -t <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:lat
 docker push <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest
 ```
 
+Crear la service account de GCP y darle los permisos (una sola vez):
+
+```bash
+gcloud iam service-accounts create deport-back-sa
+gcloud projects add-iam-policy-binding <project-id> \
+  --member="serviceAccount:deport-back-sa@<project-id>.iam.gserviceaccount.com" \
+  --role="roles/cloudsql.client"
+gcloud projects add-iam-policy-binding <project-id> \
+  --member="serviceAccount:deport-back-sa@<project-id>.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+gcloud iam service-accounts add-iam-policy-binding \
+  deport-back-sa@<project-id>.iam.gserviceaccount.com \
+  --role roles/iam.workloadIdentityUser \
+  --member "serviceAccount:<project-id>.svc.id.goog[deport-back/deport-back-sa]"
+```
+
 Aplicar en el cluster:
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/postgres-pvc.yaml
-kubectl apply -f k8s/postgres-deployment.yaml
-kubectl apply -f k8s/postgres-service.yaml
+kubectl apply -f k8s/serviceaccount.yaml
+kubectl apply -f k8s/secretproviderclass.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 kubectl apply -f k8s/hpa.yaml
 ```
-
-No hay pipeline de CI/CD para esto — el deploy es manual.
 
 ## Resources
 
