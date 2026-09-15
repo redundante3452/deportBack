@@ -110,6 +110,26 @@ En producción `REDIS_HOST` apunta a la IP interna de una instancia de **Memorys
 (ver sección de despliegue en GKE más abajo) — es la misma caché para las 2 réplicas de la app,
 por eso es "distribuida" y no un cache en memoria de cada pod por separado.
 
+### Cache + Gateway (componente transversal)
+
+En la arquitectura de seguimiento, `deport-back` hace de "Cache + Gateway" para el resto de
+componentes (por ejemplo el Orchestrator del equipo de la cola): expone la misma caché distribuida
+de arriba por HTTP, para que cualquier otro servicio pueda usarla sin tener su propio Redis.
+
+```
+GET /cache/:key
+```
+Devuelve `{ "key": "...", "value": ... }` si existe, `404` si no existe o ya expiró.
+
+```
+POST /cache
+Body: { "key": "articulos:api-fastify", "value": { "cualquier": "json" }, "ttl": 60 }
+```
+Guarda `value` bajo `key` por `ttl` segundos (opcional, por defecto 60, máximo 3600). Devuelve
+`{ "key": "...", "ttl": 60 }`.
+
+Como el resto de la API, exige el header `X-Api-Key` si `TEAM_API_KEY` está configurada.
+
 ## Run tests
 
 ```bash
