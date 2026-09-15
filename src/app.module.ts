@@ -8,6 +8,7 @@ import { DeportistasModule } from './deportistas/deportistas.module';
 import { HabitosModule } from './habitos/habitos.module';
 import { LogrosModule } from './logros/logros.module';
 import { RegistrosModule } from './registros/registros.module';
+import { CacheModule } from './cache/cache.module';
 import { TeamApiKeyGuard } from './common/team-api-key/team-api-key.guard';
 
 @Module({
@@ -48,6 +49,7 @@ import { TeamApiKeyGuard } from './common/team-api-key/team-api-key.guard';
     HabitosModule,
     RegistrosModule,
     LogrosModule,
+    CacheModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: TeamApiKeyGuard }],
