@@ -14,6 +14,7 @@ import { HabitosService } from './habitos/services/habitos.service';
 import { BuscarHabitosDto } from './habitos/dto/buscar-habitos.dto';
 import { RegistrosService } from './registros/services/registros.service';
 import { BuscarRegistrosDto } from './registros/dto/buscar-registros.dto';
+import { asignarTraceId } from './common/trace-id/trace-id.util';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -69,6 +70,7 @@ se documentan como \`POST /{recurso}/buscar\` que son funcionalmente equivalente
     customSiteTitle: 'DeportBack – API Docs',
   });
 
+  registrarTraceId(app);
   registrarRutasQuery(app);
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
@@ -76,6 +78,20 @@ se documentan como \`POST /{recurso}/buscar\` que son funcionalmente equivalente
   const url = `http://localhost:${process.env.PORT ?? 3000}`;
   console.log(`🚀  Aplicación corriendo en:  ${url}`);
   console.log(`📖  Documentación Swagger en:  ${url}/api-docs`);
+}
+
+/**
+ * Le pone X-Trace-Id a toda petición que entra (respetando el que ya traiga,
+ * generando uno nuevo si no) para que el mismo identificador de correlación
+ * se pueda seguir extremo a extremo entre las 3 nubes, la cola y el clúster.
+ */
+function registrarTraceId(app: NestFastifyApplication): void {
+  const fastify = app.getHttpAdapter().getInstance();
+
+  fastify.addHook('onRequest', (request, reply, done) => {
+    asignarTraceId(request, reply);
+    done();
+  });
 }
 
 /**

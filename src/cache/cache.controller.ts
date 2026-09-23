@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -56,5 +57,17 @@ export class CacheController {
     const ttl = dto.ttl ?? TTL_SEGUNDOS_DEFAULT;
     await this.cacheDistribuidaService.guardar(dto.key, dto.value, ttl);
     return { key: dto.key, ttl };
+  }
+
+  @Delete(':key')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Invalidar una entrada de la caché antes de que expire',
+    description:
+      'Política de invalidación: por ejemplo, cuando alguien actualiza un dato en tiempo real y no se quiere esperar el ttl para que el cambio se refleje.',
+  })
+  @ApiResponse({ status: 204, description: 'Invalidada (o ya no existía).' })
+  async invalidar(@Param('key') key: string): Promise<void> {
+    await this.cacheDistribuidaService.invalidar(key);
   }
 }

@@ -25,6 +25,57 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Arquitectura multicloud (Seguimiento #2)
+
+```mermaid
+graph TD
+    Cliente["Cliente / Postman"] --> Gateway["API Gateway<br/>(api-fastify · Azure)"]
+    Gateway --> Orq["MS Orchestrator<br/>(Azure)"]
+    Orq <--> Cola["Cola / Tópico<br/>(Azure Service Bus)"]
+
+    subgraph GCP["Google Cloud — deport-back"]
+        DB[("Cloud SQL<br/>PostgreSQL")]
+        Redis[("Memorystore<br/>Redis")]
+        API_DB["API Deportistas<br/>GKE, 2+ réplicas"]
+        Cache["Cache<br/>GET/POST /cache"]
+        API_DB --> DB
+        Cache --> Redis
+    end
+
+    subgraph AZ["Azure — api-fastify"]
+        API_AF["API Artículos<br/>AKS"]
+        DB_AF[("PostgreSQL")]
+        API_AF --> DB_AF
+    end
+
+    subgraph INV["Inventario-U — nube por confirmar"]
+        API_INV["API SKUs"]
+        Storage["Storage + Analítica<br/>POST /storage"]
+        DB_INV[("PostgreSQL")]
+        API_INV --> DB_INV
+    end
+
+    Orq -.->|"despacha según el mensaje"| API_DB
+    Orq -.->|"despacha según el mensaje"| API_AF
+    Orq -.->|"despacha según el mensaje"| API_INV
+    Orq -.->|"si GET: consulta antes"| Cache
+    Orq -.->|"siempre: guarda el resultado"| Storage
+
+    API_DB <-.->|"api/v2 cruzado"| API_AF
+    API_AF <-.->|"api/v2 cruzado"| API_INV
+    API_DB <-.->|"api/v2 cruzado"| API_INV
+```
+
+| Nube | Integrante | Componente propio | Componente transversal |
+|---|---|---|---|
+| **Google Cloud** | `deport-back` (este repo) | API Deportistas (GKE + Cloud SQL) | **Cache** distribuida (Memorystore) |
+| **Azure** | api-fastify | API Artículos (AKS + PostgreSQL) | **Orchestrator + Cola** (Service Bus) + API Gateway |
+| Inventario-U | Inventario-U | API SKUs | **Storage + Analítica** |
+
+Un identificador de correlación (`X-Trace-Id`) se propaga en cada llamada entre nubes — si la petición
+ya lo traía, se respeta; si no, `deport-back` genera uno nuevo y lo devuelve en la respuesta. Ver la
+sección "Trace-id" más abajo.
+
 ## Project setup
 
 ```bash
@@ -130,7 +181,22 @@ Body: { "key": "articulos:api-fastify", "value": { "cualquier": "json" }, "ttl":
 Guarda `value` bajo `key` por `ttl` segundos (opcional, por defecto 60, máximo 3600). Devuelve
 `{ "key": "...", "ttl": 60 }`.
 
+```
+DELETE /cache/:key
+```
+Política de invalidación: borra la entrada antes de que expire sola (por ejemplo, si alguien
+actualiza un dato en tiempo real y no se quiere esperar el `ttl`). Devuelve `204` siempre, exista
+o no la key.
+
 Como el resto de la API, exige el header `X-Api-Key` si `TEAM_API_KEY` está configurada.
+
+### Trace-id (correlación entre nubes)
+
+Toda petición que llega recibe un `X-Trace-Id`: si ya lo trae (porque viene del Gateway o del
+Orchestrator, que lo deben propagar), se respeta; si no, `deport-back` genera uno nuevo con
+`crypto.randomUUID()`. Se devuelve en el header de la respuesta, se manda como header hacia
+`api-fastify`/`Inventario-U` en las llamadas del `api/v2`, y aparece en los logs de la app —
+así un mismo mensaje se puede seguir en `kubectl logs` aunque haya cruzado 3 nubes distintas.
 
 ## Run tests
 
