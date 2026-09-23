@@ -16,8 +16,10 @@ spec:
       serviceAccountName: deport-back-sa
       containers:
         - name: deport-back
-          # CAMBIAR: <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest
-          image: CAMBIAR-docker.pkg.dev/CAMBIAR/deport-back/deport-back:latest
+          # fijado al digest exacto a propósito: GKE Autopilot cachea el tag ":latest"
+          # (Image Streaming) y ya nos sirvió una imagen vieja más de una vez con el tag solo.
+          # Después de cada "gcloud builds submit" hay que actualizar este digest a mano.
+          image: us-central1-docker.pkg.dev/deport-back/deport-back/deport-back@sha256:503f8597f0a8b8ee77450520fc75027931886ef388a09cf6afa03317848c98aa
           ports:
             - containerPort: 3000
           envFrom:
@@ -45,11 +47,11 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 20
         - name: cloud-sql-proxy
-          # CAMBIAR: instance connection name, ej. mi-proyecto:us-central1:deport-back-db
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0
           args:
             - "--port=5432"
-            - "CAMBIAR-instance-connection-name"
+            # la instancia se recreó en southamerica-east1 por STOCKOUT en us-central1
+            - "deport-back:southamerica-east1:deport-back-db-2"
           resources:
             requests:
               cpu: "50m"
