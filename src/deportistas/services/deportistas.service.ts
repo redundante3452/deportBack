@@ -105,7 +105,7 @@ export class DeportistasService {
     await this.deportistaRepository.remove(deportista);
   }
 
-  async obtenerApisExternas(): Promise<{
+  async obtenerApisExternas(traceId?: string): Promise<{
     api_fastify: unknown;
     inventario_u: unknown;
   }> {
@@ -115,6 +115,7 @@ export class DeportistasService {
     }>(CLAVE_CACHE_APIS_EXTERNAS);
 
     if (enCache) {
+      this.logger.log(`[trace:${traceId}] apis_externas servido desde cache`);
       return enCache;
     }
 
@@ -122,15 +123,19 @@ export class DeportistasService {
     const inventarioUUrl = this.configService.get<string>('INVENTARIO_U_URL');
 
     const [articulos, skus] = await Promise.all([
-      this.consultarSiHayUrl(apiFastifyUrl, '/articulos'),
-      this.consultarSiHayUrl(inventarioUUrl, '/skus'),
+      this.consultarSiHayUrl(apiFastifyUrl, '/articulos', traceId),
+      this.consultarSiHayUrl(inventarioUUrl, '/skus', traceId),
     ]);
 
     if (!articulos.ok) {
-      this.logger.warn(`api-fastify no respondió: ${articulos.error}`);
+      this.logger.warn(
+        `[trace:${traceId}] api-fastify no respondió: ${articulos.error}`,
+      );
     }
     if (!skus.ok) {
-      this.logger.warn(`Inventario-U no respondió: ${skus.error}`);
+      this.logger.warn(
+        `[trace:${traceId}] Inventario-U no respondió: ${skus.error}`,
+      );
     }
 
     const resultado = {
@@ -154,6 +159,7 @@ export class DeportistasService {
   private consultarSiHayUrl(
     baseUrl: string | undefined,
     ruta: string,
+    traceId?: string,
   ): Promise<ResultadoHttpExterno> {
     if (!baseUrl) {
       return Promise.resolve({
@@ -162,11 +168,19 @@ export class DeportistasService {
       });
     }
     const teamApiKey = this.configService.get<string>('TEAM_API_KEY');
-    const headers = teamApiKey ? { 'X-Api-Key': teamApiKey } : undefined;
+    const headers: Record<string, string> = {};
+    if (teamApiKey) {
+      headers['X-Api-Key'] = teamApiKey;
+    }
+    if (traceId) {
+      // propaga el mismo identificador de correlación hacia la otra nube,
+      // para poder seguir un mismo mensaje extremo a extremo
+      headers['X-Trace-Id'] = traceId;
+    }
     return this.httpExternoService.obtenerJson(
       `${baseUrl}${ruta}`,
       undefined,
-      headers,
+      Object.keys(headers).length > 0 ? headers : undefined,
     );
   }
 }
