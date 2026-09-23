@@ -25,7 +25,7 @@ export class CacheController {
   @ApiOperation({
     summary: 'Consultar una entrada de la caché distribuida',
     description:
-      'Componente transversal "Cache + Gateway": otros servicios (por ejemplo el Orchestrator) consultan aquí antes de llamar a la API real.',
+      'Componente transversal "Cache": otros servicios (por ejemplo el Orchestrator) consultan aquí antes de llamar a la API real.',
   })
   @ApiParam({ name: 'key', description: 'Clave a buscar' })
   @ApiResponse({ status: 200, description: 'Entrada encontrada.' })
