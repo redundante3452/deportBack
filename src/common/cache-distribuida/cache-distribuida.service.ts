@@ -68,6 +68,21 @@ export class CacheDistribuidaService implements OnModuleDestroy {
     }
   }
 
+  async invalidar(clave: string): Promise<void> {
+    if (!this.cliente) {
+      return;
+    }
+
+    try {
+      await this.cliente.del(clave);
+    } catch (error) {
+      const mensaje = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `no se pudo invalidar "${clave}" en la caché: ${mensaje}`,
+      );
+    }
+  }
+
   onModuleDestroy(): void {
     this.cliente?.disconnect();
   }
