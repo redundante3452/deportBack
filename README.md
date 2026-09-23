@@ -1,31 +1,31 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# deport-back
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST para gestión deportiva (deportistas, hábitos, registros de entrenamiento y logros),
+construida en **NestJS + Fastify + TypeORM/PostgreSQL**, desplegada en **Google Kubernetes
+Engine** con base de datos gestionada, caché distribuida y autoescalado — y extendida con una
+**integración cruzada en tiempo real** con las APIs de otros 2 equipos, desplegadas cada una en
+una nube distinta (Azure y un tercer proveedor), como parte de un ejercicio de arquitectura
+multicloud.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+[![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com)
+[![Fastify](https://img.shields.io/badge/Fastify-11-000000?logo=fastify&logoColor=white)](https://fastify.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)](https://redis.io)
+[![Kubernetes](https://img.shields.io/badge/GKE-Autopilot-326CE5?logo=kubernetes&logoColor=white)](https://cloud.google.com/kubernetes-engine)
+[![Google Cloud](https://img.shields.io/badge/Google_Cloud-Cloud_SQL_%7C_Memorystore-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com)
 
-## Description
+## Qué resuelve este proyecto
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Más allá del CRUD, el reto era construir una API que **no vive sola**: cada uno de los 3
+integrantes del grupo despliega su propia API en una nube distinta, y las 3 se llaman entre sí
+en tiempo real para componer respuestas combinadas — sin copiar datos, sin duplicar lógica, y
+sin caerse si alguna de las otras 2 no responde. Este repo es la pieza de esa arquitectura que
+me correspondía a mí: la API de **Deportistas**, desplegada en **GKE**, más el componente
+transversal de **caché distribuida** que expongo para que el resto del sistema (el orquestador
+del flujo, en otra nube) la use.
 
-## Arquitectura multicloud (Seguimiento #2)
+## Arquitectura
 
 ```mermaid
 graph TD
@@ -33,11 +33,11 @@ graph TD
     Gateway --> Orq["MS Orchestrator<br/>(Azure)"]
     Orq <--> Cola["Cola / Tópico<br/>(Azure Service Bus)"]
 
-    subgraph GCP["Google Cloud — deport-back"]
+    subgraph GCP["Google Cloud — deport-back (este repo)"]
         DB[("Cloud SQL<br/>PostgreSQL")]
         Redis[("Memorystore<br/>Redis")]
         API_DB["API Deportistas<br/>GKE, 2+ réplicas"]
-        Cache["Cache<br/>GET/POST /cache"]
+        Cache["Cache<br/>GET/POST/DELETE /cache"]
         API_DB --> DB
         Cache --> Redis
     end
@@ -48,7 +48,7 @@ graph TD
         API_AF --> DB_AF
     end
 
-    subgraph INV["Inventario-U — nube por confirmar"]
+    subgraph INV["Inventario-U"]
         API_INV["API SKUs"]
         Storage["Storage + Analítica<br/>POST /storage"]
         DB_INV[("PostgreSQL")]
@@ -66,192 +66,162 @@ graph TD
     API_DB <-.->|"api/v2 cruzado"| API_INV
 ```
 
-| Nube | Integrante | Componente propio | Componente transversal |
+| Nube | Responsable | Componente propio | Componente transversal |
 |---|---|---|---|
-| **Google Cloud** | `deport-back` (este repo) | API Deportistas (GKE + Cloud SQL) | **Cache** distribuida (Memorystore) |
-| **Azure** | api-fastify | API Artículos (AKS + PostgreSQL) | **Orchestrator + Cola** (Service Bus) + API Gateway |
-| Inventario-U | Inventario-U | API SKUs | **Storage + Analítica** |
+| **Google Cloud** | `deport-back` (este repo) | API Deportistas — GKE + Cloud SQL | **Cache** distribuida (Memorystore) |
+| **Azure** | api-fastify | API Artículos — AKS + PostgreSQL | Orchestrator + Cola (Service Bus) + API Gateway |
+| — | Inventario-U | API SKUs | Storage + Analítica |
 
-Un identificador de correlación (`X-Trace-Id`) se propaga en cada llamada entre nubes — si la petición
-ya lo traía, se respeta; si no, `deport-back` genera uno nuevo y lo devuelve en la respuesta. Ver la
-sección "Trace-id" más abajo.
+Un `X-Trace-Id` se propaga en cada llamada entre nubes (lo detalla la sección
+[Trace-id](#trace-id-correlación-entre-nubes) más abajo), así un mismo mensaje se puede seguir
+extremo a extremo aunque cruce 3 proveedores distintos.
 
-## Project setup
+## Ingeniería de nube: qué está corriendo de verdad
+
+No es un despliegue de juguete — corre en **GKE Autopilot** con lo que se le pide a un sistema en
+producción:
+
+- **2 réplicas mínimo**, autoescalado hasta 5 con `HorizontalPodAutoscaler` al 70% de CPU
+- **Liveness y readiness probes** reales (con la excepción explícita de la ruta de healthcheck
+  frente al guard de autenticación — un probe de Kubernetes no puede mandar headers custom)
+- **Requests/limits** de CPU y memoria en cada contenedor
+- **Configuración 100% externalizada**: `ConfigMap` para lo no sensible, `Secret` (leído de
+  **Secret Manager**) para credenciales — nada de secretos en el código ni en el repo
+- **Workload Identity**: el pod usa una identidad de GCP nativa para hablar con Cloud SQL y
+  Secret Manager, sin una sola llave JSON de service account en ningún lado
+- **Base de datos gestionada real** (Cloud SQL for PostgreSQL) vía el Cloud SQL Auth Proxy como
+  sidecar del mismo pod
+- **Caché gestionada real** (Memorystore for Redis), compartida entre todas las réplicas
+
+### Retos reales que tocó diagnosticar y resolver en producción
+
+| Problema | Causa raíz | Solución |
+|---|---|---|
+| Los pods quedaban en `CrashLoopBackOff` apenas se activó la API key compartida | El `readinessProbe`/`livenessProbe` de Kubernetes pega a `GET /` sin poder mandar el header `X-Api-Key` — el propio healthcheck se autobloqueaba | Excluir la ruta raíz del guard de autenticación, ya que es tráfico de infraestructura, no de negocio |
+| Un rebuild con código nuevo seguía sirviendo la versión vieja | GKE Autopilot (Image Streaming) cachea la resolución del tag `:latest` y no siempre refleja un push reciente | Fijar el `deployment.yaml` al **digest exacto** de la imagen (`sha256:...`) en vez de al tag, forzando un pull inequívoco |
+| El add-on de sincronización automática de Secret Manager → k8s nunca terminó de habilitarse | `GCE_STOCKOUT`: falta de capacidad transitoria de Google en la región para el driver CSI | Pivotar a un `Secret` de k8s creado a mano, leyendo los valores en vivo con `gcloud secrets versions access` — sin bloquear el resto del despliegue |
+| Cloud SQL no arrancaba tras una pausa programada (para no gastar crédito) | Otro `STOCKOUT`, esta vez de cómputo en la región de la instancia | Recrear la instancia en **otra región**, reutilizando las mismas credenciales ya guardadas en Secret Manager — cero cambios en el `Secret` de k8s ni en el código |
+| Control de costos durante el desarrollo | Cloud SQL, Memorystore y el `LoadBalancer` cobran por hora estando prendidos, sin importar el uso | Pausar Cloud SQL (`activation-policy=NEVER`), escalar la app a 0 réplicas y borrar Memorystore/el `Service` cuando no se estaba trabajando activamente; documentados los pasos exactos de reactivación |
+
+## Qué incluye la API
+
+**Dominio propio** (persistido en PostgreSQL):
+- **Deportistas** — CRUD completo + búsqueda avanzada (`POST /deportistas/buscar`, y el método
+  HTTP `QUERY` nativo, [RFC 10008](https://www.rfc-editor.org/rfc/rfc9110#QUERY))
+- **Hábitos** — hábitos deportivos por deportista, con frecuencia configurable
+- **Registros de entrenamiento** — historial de sesiones (RPE, duración, check-ins)
+- **Logros** — se calculan sobre la marcha a partir de rachas y umbrales en los registros; no
+  se persisten como entidad propia
+
+**Integración multicloud (`api/v2`):**
+- `GET /api/v2/deportistas/:id` — el mismo deportista, con la respuesta cruda de las otras 2
+  APIs pegada en `apis_externas` (artículos de api-fastify, SKUs de Inventario-U), obtenida en
+  vivo — nunca copiada ni persistida. Si alguna de las 2 no responde, la clave queda con
+  `{ error }` y el resto de la respuesta sigue en pie.
+
+**Componente transversal — Cache:**
+- `GET /cache/:key`, `POST /cache`, `DELETE /cache/:key` — la caché distribuida (Redis) que uso
+  internamente para no golpear a las otras 2 APIs en cada request, expuesta también por HTTP
+  para que cualquier otro servicio del sistema (el Orchestrator) la use sin tener su propio Redis.
+
+**Seguridad y trazabilidad:**
+- `X-Api-Key` compartida entre los 3 equipos (fail-open si no está configurada, para no bloquear
+  el desarrollo en paralelo)
+- `X-Trace-Id` generado o propagado en cada petición, para correlacionar logs entre las 3 nubes
+
+Documentación interactiva completa (Swagger/OpenAPI) en `/api-docs` una vez levantada la app.
+
+## Stack técnico
+
+| Capa | Tecnología |
+|---|---|
+| Framework | NestJS 11 sobre el adapter de **Fastify** (no Express) |
+| Lenguaje | TypeScript 5.7 |
+| ORM / base de datos | TypeORM + **PostgreSQL 16** |
+| Caché | **Redis** (`ioredis`), con fallback gracioso si no responde |
+| Llamadas externas | `fetch` nativo de Node 22 + `AbortController` (sin cliente HTTP externo) |
+| Validación | `class-validator` / `class-transformer` |
+| Documentación | Swagger / OpenAPI 3 |
+| Tests | Jest (unit + e2e) |
+| Contenedor | Docker (build multi-stage) |
+| Orquestación | Kubernetes (**GKE Autopilot**) |
+| Base de datos gestionada | **Cloud SQL for PostgreSQL** (Cloud SQL Auth Proxy como sidecar) |
+| Caché gestionada | **Memorystore for Redis** |
+| Secretos | **Secret Manager** |
+| Exposición | `LoadBalancer` de GCP |
+| Autoescalado | `HorizontalPodAutoscaler` (2 → 5 réplicas, 70% CPU) |
+
+## Desarrollo local
 
 ```bash
-$ pnpm install
-```
+pnpm install
 
-## Local database with Docker
-
-```bash
-# create your local env file
+# variables de entorno
 copy .env.local.example .env.local
 
-# start postgres
+# levantar Postgres + Redis en Docker
 docker compose up -d
-```
 
-Then run the API with:
-
-```bash
+# correr la API
 pnpm run start:dev
 ```
 
-## Compile and run the project
-
-```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
-```
-
-## Integración con APIs externas (v2)
-
-`GET /api/v2/deportistas/:id` es un controller aparte (`DeportistasV2Controller`) que, además del deportista, trae pegada la respuesta cruda de las APIs de los otros 2 equipos: `api-fastify` (`/articulos`) e `Inventario-U` (`/skus`). Si alguna de las dos no responde, no rompe la respuesta: queda un `{ error }` en esa clave y el resto sigue funcionando. El `GET /deportistas` y `GET /deportistas/:id` normales (v1) no cambian.
-
-Variables de entorno necesarias (agregar en `.env` / `.env.local`):
+Variables relevantes en `.env.local` (además de las de `DB_*`):
 
 ```
 API_FASTIFY_URL=http://localhost:3001
 INVENTARIO_U_URL=http://localhost:8000
-```
-
-Ejemplo de respuesta:
-
-```json
-{
-  "deportista": { /* ... */ },
-  "apis_externas": {
-    "api_fastify": [ /* artículos de api-fastify, o { "error": "..." } */ ],
-    "inventario_u": [ /* skus de Inventario-U, o { "error": "..." } */ ]
-  }
-}
-```
-
-### API key compartida entre los 3 equipos
-
-Si `TEAM_API_KEY` está configurada, todos los endpoints exigen el header `X-Api-Key` con ese
-mismo valor (401 si falta o no coincide) — y `deportistas.service.ts` lo manda automáticamente
-al llamar a `api-fastify` e `Inventario-U`. Si `TEAM_API_KEY` **no** está configurada, la API
-sigue funcionando abierta (para no bloquear a nadie mientras cada equipo la va armando).
-
-```
-TEAM_API_KEY=<la key compartida por el equipo>
-```
-
-### Caché distribuida (Redis)
-
-Las respuestas de `api-fastify` e `Inventario-U` que trae `GET /api/v2/deportistas/:id` se
-guardan 30 segundos en Redis (`CacheDistribuidaService`), para no golpear a las 2 APIs externas
-en cada request. Si Redis no está configurado o no responde, el endpoint sigue funcionando igual,
-simplemente sin caché (no rompe nada, solo pierde el ahorro).
-
-```
 REDIS_HOST=localhost
 REDIS_PORT=6379
+TEAM_API_KEY=<opcional — la API queda abierta si no se define>
 ```
 
-En producción `REDIS_HOST` apunta a la IP interna de una instancia de **Memorystore for Redis**
-(ver sección de despliegue en GKE más abajo) — es la misma caché para las 2 réplicas de la app,
-por eso es "distribuida" y no un cache en memoria de cada pod por separado.
+## Tests
 
-### Cache (componente transversal)
-
-En la arquitectura de seguimiento, `deport-back` es el componente transversal de "Cache" para el
-resto de servicios (por ejemplo el Orchestrator del equipo de la cola): expone la misma caché
-distribuida de arriba por HTTP, para que cualquier otro servicio pueda usarla sin tener su propio
-Redis. El "Gateway" que aparecía junto a la caché en el diagrama original lo termina implementando
-otro equipo (api-fastify), no `deport-back`.
-
+```bash
+pnpm run test        # unit
+pnpm run test:e2e    # end-to-end
+pnpm run test:cov    # coverage
+pnpm run test:docker # unit + e2e dentro de Docker
 ```
-GET /cache/:key
-```
-Devuelve `{ "key": "...", "value": ... }` si existe, `404` si no existe o ya expiró.
 
-```
-POST /cache
-Body: { "key": "articulos:api-fastify", "value": { "cualquier": "json" }, "ttl": 60 }
-```
-Guarda `value` bajo `key` por `ttl` segundos (opcional, por defecto 60, máximo 3600). Devuelve
-`{ "key": "...", "ttl": 60 }`.
-
-```
-DELETE /cache/:key
-```
-Política de invalidación: borra la entrada antes de que expire sola (por ejemplo, si alguien
-actualiza un dato en tiempo real y no se quiere esperar el `ttl`). Devuelve `204` siempre, exista
-o no la key.
-
-Como el resto de la API, exige el header `X-Api-Key` si `TEAM_API_KEY` está configurada.
-
-### Trace-id (correlación entre nubes)
+## Trace-id (correlación entre nubes)
 
 Toda petición que llega recibe un `X-Trace-Id`: si ya lo trae (porque viene del Gateway o del
-Orchestrator, que lo deben propagar), se respeta; si no, `deport-back` genera uno nuevo con
+Orchestrator, que lo deben propagar), se respeta; si no, se genera uno nuevo con
 `crypto.randomUUID()`. Se devuelve en el header de la respuesta, se manda como header hacia
-`api-fastify`/`Inventario-U` en las llamadas del `api/v2`, y aparece en los logs de la app —
-así un mismo mensaje se puede seguir en `kubectl logs` aunque haya cruzado 3 nubes distintas.
-
-## Run tests
-
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
-
-# tests in docker
-$ pnpm run test:docker
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+`api-fastify` e `Inventario-U` en las llamadas del `api/v2`, y queda en los logs de la app — así
+un mismo mensaje se puede seguir en `kubectl logs` aunque haya cruzado 3 nubes distintas.
 
 ## Despliegue en Google Cloud (GKE)
 
-Manifiestos de Kubernetes en `k8s/` para desplegar en Google Kubernetes Engine (GKE Autopilot),
-usando el crédito gratis de $300 de GCP. La base de datos es **Cloud SQL for PostgreSQL** (gestionada
-de verdad), a la que se conecta vía el **Cloud SQL Auth Proxy** como sidecar. Las credenciales viven
-en **Secret Manager**; el Secret de k8s se crea a mano leyéndolas de ahí (el add-on de sincronización
-automática de GKE quedó bloqueado por falta de capacidad de Google en la región — se puede volver a
-intentar más adelante, ver comando abajo).
+Manifiestos de Kubernetes en [`k8s/`](k8s) para GKE Autopilot. Sin pipeline de CI/CD — el deploy
+es manual, a propósito (ejercicio académico de una sola vez).
 
-- `namespace.yaml`, `configmap.yaml` — configuración no sensible (`DB_HOST: 127.0.0.1`, donde escucha el proxy; `REDIS_HOST`, la IP interna de Memorystore)
-- `serviceaccount.yaml` — ServiceAccount con Workload Identity (roles `cloudsql.client` y `secretmanager.secretAccessor`)
-- `deployment.yaml` — 2 réplicas de la app + sidecar del Cloud SQL Auth Proxy, probes en `GET /`, requests/limits
-- `service.yaml` — `LoadBalancer` para exponer la app
-- `hpa.yaml` — autoescala de 2 a 5 réplicas al 70% de CPU
+| Archivo | Qué configura |
+|---|---|
+| `namespace.yaml` | Namespace `deport-back` |
+| `configmap.yaml` | Config no sensible: host del proxy de Cloud SQL, URLs de las otras 2 APIs, host de Redis |
+| `serviceaccount.yaml` | ServiceAccount con Workload Identity (`cloudsql.client`, `secretmanager.secretAccessor`) |
+| `deployment.yaml` | 2 réplicas + sidecar del Cloud SQL Auth Proxy, probes de liveness/readiness, requests/limits |
+| `service.yaml` | `LoadBalancer` para exponer la app |
+| `hpa.yaml` | Autoescala de 2 a 5 réplicas al 70% de CPU |
 
-No hay pipeline de CI/CD para esto — el deploy es manual.
+<details>
+<summary><strong>Pasos completos de despliegue desde cero</strong></summary>
 
-Build y push de la imagen a Artifact Registry (reemplazar región/proyecto):
+Build y push de la imagen a Artifact Registry:
 
 ```bash
-docker build -t <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest .
-docker push <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest
+gcloud builds submit --tag <region>-docker.pkg.dev/<project-id>/deport-back/deport-back:latest .
 ```
 
-Crear la service account de GCP y darle los permisos (una sola vez):
+> GKE Autopilot puede cachear el tag `:latest` (Image Streaming) y servir una imagen vieja tras
+> un rebuild — para desplegar con certeza, fijar el `deployment.yaml` al **digest exacto**
+> (`gcloud artifacts docker images describe ... --format='value(image_summary.digest)'`) en vez
+> del tag.
+
+Service account de GCP y permisos (una sola vez):
 
 ```bash
 gcloud iam service-accounts create deport-back-sa
@@ -267,21 +237,16 @@ gcloud iam service-accounts add-iam-policy-binding \
   --member "serviceAccount:<project-id>.svc.id.goog[deport-back/deport-back-sa]"
 ```
 
-Crear la instancia de Memorystore for Redis (caché distribuida) y anotar su IP interna
-(la usa `configmap.yaml` en `REDIS_HOST`; tiene que estar en la misma región/red que el cluster):
+Memorystore for Redis (anotar la IP interna para `configmap.yaml`):
 
 ```bash
 gcloud services enable redis.googleapis.com
 gcloud redis instances create deport-back-cache \
-  --size=1 \
-  --region=us-central1 \
-  --tier=basic \
-  --redis-version=redis_7_0
-gcloud redis instances describe deport-back-cache --region=us-central1 --format='value(host)'
+  --size=1 --region=<region> --tier=basic --redis-version=redis_7_0
+gcloud redis instances describe deport-back-cache --region=<region> --format='value(host)'
 ```
 
-Crear el Secret de k8s leyendo los valores directo de Secret Manager (`db-username`, `db-password`,
-`db-name`, `team-api-key` ya creados ahí):
+Secret de k8s, leyendo las credenciales directo de Secret Manager:
 
 ```bash
 kubectl create secret generic deport-back-db -n deport-back \
@@ -291,7 +256,7 @@ kubectl create secret generic deport-back-db -n deport-back \
   --from-literal=TEAM_API_KEY="$(gcloud secrets versions access latest --secret=team-api-key)"
 ```
 
-Aplicar en el cluster:
+Aplicar todo:
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
@@ -302,36 +267,25 @@ kubectl apply -f k8s/service.yaml
 kubectl apply -f k8s/hpa.yaml
 ```
 
-Si más adelante el add-on de Secret Manager para GKE deja de estar bloqueado por capacidad, se
-puede volver a sincronizar automático con:
+</details>
 
-```bash
-gcloud container clusters update deport-back-cluster --location=us-central1 --enable-secret-manager
+## Estructura del proyecto
+
+```
+src/
+├── deportistas/    # dominio propio: entidad, controllers (v1 y v2), service, DTOs
+├── habitos/
+├── registros/
+├── logros/         # calculado, sin entidad propia
+├── cache/           # componente transversal expuesto por HTTP
+└── common/
+    ├── http-externo/       # cliente fetch con timeout, sin dependencias externas
+    ├── cache-distribuida/  # cliente Redis con fallback gracioso
+    ├── team-api-key/       # guard de autenticación entre los 3 equipos
+    └── trace-id/           # correlación de peticiones entre nubes
+k8s/                 # manifiestos de despliegue en GKE
 ```
 
-## Resources
+## Licencia
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Proyecto académico — Universidad de Medellín, Ingeniería de Sistemas.
