@@ -110,11 +110,13 @@ En producción `REDIS_HOST` apunta a la IP interna de una instancia de **Memorys
 (ver sección de despliegue en GKE más abajo) — es la misma caché para las 2 réplicas de la app,
 por eso es "distribuida" y no un cache en memoria de cada pod por separado.
 
-### Cache + Gateway (componente transversal)
+### Cache (componente transversal)
 
-En la arquitectura de seguimiento, `deport-back` hace de "Cache + Gateway" para el resto de
-componentes (por ejemplo el Orchestrator del equipo de la cola): expone la misma caché distribuida
-de arriba por HTTP, para que cualquier otro servicio pueda usarla sin tener su propio Redis.
+En la arquitectura de seguimiento, `deport-back` es el componente transversal de "Cache" para el
+resto de servicios (por ejemplo el Orchestrator del equipo de la cola): expone la misma caché
+distribuida de arriba por HTTP, para que cualquier otro servicio pueda usarla sin tener su propio
+Redis. El "Gateway" que aparecía junto a la caché en el diagrama original lo termina implementando
+otro equipo (api-fastify), no `deport-back`.
 
 ```
 GET /cache/:key
