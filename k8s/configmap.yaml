@@ -11,7 +11,7 @@ data:
   DB_PORT: "5432"
   DB_SSL: "false"
   # URLs públicas de las otras 2 APIs del seguimiento (no son secretas)
-  API_FASTIFY_URL: "http://57.154.176.147"
-  INVENTARIO_U_URL: "http://CAMBIAR-inventario-u"
-  REDIS_HOST: "10.194.140.203"
+  API_FASTIFY_URL: "http://20.66.47.84"
+  INVENTARIO_U_URL: "http://158.247.121.202"
+  REDIS_HOST: "10.24.160.203"
   REDIS_PORT: "6379"
