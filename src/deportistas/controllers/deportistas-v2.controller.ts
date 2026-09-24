@@ -1,13 +1,24 @@
-import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
+  ApiBody,
   ApiParam,
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
 import { DeportistasService } from '../services/deportistas.service';
 import { CreateDeportistaDto } from '../dto/create-deportista.dto';
+import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
 import { obtenerTraceId } from '../../common/trace-id/trace-id.util';
 import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
 
@@ -58,6 +69,24 @@ export class DeportistasV2Controller {
     @Query('email') email?: string,
   ) {
     const deportistas = await this.deportistasService.listar(nombre, email);
+    return { deportistas, trace_id: obtenerTraceId(request) };
+  }
+
+  @Post('buscar')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Búsqueda avanzada de deportistas (v2, POST)',
+    description:
+      'Igual que POST /deportistas/buscar, con la respuesta envuelta con el trace_id. Equivalente al método HTTP QUERY en /api/v2/deportistas.',
+  })
+  @ApiBody({ type: BuscarDeportistasDto })
+  @ApiResponse({ status: 200, description: 'Resultados de la búsqueda.' })
+  @ApiResponse({ status: 400, description: 'Filtros inválidos.' })
+  async buscarAvanzado(
+    @Body() dto: BuscarDeportistasDto,
+    @Req() request: RequestConTraceId,
+  ) {
+    const deportistas = await this.deportistasService.buscarAvanzado(dto);
     return { deportistas, trace_id: obtenerTraceId(request) };
   }
 
