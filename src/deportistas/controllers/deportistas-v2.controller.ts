@@ -1,5 +1,19 @@
-import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { DeportistasService } from '../services/deportistas.service';
 import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 import { obtenerTraceId } from '../../common/trace-id/trace-id.util';
@@ -25,6 +39,34 @@ export class DeportistasV2Controller {
   ) {
     const deportista = await this.deportistasService.create(dto);
     return { deportista, trace_id: obtenerTraceId(request) };
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Listar deportistas (v2)',
+    description:
+      'Igual que GET /deportistas, con la respuesta envuelta con el trace_id. Las entidades de las otras 2 APIs se piden por id (GET /api/v2/deportistas/:id), no en el listado.',
+  })
+  @ApiQuery({
+    name: 'nombre',
+    required: false,
+    description: 'Filtro por nombre del deportista',
+    example: 'Juan',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    description: 'Filtro por correo electrónico',
+    example: 'juan@ejemplo.com',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de deportistas.' })
+  async listar(
+    @Req() request: RequestConTraceId,
+    @Query('nombre') nombre?: string,
+    @Query('email') email?: string,
+  ) {
+    const deportistas = await this.deportistasService.listar(nombre, email);
+    return { deportistas, trace_id: obtenerTraceId(request) };
   }
 
   @Get(':id')
