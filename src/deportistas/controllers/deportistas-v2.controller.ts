@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -21,6 +22,7 @@ import { DeportistasService } from '../services/deportistas.service';
 import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
 import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
+import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
 import { obtenerTraceId } from '../../common/trace-id/trace-id.util';
 import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
 
@@ -133,6 +135,24 @@ export class DeportistasV2Controller {
     @Req() request: RequestConTraceId,
   ) {
     const deportista = await this.deportistasService.reemplazar(id, dto);
+    return { deportista, trace_id: obtenerTraceId(request) };
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Actualización parcial del deportista (v2, PATCH)',
+    description:
+      'Actualiza únicamente los campos enviados. Sirve para modificar en tiempo real el objeto que el flujo va agregando al mensaje: el cambio se ve de inmediato en GET /api/v2/deportistas/:id.',
+  })
+  @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Deportista actualizado.' })
+  @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
+  async actualizarParcial(
+    @Param('id') id: string,
+    @Body() dto: ActualizarParcialDeportistaDto,
+    @Req() request: RequestConTraceId,
+  ) {
+    const deportista = await this.deportistasService.actualizarParcial(id, dto);
     return { deportista, trace_id: obtenerTraceId(request) };
   }
 }
