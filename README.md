@@ -118,6 +118,21 @@ producción:
   APIs pegada en `apis_externas` (artículos de api-fastify, SKUs de Inventario-U), obtenida en
   vivo — nunca copiada ni persistida. Si alguna de las 2 no responde, la clave queda con
   `{ error }` y el resto de la respuesta sigue en pie.
+- El resto de los métodos HTTP también existen en v2, para que el flujo pueda modificar datos en
+  tiempo real y ver el cambio reflejado en el mensaje:
+
+| Método | Ruta v2 | Respuesta |
+|---|---|---|
+| `POST` | `/api/v2/deportistas` | `{ deportista, trace_id }` |
+| `GET` | `/api/v2/deportistas` | `{ deportistas, trace_id }` |
+| `POST` / `QUERY` | `/api/v2/deportistas/buscar` · `/api/v2/deportistas` | `{ deportistas, trace_id }` |
+| `GET` | `/api/v2/deportistas/:id` | `{ deportista, apis_externas, trace_id }` |
+| `PUT` | `/api/v2/deportistas/:id` | `{ deportista, trace_id }` |
+| `PATCH` | `/api/v2/deportistas/:id` | `{ deportista, trace_id }` |
+| `DELETE` | `/api/v2/deportistas/:id` | `{ eliminado, id, trace_id }` |
+
+  Los datos propios (`nombre`, `email`) nunca pasan por la caché, así que un `PATCH` se ve de
+  inmediato en el siguiente `GET /api/v2/deportistas/:id`.
 
 **Componente transversal — Cache:**
 - `GET /cache/:key`, `POST /cache`, `DELETE /cache/:key` — la caché distribuida (Redis) que uso
