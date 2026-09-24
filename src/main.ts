@@ -14,7 +14,10 @@ import { HabitosService } from './habitos/services/habitos.service';
 import { BuscarHabitosDto } from './habitos/dto/buscar-habitos.dto';
 import { RegistrosService } from './registros/services/registros.service';
 import { BuscarRegistrosDto } from './registros/dto/buscar-registros.dto';
-import { asignarTraceId } from './common/trace-id/trace-id.util';
+import {
+  asignarTraceId,
+  obtenerTraceId,
+} from './common/trace-id/trace-id.util';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -126,6 +129,29 @@ function registrarRutasQuery(app: NestFastifyApplication) {
 
       const resultado = await deportistasService.buscarAvanzado(dto);
       return reply.status(200).send(resultado);
+    },
+  });
+
+  fastify.route({
+    method: 'QUERY',
+    url: '/api/v2/deportistas',
+    handler: async (request, reply) => {
+      const dto = plainToInstance(BuscarDeportistasDto, request.body ?? {});
+      const errores = await validate(dto, { whitelist: true });
+
+      if (errores.length > 0) {
+        return reply.status(400).send({
+          statusCode: 400,
+          message: errores
+            .flatMap((error) => Object.values(error.constraints ?? {}))
+            .join(', '),
+        });
+      }
+
+      const deportistas = await deportistasService.buscarAvanzado(dto);
+      return reply
+        .status(200)
+        .send({ deportistas, trace_id: obtenerTraceId(request) });
     },
   });
 
