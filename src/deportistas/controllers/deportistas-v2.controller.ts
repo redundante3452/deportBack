@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -154,5 +155,19 @@ export class DeportistasV2Controller {
   ) {
     const deportista = await this.deportistasService.actualizarParcial(id, dto);
     return { deportista, trace_id: obtenerTraceId(request) };
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Eliminar deportista (v2)',
+    description:
+      'Igual que DELETE /deportistas/:id, pero confirma con un cuerpo { eliminado, id, trace_id } en vez de responder vacío.',
+  })
+  @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Deportista eliminado.' })
+  @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
+  async eliminar(@Param('id') id: string, @Req() request: RequestConTraceId) {
+    await this.deportistasService.eliminar(id);
+    return { eliminado: true, id, trace_id: obtenerTraceId(request) };
   }
 }
