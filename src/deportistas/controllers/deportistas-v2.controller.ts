@@ -5,6 +5,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Put,
   Query,
   Req,
 } from '@nestjs/common';
@@ -19,6 +20,7 @@ import {
 import { DeportistasService } from '../services/deportistas.service';
 import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
+import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
 import { obtenerTraceId } from '../../common/trace-id/trace-id.util';
 import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
 
@@ -114,5 +116,23 @@ export class DeportistasV2Controller {
     ]);
 
     return { deportista, apis_externas: apisExternas, trace_id: traceId };
+  }
+
+  @Put(':id')
+  @ApiOperation({
+    summary: 'Reemplazar deportista completo (v2, PUT)',
+    description:
+      'Sustituye todos los campos del deportista. Los cambios se reflejan de inmediato en GET /api/v2/deportistas/:id (los datos propios nunca se cachean).',
+  })
+  @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Deportista reemplazado.' })
+  @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
+  async reemplazar(
+    @Param('id') id: string,
+    @Body() dto: ReemplazarDeportistaDto,
+    @Req() request: RequestConTraceId,
+  ) {
+    const deportista = await this.deportistasService.reemplazar(id, dto);
+    return { deportista, trace_id: obtenerTraceId(request) };
   }
 }
