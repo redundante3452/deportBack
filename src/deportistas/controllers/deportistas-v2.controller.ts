@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { DeportistasService } from '../services/deportistas.service';
+import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 import { obtenerTraceId } from '../../common/trace-id/trace-id.util';
 import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
 
@@ -8,6 +9,23 @@ import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
 @Controller('api/v2/deportistas')
 export class DeportistasV2Controller {
   constructor(private readonly deportistasService: DeportistasService) {}
+
+  @Post()
+  @ApiOperation({
+    summary: 'Crear un deportista (v2)',
+    description:
+      'Igual que POST /deportistas, pero la respuesta viene envuelta con el trace_id de la petición.',
+  })
+  @ApiResponse({ status: 201, description: 'Deportista creado exitosamente.' })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })
+  @ApiResponse({ status: 409, description: 'El email ya está registrado.' })
+  async crear(
+    @Body() dto: CreateDeportistaDto,
+    @Req() request: RequestConTraceId,
+  ) {
+    const deportista = await this.deportistasService.create(dto);
+    return { deportista, trace_id: obtenerTraceId(request) };
+  }
 
   @Get(':id')
   @ApiOperation({
