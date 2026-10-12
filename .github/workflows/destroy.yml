@@ -1,0 +1,38 @@
+name: Destroy Google Cloud infrastructure
+
+on:
+  workflow_dispatch:
+
+env:
+  APP_NAME: deport-back
+  TF_IN_AUTOMATION: true
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate in Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Initialize Terraform
+        working-directory: terraform
+        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      - name: Destroy infrastructure
+        working-directory: terraform
+        run: |
+          terraform destroy -auto-approve \
+            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+            -var="region=${{ vars.GCP_REGION }}" \
+            -var="app_name=${{ env.APP_NAME }}"
