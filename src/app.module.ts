@@ -21,13 +21,22 @@ import { TeamApiKeyGuard } from './common/team-api-key/team-api-key.guard';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const useSsl = configService.get<string>('DB_SSL') === 'true';
+        const host = configService.get<string>('DB_HOST');
+        const isCloudSqlSocket = host?.startsWith('/cloudsql/') ?? false;
+        const useSsl =
+          !isCloudSqlSocket && configService.get<string>('DB_SSL') === 'true';
 
         return {
           type: 'postgres',
-          host: configService.get<string>('DB_HOST'),
-          port: Number(configService.get<string>('DB_PORT') ?? 5432),
-          username: configService.get<string>('DB_USERNAME'),
+          host,
+          ...(isCloudSqlSocket
+            ? {}
+            : {
+                port: Number(configService.get<string>('DB_PORT') ?? 5432),
+              }),
+          username:
+            configService.get<string>('DB_USER') ??
+            configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
           autoLoadEntities: true,
