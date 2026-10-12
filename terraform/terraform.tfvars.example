@@ -1,0 +1,6 @@
+project_id = "mi-proyecto-gcp"
+region     = "us-central1"
+app_name   = "deport-back"
+db_name    = "deport_db"
+db_user    = "deport_user"
+image      = "us-central1-docker.pkg.dev/mi-proyecto-gcp/deport-back/deport-back:bootstrap"
