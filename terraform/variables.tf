@@ -12,7 +12,7 @@ variable "region" {
 variable "db_region" {
   description = "Región de Google Cloud para Cloud SQL."
   type        = string
-  default     = "us-east1"
+  default     = "us-central1"
 }
 
 variable "app_name" {
