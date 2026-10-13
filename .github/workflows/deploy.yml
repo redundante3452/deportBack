@@ -15,6 +15,9 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-deport-back-state
+      cancel-in-progress: false
     permissions:
       contents: read
 
@@ -42,6 +45,7 @@ jobs:
         run: |
           terraform apply \
             -target=google_artifact_registry_repository.repo \
+            -lock-timeout=10m \
             -auto-approve \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="region=${{ env.GCP_REGION }}" \
@@ -63,6 +67,7 @@ jobs:
           IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.APP_NAME }}/${{ env.APP_NAME }}:${{ github.sha }}
         run: |
           terraform apply -auto-approve \
+            -lock-timeout=10m \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="region=${{ env.GCP_REGION }}" \
             -var="app_name=${{ env.APP_NAME }}" \
