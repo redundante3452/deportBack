@@ -6,6 +6,9 @@ on:
 env:
   APP_NAME: deport-back
   TF_IN_AUTOMATION: true
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET || 'deport-back_cloudbuild' }}
 
 jobs:
   destroy:
@@ -27,12 +30,12 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: terraform
-        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+        run: terraform init -backend-config="bucket=${{ env.TF_STATE_BUCKET }}"
 
       - name: Destroy infrastructure
         working-directory: terraform
         run: |
           terraform destroy -auto-approve \
-            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
-            -var="region=${{ vars.GCP_REGION }}" \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
             -var="app_name=${{ env.APP_NAME }}"

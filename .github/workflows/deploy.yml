@@ -8,6 +8,9 @@ on:
 env:
   APP_NAME: deport-back
   TF_IN_AUTOMATION: true
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET || 'deport-back_cloudbuild' }}
 
 jobs:
   deploy:
@@ -32,7 +35,7 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: terraform
-        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+        run: terraform init -backend-config="bucket=${{ env.TF_STATE_BUCKET }}"
 
       - name: Create Artifact Registry repository
         working-directory: terraform
@@ -40,16 +43,16 @@ jobs:
           terraform apply \
             -target=google_artifact_registry_repository.repo \
             -auto-approve \
-            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
-            -var="region=${{ vars.GCP_REGION }}" \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
             -var="app_name=${{ env.APP_NAME }}"
 
       - name: Configure Docker authentication
-        run: gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
+        run: gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
 
       - name: Build and push image
         env:
-          IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.APP_NAME }}/${{ env.APP_NAME }}:${{ github.sha }}
+          IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.APP_NAME }}/${{ env.APP_NAME }}:${{ github.sha }}
         run: |
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
@@ -57,10 +60,10 @@ jobs:
       - name: Deploy Cloud Run and database
         working-directory: terraform
         env:
-          IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.APP_NAME }}/${{ env.APP_NAME }}:${{ github.sha }}
+          IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.APP_NAME }}/${{ env.APP_NAME }}:${{ github.sha }}
         run: |
           terraform apply -auto-approve \
-            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
-            -var="region=${{ vars.GCP_REGION }}" \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
             -var="app_name=${{ env.APP_NAME }}" \
             -var="image=$IMAGE"
