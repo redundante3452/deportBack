@@ -3,6 +3,12 @@ resource "google_service_account" "cloud_run" {
   display_name = "Service account de Cloud Run para ${var.app_name}"
 }
 
+resource "google_service_account_iam_member" "cloud_run_user" {
+  service_account_id = google_service_account.cloud_run.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:github-deploy@${var.project_id}.iam.gserviceaccount.com"
+}
+
 resource "google_project_iam_member" "cloud_sql_client" {
   project = var.project_id
   role    = "roles/cloudsql.client"
