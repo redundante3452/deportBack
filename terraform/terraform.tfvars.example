@@ -1,5 +1,6 @@
 project_id = "mi-proyecto-gcp"
 region     = "us-central1"
+db_region  = "us-east1"
 app_name   = "deport-back"
 db_name    = "deport_db"
 db_user    = "deport_user"

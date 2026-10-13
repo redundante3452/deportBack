@@ -2,6 +2,7 @@
 
 Esta carpeta despliega la API NestJS en Cloud Run y PostgreSQL 15 en Cloud SQL.
 Los recursos están separados por servicio para facilitar su revisión y mantenimiento.
+Cloud Run y Artifact Registry usan `region`; Cloud SQL usa `db_region`.
 
 ## Prerrequisitos
 
