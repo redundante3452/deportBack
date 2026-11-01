@@ -1,8 +1,52 @@
-# Infraestructura de deport-back en Google Cloud
+# Infraestructura y Canary Deployment de deport-back en Google Cloud
 
 Esta carpeta despliega la API NestJS en Cloud Run y PostgreSQL 15 en Cloud SQL.
+También contiene la infraestructura de observabilidad del despliegue Canary.
 Los recursos están separados por servicio para facilitar su revisión y mantenimiento.
 Cloud Run y Artifact Registry usan `region`; Cloud SQL usa `db_region`.
+
+## Arquitectura Canary
+
+Cloud Run usa un único servicio con dos revisiones inmutables:
+
+```text
+Cliente
+  |
+  v
+Cloud Run deport-back
+  |-- tag stable  -> api/v2, APP_TRACK=stable
+  `-- tag canary  -> api/v3, APP_TRACK=canary
+                         |
+                         `-- Cloud SQL PostgreSQL
+```
+
+Cada respuesta incluye `X-App-Version` y `X-App-Track`. La versión canary agrega
+el campo opcional `nivel` a `deportistas`; la columna se crea nullable, por lo que
+api/v2 sigue funcionando durante todo el despliegue. Este es el paso **Expand**.
+El paso **Contract** (hacer obligatorio o eliminar el campo) queda fuera del
+despliegue y solo se realizaría después de retirar api/v2.
+
+El pipeline usa una imagen por digest SHA256 y avanza por estas etapas:
+
+| Etapa | Stable | Canary | Bake time |
+|---|---:|---:|---:|
+| 0 | 100% | 0% | 60 s |
+| 1 | 90% | 10% | 60 s |
+| 2 | 75% | 25% | 60 s |
+| 3 | 50% | 50% | 60 s |
+| 4 | 0% | 100% | — |
+
+El quality gate ejecuta muestras contra ambos tags y aborta si el error 5xx
+supera 0% o la latencia media supera 1000 ms. El rollback devuelve el tráfico
+a `stable=100,canary=0`.
+
+Para simular una regresión sin afectar stable, ejecuta manualmente
+`canary-rollback.yml`. El workflow envía `X-Canary-Failure: true` únicamente
+al canary y verifica el rollback.
+
+Las métricas de peticiones, errores 4xx/5xx, latencia y deportistas creados se
+exportan desde logs estructurados a Cloud Monitoring. Terraform crea el
+dashboard `deport-back Canary SLI/SLO`.
 
 ## Prerrequisitos
 
@@ -12,6 +56,7 @@ Cloud Run y Artifact Registry usan `region`; Cloud SQL usa `db_region`.
 - Un proyecto GCP con facturación habilitada.
 - Un bucket GCS existente para el estado remoto.
 - Permisos para crear Artifact Registry, Cloud SQL, Cloud Run, Secret Manager e IAM.
+- APIs `monitoring.googleapis.com` y `logging.googleapis.com` habilitadas.
 
 ## Autenticación en GCP
 
@@ -57,7 +102,33 @@ terraform apply -auto-approve \
   -var="image=REGION-docker.pkg.dev/MI_PROJECT_ID/deport-back/deport-back:TAG"
 ```
 
-El workflow de despliegue automatiza este proceso usando el SHA del commit como tag.
+El workflow de despliegue automatiza este proceso usando el SHA del commit como
+tag y luego resuelve el digest SHA256 para las revisiones stable/canary.
+
+## Workflows
+
+- `deploy.yml`: construye la imagen, despliega stable y canary y ejecuta las
+  etapas 0/10/25/50/100 con quality gate.
+- `canary-rollback.yml`: workflow manual que inyecta un 503 controlado en
+  canary y demuestra el rollback a stable.
+- `destroy.yml`: elimina la infraestructura al finalizar la sustentación.
+
+## Comandos de demostración
+
+```bash
+# Ver la URL pública y las revisiones con sus porcentajes
+gcloud run services describe deport-back \
+  --project=MI_PROJECT_ID \
+  --region=REGION \
+  --format='yaml(status.url,status.traffic)'
+
+# Acceder directamente al canary al 0% público mediante su tag
+curl -i "https://canary---URL_DEL_SERVICIO" \
+  -H "X-Canary-Probe: true"
+
+# Ver el dashboard creado por Terraform
+gcloud monitoring dashboards list --project=MI_PROJECT_ID
+```
 
 ## Eliminación al terminar la sustentación
 

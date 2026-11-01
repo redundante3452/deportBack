@@ -1,0 +1,35 @@
+name: Canary rollback demo
+
+on:
+  workflow_dispatch:
+
+env:
+  APP_NAME: deport-back
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  CANARY_BAKE_SECONDS: '10'
+  CANARY_SAMPLE_SIZE: '10'
+  CANARY_MAX_ERROR_RATE: '0'
+  CANARY_MAX_LATENCY_MS: '1000'
+  CANARY_INJECT_FAILURE: 'true'
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate in Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Simulate canary regression and rollback
+        run: |
+          bash scripts/canary-promote.sh

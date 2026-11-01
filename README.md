@@ -1,5 +1,28 @@
 # deport-back
 
+## Canary Deployment (v3)
+
+La entrega de Canary usa Google Cloud Run con dos revisiones del mismo servicio:
+`stable` sirve `api/v2` y `canary` sirve `api/v3`. El pipeline publica imágenes
+inmutables por digest SHA256 y mueve el tráfico en las etapas 0% → 10% → 25% →
+50% → 100%, con 60 segundos de bake time entre etapas.
+
+Todas las respuestas incluyen:
+
+```text
+X-App-Version: v2 | v3
+X-App-Track: stable | canary
+```
+
+`api/v3/deportistas` agrega el campo opcional `nivel` mediante Expand/Contract:
+la columna es nullable y api/v2 sigue siendo compatible. La cabecera
+`X-Canary-Failure: true` inyecta un 503 únicamente en canary para demostrar el
+quality gate y el rollback a `stable=100,canary=0`.
+
+Los scripts de promoción están en [scripts/](./scripts/) y la infraestructura
+de métricas/dashboard en [terraform/monitoring.tf](./terraform/monitoring.tf).
+El detalle operativo está en [terraform/README.md](./terraform/README.md).
+
 API REST para gestión deportiva (deportistas, hábitos, registros de entrenamiento y logros),
 construida en **NestJS + Fastify + TypeORM/PostgreSQL**, desplegada en **Google Kubernetes
 Engine** con base de datos gestionada, caché distribuida y autoescalado — y extendida con una

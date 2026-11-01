@@ -11,6 +11,10 @@ env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
   GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
   TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET || 'deport-back_cloudbuild' }}
+  CANARY_BAKE_SECONDS: '60'
+  CANARY_SAMPLE_SIZE: '20'
+  CANARY_MAX_ERROR_RATE: '0'
+  CANARY_MAX_LATENCY_MS: '1000'
 
 jobs:
   deploy:
@@ -42,6 +46,8 @@ jobs:
             secretmanager.googleapis.com \
             iam.googleapis.com \
             cloudresourcemanager.googleapis.com \
+            monitoring.googleapis.com \
+            logging.googleapis.com \
             serviceusage.googleapis.com \
             --project="${{ env.GCP_PROJECT_ID }}"
 
@@ -87,10 +93,23 @@ jobs:
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
 
+      - name: Resolve immutable image digest
+        id: image
+        env:
+          IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.APP_NAME }}/${{ env.APP_NAME }}:${{ github.sha }}
+        run: |
+          DIGEST="$(gcloud artifacts docker images describe "$IMAGE" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --format='value(image_summary.digest)')"
+          IMAGE_REPOSITORY="${IMAGE%:*}"
+          IMMUTABLE_IMAGE="${IMAGE_REPOSITORY}@${DIGEST}"
+          echo "IMAGE=${IMMUTABLE_IMAGE}" >> "$GITHUB_ENV"
+          echo "immutable_image=${IMMUTABLE_IMAGE}" >> "$GITHUB_OUTPUT"
+
       - name: Deploy Cloud Run and database
         working-directory: terraform
         env:
-          IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.APP_NAME }}/${{ env.APP_NAME }}:${{ github.sha }}
+          IMAGE: ${{ steps.image.outputs.immutable_image }}
         run: |
           terraform apply -auto-approve \
             -lock-timeout=10m \
@@ -99,3 +118,23 @@ jobs:
             -var="db_region=${{ env.GCP_REGION }}" \
             -var="app_name=${{ env.APP_NAME }}" \
             -var="image=$IMAGE"
+
+      - name: Deploy stable and canary revisions
+        env:
+          IMAGE: ${{ steps.image.outputs.immutable_image }}
+        run: |
+          bash scripts/deploy-canary.sh
+
+      - name: Promote canary through quality gates
+        env:
+          IMAGE: ${{ steps.image.outputs.immutable_image }}
+          STABLE_URL: ""
+          CANARY_URL: ""
+        run: |
+          SERVICE_JSON="$(gcloud run services describe "${{ env.APP_NAME }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --format=json)"
+          export STABLE_URL="$(jq -r '.status.traffic[] | select(.tag=="stable") | .url' <<<"$SERVICE_JSON")"
+          export CANARY_URL="$(jq -r '.status.traffic[] | select(.tag=="canary") | .url' <<<"$SERVICE_JSON")"
+          bash scripts/canary-promote.sh

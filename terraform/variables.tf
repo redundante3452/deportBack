@@ -38,3 +38,9 @@ variable "image" {
   type        = string
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
+
+variable "canary_bake_seconds" {
+  description = "Tiempo de observación por etapa canary."
+  type        = number
+  default     = 60
+}

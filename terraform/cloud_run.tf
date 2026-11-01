@@ -37,6 +37,16 @@ resource "google_cloud_run_v2_service" "app" {
       }
 
       env {
+        name  = "APP_VERSION"
+        value = "v2"
+      }
+
+      env {
+        name  = "APP_TRACK"
+        value = "stable"
+      }
+
+      env {
         name = "DB_PASSWORD"
 
         value_source {
