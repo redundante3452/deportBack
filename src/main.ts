@@ -97,6 +97,9 @@ function registrarMetadatosCanary(app: NestFastifyApplication): void {
   });
 
   fastify.addHook('onResponse', (request, reply, done) => {
+    const requestWithTiming = request as typeof request & {
+      canaryStartedAt?: number;
+    };
     console.log(
       JSON.stringify({
         event: 'http_request',
@@ -105,6 +108,9 @@ function registrarMetadatosCanary(app: NestFastifyApplication): void {
         method: request.method,
         path: request.url,
         status: reply.statusCode,
+        duration_ms: requestWithTiming.canaryStartedAt
+          ? Date.now() - requestWithTiming.canaryStartedAt
+          : undefined,
       }),
     );
     done();
@@ -115,6 +121,11 @@ function registrarInyeccionCanary(app: NestFastifyApplication): void {
   const fastify = app.getHttpAdapter().getInstance();
 
   fastify.addHook('onRequest', async (request, reply) => {
+    const requestWithTiming = request as typeof request & {
+      canaryStartedAt?: number;
+    };
+    requestWithTiming.canaryStartedAt = Date.now();
+
     if ((process.env.APP_TRACK ?? 'stable') !== 'canary') {
       return;
     }

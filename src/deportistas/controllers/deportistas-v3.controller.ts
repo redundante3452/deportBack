@@ -15,7 +15,16 @@ export class DeportistasV3Controller {
       'Cambio funcional canary compatible: nivel es opcional y no rompe api/v2.',
   })
   crear(@Body() dto: CreateDeportistaV3Dto) {
-    return this.deportistasService.create(dto);
+    return this.deportistasService.create(dto).then((deportista) => {
+      console.log(
+        JSON.stringify({
+          event: 'deportista_created',
+          app_version: process.env.APP_VERSION ?? 'v2',
+          app_track: process.env.APP_TRACK ?? 'stable',
+        }),
+      );
+      return deportista;
+    });
   }
 
   @Get()
