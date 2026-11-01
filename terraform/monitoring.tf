@@ -111,6 +111,8 @@ resource "google_logging_metric" "deportistas_created" {
 }
 
 resource "google_monitoring_dashboard" "canary" {
+  depends_on = [google_project_iam_member.monitoring_dashboard_editor]
+
   dashboard_json = jsonencode({
     displayName = "${var.app_name} Canary SLI/SLO"
     gridLayout = {

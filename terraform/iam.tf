@@ -21,6 +21,12 @@ resource "google_project_iam_member" "logging_config_writer" {
   member  = "serviceAccount:github-deploy@${var.project_id}.iam.gserviceaccount.com"
 }
 
+resource "google_project_iam_member" "monitoring_dashboard_editor" {
+  project = var.project_id
+  role    = "roles/monitoring.dashboardEditor"
+  member  = "serviceAccount:github-deploy@${var.project_id}.iam.gserviceaccount.com"
+}
+
 resource "google_secret_manager_secret_iam_member" "db_password_accessor" {
   secret_id = google_secret_manager_secret.db_password.id
   role      = "roles/secretmanager.secretAccessor"
