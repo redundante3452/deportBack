@@ -22,14 +22,22 @@ measure() {
   fi
 
   for ((i = 1; i <= SAMPLE_SIZE; i++)); do
-    read -r status duration version track < <(
+    local headers_file response
+    headers_file="$(mktemp)"
+    response="$(
       curl --silent --show-error --max-time 30 \
         -H "X-Canary-Probe: true" \
         "${failure_header[@]}" \
+        -D "$headers_file" \
         -o /dev/null \
-        -w '%{http_code} %{time_total} %{header_x-app-version} %{header_x-app-track}' \
+        -w '%{http_code} %{time_total}' \
         "$url"
-    )
+    )"
+    read -r status duration <<<"$response"
+    version="$(awk -F': ' 'tolower($1) == "x-app-version" { gsub("\r", "", $2); print $2 }' "$headers_file")"
+    track="$(awk -F': ' 'tolower($1) == "x-app-track" { gsub("\r", "", $2); print $2 }' "$headers_file")"
+    rm -f "$headers_file"
+
     duration=$(awk -v seconds="$duration" 'BEGIN { printf "%.0f", seconds * 1000 }')
     total_ms=$((total_ms + duration))
 
