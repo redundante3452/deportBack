@@ -74,6 +74,8 @@ se documentan como \`POST /{recurso}/buscar\` que son funcionalmente equivalente
   });
 
   registrarTraceId(app);
+  registrarMetadatosCanary(app);
+  registrarInyeccionCanary(app);
   registrarRutasQuery(app);
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
@@ -81,6 +83,56 @@ se documentan como \`POST /{recurso}/buscar\` que son funcionalmente equivalente
   const url = `http://localhost:${process.env.PORT ?? 3000}`;
   console.log(`🚀  Aplicación corriendo en:  ${url}`);
   console.log(`📖  Documentación Swagger en:  ${url}/api-docs`);
+}
+
+function registrarMetadatosCanary(app: NestFastifyApplication): void {
+  const fastify = app.getHttpAdapter().getInstance();
+  const version = process.env.APP_VERSION ?? 'v2';
+  const track = process.env.APP_TRACK ?? 'stable';
+
+  fastify.addHook('onSend', (_request, reply, _payload, done) => {
+    reply.header('X-App-Version', version);
+    reply.header('X-App-Track', track);
+    done();
+  });
+
+  fastify.addHook('onResponse', (request, reply, done) => {
+    console.log(
+      JSON.stringify({
+        event: 'http_request',
+        app_version: version,
+        app_track: track,
+        method: request.method,
+        path: request.url,
+        status: reply.statusCode,
+      }),
+    );
+    done();
+  });
+}
+
+function registrarInyeccionCanary(app: NestFastifyApplication): void {
+  const fastify = app.getHttpAdapter().getInstance();
+
+  fastify.addHook('onRequest', async (request, reply) => {
+    if ((process.env.APP_TRACK ?? 'stable') !== 'canary') {
+      return;
+    }
+
+    const failure = request.headers['x-canary-failure'];
+    if (failure === 'true') {
+      reply.code(503).send({ error: 'canary_failure_injected' });
+      return;
+    }
+
+    const rawDelay = request.headers['x-canary-delay-ms'];
+    const delayMs = Number(rawDelay);
+    if (Number.isFinite(delayMs) && delayMs > 0) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.min(delayMs, 30_000)),
+      );
+    }
+  });
 }
 
 /**

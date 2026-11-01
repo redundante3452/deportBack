@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { DeportistasService } from './services/deportistas.service';
 import { DeportistasController } from './controllers/deportistas.controller';
 import { DeportistasV2Controller } from './controllers/deportistas-v2.controller';
+import { DeportistasV3Controller } from './controllers/deportistas-v3.controller';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Deportista } from './entities/deportista.entity';
@@ -14,7 +15,11 @@ import { CacheDistribuidaModule } from '../common/cache-distribuida/cache-distri
     HttpExternoModule,
     CacheDistribuidaModule,
   ],
-  controllers: [DeportistasController, DeportistasV2Controller],
+  controllers: [
+    DeportistasController,
+    DeportistasV2Controller,
+    DeportistasV3Controller,
+  ],
   providers: [DeportistasService],
 })
 export class DeportistasModule {}

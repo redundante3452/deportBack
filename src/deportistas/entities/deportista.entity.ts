@@ -16,6 +16,9 @@ export class Deportista {
   @Column()
   email: string;
 
+  @Column({ length: 50, nullable: true })
+  nivel: string | null;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   creadoEn: Date;
 }
