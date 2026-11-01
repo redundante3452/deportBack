@@ -1,6 +1,7 @@
 resource "google_logging_metric" "http_requests_by_track" {
-  name   = "${var.app_name}-http-requests-by-track"
-  filter = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\""
+  name       = "${var.app_name}-http-requests-by-track"
+  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\""
+  depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
     metric_kind = "DELTA"
@@ -25,8 +26,9 @@ resource "google_logging_metric" "http_requests_by_track" {
 }
 
 resource "google_logging_metric" "http_errors_by_track" {
-  name   = "${var.app_name}-http-errors-by-track"
-  filter = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\" AND jsonPayload.status >= 500"
+  name       = "${var.app_name}-http-errors-by-track"
+  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\" AND jsonPayload.status >= 500"
+  depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
     metric_kind = "DELTA"
@@ -45,8 +47,9 @@ resource "google_logging_metric" "http_errors_by_track" {
 }
 
 resource "google_logging_metric" "http_client_errors_by_track" {
-  name   = "${var.app_name}-http-client-errors-by-track"
-  filter = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\" AND jsonPayload.status >= 400 AND jsonPayload.status < 500"
+  name       = "${var.app_name}-http-client-errors-by-track"
+  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\" AND jsonPayload.status >= 400 AND jsonPayload.status < 500"
+  depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
     metric_kind = "DELTA"
@@ -65,8 +68,9 @@ resource "google_logging_metric" "http_client_errors_by_track" {
 }
 
 resource "google_logging_metric" "http_latency_by_track" {
-  name   = "${var.app_name}-http-latency-by-track"
-  filter = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\""
+  name       = "${var.app_name}-http-latency-by-track"
+  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\""
+  depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
     metric_kind = "DELTA"
@@ -87,8 +91,9 @@ resource "google_logging_metric" "http_latency_by_track" {
 }
 
 resource "google_logging_metric" "deportistas_created" {
-  name   = "${var.app_name}-deportistas-created"
-  filter = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"deportista_created\""
+  name       = "${var.app_name}-deportistas-created"
+  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"deportista_created\""
+  depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
     metric_kind = "DELTA"
