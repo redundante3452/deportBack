@@ -74,7 +74,7 @@ resource "google_logging_metric" "http_latency_by_track" {
 
   metric_descriptor {
     metric_kind = "DELTA"
-    value_type  = "DOUBLE"
+    value_type  = "DISTRIBUTION"
     unit        = "ms"
 
     labels {
@@ -84,6 +84,14 @@ resource "google_logging_metric" "http_latency_by_track" {
   }
 
   value_extractor = "EXTRACT(jsonPayload.duration_ms)"
+
+  bucket_options {
+    linear_buckets {
+      num_finite_buckets = 20
+      width              = 100
+      offset             = 0
+    }
+  }
 
   label_extractors = {
     track = "EXTRACT(jsonPayload.app_track)"
