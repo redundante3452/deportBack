@@ -9,6 +9,34 @@ Cloud Run y Artifact Registry usan `region`; Cloud SQL usa `db_region`.
 
 Cloud Run usa un único servicio con dos revisiones inmutables:
 
+```mermaid
+flowchart LR
+    Dev["Push a main"] --> Build["GitHub Actions"]
+    Build --> Registry["Artifact Registry<br/>imagen con digest SHA256"]
+    Registry --> Deploy["Cloud Run<br/>servicio deport-back"]
+
+    subgraph Revisions["Revisiones simultáneas"]
+        Stable["stable<br/>api/v2<br/>APP_TRACK=stable"]
+        Canary["canary<br/>api/v3<br/>APP_TRACK=canary"]
+    end
+
+    Deploy --> Stable
+    Deploy --> Canary
+    Stable --> SQL[("Cloud SQL<br/>PostgreSQL 15")]
+    Canary --> SQL
+    Stable --> Secret["Secret Manager<br/>DB_PASSWORD"]
+    Canary --> Secret
+
+    Deploy --> Traffic["Tráfico progresivo<br/>100/0 -> 90/10 -> 75/25<br/>-> 50/50 -> 0/100"]
+    Traffic --> Gate["Quality gate<br/>error rate y latencia"]
+    Gate -->|OK| Promote["Promover canary"]
+    Gate -->|Fallo| Rollback["Rollback<br/>stable=100 / canary=0"]
+    Stable -.-> Metrics["Cloud Monitoring<br/>SLI/SLO y dashboard"]
+    Canary -.-> Metrics
+```
+
+Flujo operativo:
+
 ```text
 Cliente
   |

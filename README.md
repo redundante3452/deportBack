@@ -21,7 +21,8 @@ quality gate y el rollback a `stable=100,canary=0`.
 
 Los scripts de promoción están en [scripts/](./scripts/) y la infraestructura
 de métricas/dashboard en [terraform/monitoring.tf](./terraform/monitoring.tf).
-El detalle operativo está en [terraform/README.md](./terraform/README.md).
+El diagrama visual y el detalle operativo están en
+[terraform/README.md](./terraform/README.md).
 
 API REST para gestión deportiva (deportistas, hábitos, registros de entrenamiento y logros),
 construida en **NestJS + Fastify + TypeORM/PostgreSQL**, desplegada en **Google Kubernetes
