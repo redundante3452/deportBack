@@ -1,5 +1,41 @@
 # deport-back
 
+## Estructura del proyecto
+
+```text
+src/
+├── deportistas/    # dominio propio: entidad, controllers (v1, v2 y v3), service y DTOs
+├── habitos/
+├── registros/
+├── logros/         # calculado, sin entidad propia
+├── cache/          # componente transversal expuesto por HTTP
+└── common/
+    ├── http-externo/       # cliente fetch con timeout
+    ├── cache-distribuida/  # cliente Redis con fallback
+    ├── team-api-key/       # guard de autenticación entre equipos
+    └── trace-id/           # correlación de peticiones entre nubes
+terraform/            # infraestructura modular para GCP y Cloud Run
+scripts/              # despliegue, promoción, quality gate y rollback canary
+.github/workflows/    # automatización de deploy y destroy
+k8s/                  # manifiestos alternativos para GKE
+```
+
+## Implementaciones DevOps
+
+- **Contenerización:** Dockerfile multi-stage para construir una imagen de producción.
+- **Infraestructura como código:** Terraform modular para Artifact Registry, Cloud SQL,
+  Secret Manager, IAM, Cloud Run y Cloud Monitoring.
+- **CI/CD:** GitHub Actions construye la imagen, la publica con digest SHA256 y despliega
+  automáticamente al hacer push a `main`.
+- **Despliegue Canary:** dos revisiones de Cloud Run (`stable` para `api/v2` y `canary`
+  para `api/v3`) con tráfico progresivo, bake time y promoción controlada.
+- **Observabilidad:** métricas de peticiones, errores, latencia y negocio, además de un
+  dashboard de Cloud Monitoring.
+- **Quality gate y rollback:** validación automática de errores, latencia y headers de
+  versión; ante una regresión, el tráfico vuelve a `stable=100,canary=0`.
+- **Escalabilidad en GKE:** manifiestos alternativos con réplicas, probes, límites de
+  recursos, LoadBalancer y HPA de 2 a 5 réplicas.
+
 ## Canary Deployment (v3)
 
 La entrega de Canary usa Google Cloud Run con dos revisiones del mismo servicio:
@@ -307,24 +343,3 @@ kubectl apply -f k8s/hpa.yaml
 ```
 
 </details>
-
-## Estructura del proyecto
-
-```
-src/
-├── deportistas/    # dominio propio: entidad, controllers (v1 y v2), service, DTOs
-├── habitos/
-├── registros/
-├── logros/         # calculado, sin entidad propia
-├── cache/           # componente transversal expuesto por HTTP
-└── common/
-    ├── http-externo/       # cliente fetch con timeout, sin dependencias externas
-    ├── cache-distribuida/  # cliente Redis con fallback gracioso
-    ├── team-api-key/       # guard de autenticación entre los 3 equipos
-    └── trace-id/           # correlación de peticiones entre nubes
-k8s/                 # manifiestos de despliegue en GKE
-```
-
-## Licencia
-
-Proyecto académico — Universidad de Medellín, Ingeniería de Sistemas.
