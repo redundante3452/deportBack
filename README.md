@@ -1,5 +1,15 @@
 # deport-back
 
+## Qué resuelve este proyecto
+
+Más allá del CRUD, el reto era construir una API que **no vive sola**: cada uno de los 3
+integrantes del grupo despliega su propia API en una nube distinta, y las 3 se llaman entre sí
+en tiempo real para componer respuestas combinadas — sin copiar datos, sin duplicar lógica, y
+sin caerse si alguna de las otras 2 no responde. Este repo es la pieza de esa arquitectura que
+me correspondía a mí: la API de **Deportistas**, desplegada en **GKE**, más el componente
+transversal de **caché distribuida** que expongo para que el resto del sistema (el orquestador
+del flujo, en otra nube) la use.
+
 ## Estructura del proyecto
 
 ```text
@@ -74,16 +84,6 @@ multicloud.
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)](https://redis.io)
 [![Kubernetes](https://img.shields.io/badge/GKE-Autopilot-326CE5?logo=kubernetes&logoColor=white)](https://cloud.google.com/kubernetes-engine)
 [![Google Cloud](https://img.shields.io/badge/Google_Cloud-Cloud_SQL_%7C_Memorystore-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com)
-
-## Qué resuelve este proyecto
-
-Más allá del CRUD, el reto era construir una API que **no vive sola**: cada uno de los 3
-integrantes del grupo despliega su propia API en una nube distinta, y las 3 se llaman entre sí
-en tiempo real para componer respuestas combinadas — sin copiar datos, sin duplicar lógica, y
-sin caerse si alguna de las otras 2 no responde. Este repo es la pieza de esa arquitectura que
-me correspondía a mí: la API de **Deportistas**, desplegada en **GKE**, más el componente
-transversal de **caché distribuida** que expongo para que el resto del sistema (el orquestador
-del flujo, en otra nube) la use.
 
 ## Arquitectura
 
