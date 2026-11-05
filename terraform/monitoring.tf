@@ -204,7 +204,7 @@ resource "google_monitoring_dashboard" "canary" {
                   filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.deportistas_created.name}\""
                   aggregation = {
                     alignmentPeriod    = "60s"
-                    perSeriesAligner   = "ALIGN_RATE"
+                    perSeriesAligner   = "ALIGN_SUM"
                     crossSeriesReducer = "REDUCE_SUM"
                   }
                 }
