@@ -17,6 +17,9 @@ env:
 jobs:
   rollback:
     runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-deport-back-state
+      cancel-in-progress: false
     permissions:
       contents: read
     steps:
