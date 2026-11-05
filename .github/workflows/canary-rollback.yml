@@ -40,8 +40,8 @@ jobs:
             --project="$GCP_PROJECT_ID" \
             --region="$GCP_REGION" \
             --format=json)"
-          STABLE_PERCENT="$(jq -r '.status.traffic[] | select(.tag=="stable") | .percent' <<<"$SERVICE_JSON")"
-          CANARY_PERCENT="$(jq -r '.status.traffic[] | select(.tag=="canary") | .percent' <<<"$SERVICE_JSON")"
+          STABLE_PERCENT="$(jq -r '(.status.traffic[] | select(.tag=="stable") | .percent) // 0' <<<"$SERVICE_JSON")"
+          CANARY_PERCENT="$(jq -r '(.status.traffic[] | select(.tag=="canary") | .percent) // 0' <<<"$SERVICE_JSON")"
 
           if [[ "$PROMOTION_STATUS" -ne 0 && "$STABLE_PERCENT" == "100" && "$CANARY_PERCENT" == "0" ]]; then
             echo "Rollback esperado confirmado: stable=100%, canary=0%."
