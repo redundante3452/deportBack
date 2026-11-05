@@ -119,6 +119,73 @@ resource "google_monitoring_dashboard" "canary" {
       columns = "2"
       widgets = [
         {
+          title = "Solicitudes actuales"
+          scorecard = {
+            timeSeriesQuery = {
+              timeSeriesFilter = {
+                filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.http_requests_by_track.name}\""
+                aggregation = {
+                  alignmentPeriod    = "60s"
+                  perSeriesAligner   = "ALIGN_RATE"
+                  crossSeriesReducer = "REDUCE_SUM"
+                }
+              }
+            }
+          }
+        },
+        {
+          title = "Errores 5xx actuales"
+          scorecard = {
+            timeSeriesQuery = {
+              timeSeriesFilter = {
+                filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.http_errors_by_track.name}\""
+                aggregation = {
+                  alignmentPeriod    = "60s"
+                  perSeriesAligner   = "ALIGN_RATE"
+                  crossSeriesReducer = "REDUCE_SUM"
+                }
+              }
+            }
+          }
+        },
+        {
+          title = "Latencia media (ms)"
+          scorecard = {
+            timeSeriesQuery = {
+              timeSeriesFilter = {
+                filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.http_latency_by_track.name}\""
+                aggregation = {
+                  alignmentPeriod    = "60s"
+                  perSeriesAligner   = "ALIGN_DELTA"
+                  crossSeriesReducer = "REDUCE_MEAN"
+                }
+              }
+            }
+          }
+        },
+        {
+          title = "Deportistas creados"
+          scorecard = {
+            timeSeriesQuery = {
+              timeSeriesFilter = {
+                filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.deportistas_created.name}\""
+                aggregation = {
+                  alignmentPeriod    = "60s"
+                  perSeriesAligner   = "ALIGN_SUM"
+                  crossSeriesReducer = "REDUCE_SUM"
+                }
+              }
+            }
+          }
+        },
+        {
+          title = "Objetivos Canary"
+          text = {
+            content = "### SLO Canary\n\n- Error rate objetivo: **0%**\n- Latencia media objetivo: **< 1000 ms**\n- Promoción: **10% → 25% → 50% → 100%**\n- Rollback: **stable 100% / canary 0%**"
+            format  = "MARKDOWN"
+          }
+        },
+        {
           title = "Peticiones por track"
           xyChart = {
             dataSets = [{
