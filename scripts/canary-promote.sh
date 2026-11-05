@@ -6,6 +6,7 @@ set -euo pipefail
 : "${APP_NAME:?APP_NAME is required}"
 
 BAKE_SECONDS="${CANARY_BAKE_SECONDS:-60}"
+START_CANARY_PERCENT="${CANARY_START_PERCENT:-0}"
 SERVICE_JSON="$(gcloud run services describe "$APP_NAME" --project="$GCP_PROJECT_ID" --region="$GCP_REGION" --format=json)"
 STABLE_URL="$(jq -r '.status.traffic[] | select(.tag=="stable") | .url' <<<"$SERVICE_JSON")"
 CANARY_URL="$(jq -r '.status.traffic[] | select(.tag=="canary") | .url' <<<"$SERVICE_JSON")"
@@ -26,7 +27,19 @@ rollback() {
 
 trap rollback ERR
 
-for canary_percent in 0 10 25 50 100; do
+case "$START_CANARY_PERCENT" in
+  0) stages=(0 10 25 50 100) ;;
+  10) stages=(10 25 50 100) ;;
+  25) stages=(25 50 100) ;;
+  50) stages=(50 100) ;;
+  100) stages=(100) ;;
+  *)
+    echo "CANARY_START_PERCENT debe ser 0, 10, 25, 50 o 100." >&2
+    exit 1
+    ;;
+esac
+
+for canary_percent in "${stages[@]}"; do
   stable_percent=$((100 - canary_percent))
   echo "Etapa canary: stable=${stable_percent}% canary=${canary_percent}%"
   gcloud run services update-traffic "$APP_NAME" \
