@@ -32,4 +32,21 @@ jobs:
 
       - name: Simulate canary regression and rollback
         run: |
+          set +e
           bash scripts/canary-promote.sh
+          PROMOTION_STATUS=$?
+
+          SERVICE_JSON="$(gcloud run services describe "$APP_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format=json)"
+          STABLE_PERCENT="$(jq -r '.status.traffic[] | select(.tag=="stable") | .percent' <<<"$SERVICE_JSON")"
+          CANARY_PERCENT="$(jq -r '.status.traffic[] | select(.tag=="canary") | .percent' <<<"$SERVICE_JSON")"
+
+          if [[ "$PROMOTION_STATUS" -ne 0 && "$STABLE_PERCENT" == "100" && "$CANARY_PERCENT" == "0" ]]; then
+            echo "Rollback esperado confirmado: stable=100%, canary=0%."
+            exit 0
+          fi
+
+          echo "El rollback no produjo el estado esperado." >&2
+          exit 1
