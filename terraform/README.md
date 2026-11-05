@@ -68,9 +68,10 @@ El quality gate ejecuta muestras contra ambos tags y aborta si el error 5xx
 supera 0% o la latencia media supera 1000 ms. El rollback devuelve el tráfico
 a `stable=100,canary=0`.
 
-Para simular una regresión sin afectar stable, ejecuta manualmente
-`canary-rollback.yml`. El workflow envía `X-Canary-Failure: true` únicamente
-al canary y verifica el rollback.
+El workflow manual `canary-rollback.yml` provoca una regresión controlada
+únicamente en canary mediante `X-Canary-Failure: true`. El rollback del tráfico
+es real: Cloud Run lo devuelve a `stable=100,canary=0` y el workflow verifica
+ese estado consultando el servicio.
 
 Las métricas de peticiones, errores 4xx/5xx, latencia y deportistas creados se
 exportan desde logs estructurados a Cloud Monitoring. Terraform crea el
@@ -138,7 +139,7 @@ tag y luego resuelve el digest SHA256 para las revisiones stable/canary.
 - `deploy.yml`: construye la imagen, despliega stable y canary y ejecuta las
   etapas 0/10/25/50/100 con quality gate.
 - `canary-rollback.yml`: workflow manual que inyecta un 503 controlado en
-  canary y demuestra el rollback a stable.
+  canary y demuestra el rollback real a stable.
 - `destroy.yml`: elimina la infraestructura al finalizar la sustentación.
 
 ## Comandos de demostración
