@@ -36,17 +36,31 @@ jobs:
           bash scripts/canary-promote.sh
           PROMOTION_STATUS=$?
 
-          SERVICE_JSON="$(gcloud run services describe "$APP_NAME" \
-            --project="$GCP_PROJECT_ID" \
-            --region="$GCP_REGION" \
-            --format=json)"
-          STABLE_PERCENT="$(jq -r '(.status.traffic[] | select(.tag=="stable") | .percent) // 0' <<<"$SERVICE_JSON")"
-          CANARY_PERCENT="$(jq -r '(.status.traffic[] | select(.tag=="canary") | .percent) // 0' <<<"$SERVICE_JSON")"
-
-          if [[ "$PROMOTION_STATUS" -ne 0 && "$STABLE_PERCENT" == "100" && "$CANARY_PERCENT" == "0" ]]; then
-            echo "Rollback esperado confirmado: stable=100%, canary=0%."
-            exit 0
+          if [[ "$PROMOTION_STATUS" -eq 0 ]]; then
+            echo "La promoción no falló; no se puede confirmar un rollback." >&2
+            exit 1
           fi
 
-          echo "El rollback no produjo el estado esperado." >&2
+          for attempt in {1..12}; do
+            SERVICE_JSON="$(gcloud run services describe "$APP_NAME" \
+              --project="$GCP_PROJECT_ID" \
+              --region="$GCP_REGION" \
+              --format=json)"
+
+            STABLE_TAG_COUNT="$(jq '[.status.traffic[] | select(.tag=="stable")] | length' <<<"$SERVICE_JSON")"
+            CANARY_TAG_COUNT="$(jq '[.status.traffic[] | select(.tag=="canary")] | length' <<<"$SERVICE_JSON")"
+            STABLE_PERCENT="$(jq -r '.status.traffic[] | select(.tag=="stable") | (.percent // 0)' <<<"$SERVICE_JSON")"
+            CANARY_PERCENT="$(jq -r '.status.traffic[] | select(.tag=="canary") | (.percent // 0)' <<<"$SERVICE_JSON")"
+
+            if [[ "$STABLE_TAG_COUNT" -eq 1 && "$CANARY_TAG_COUNT" -eq 1 \
+              && "$STABLE_PERCENT" -eq 100 && "$CANARY_PERCENT" -eq 0 ]]; then
+              echo "Rollback real confirmado por Cloud Run: stable=100%, canary=0%."
+              exit 0
+            fi
+
+            echo "Esperando tráfico estable después del rollback (intento $attempt/12)..."
+            sleep 5
+          done
+
+          echo "Cloud Run no confirmó stable=100% y canary=0% después del rollback." >&2
           exit 1
