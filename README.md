@@ -65,6 +65,16 @@ la columna es nullable y api/v2 sigue siendo compatible. La cabecera
 `X-Canary-Failure: true` inyecta un 503 únicamente en canary para demostrar el
 quality gate y el rollback a `stable=100,canary=0`.
 
+La v3 mantiene operaciones completas sobre deportistas:
+
+```text
+GET    /api/v3/deportistas
+POST   /api/v3/deportistas
+PUT    /api/v3/deportistas/:id
+PATCH  /api/v3/deportistas/:id
+DELETE /api/v3/deportistas/:id
+```
+
 Los scripts de promoción están en [scripts/](./scripts/) y la infraestructura
 de métricas/dashboard en [terraform/monitoring.tf](./terraform/monitoring.tf).
 El diagrama visual y el detalle operativo están en

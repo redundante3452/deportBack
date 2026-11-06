@@ -1,7 +1,19 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { DeportistasService } from '../services/deportistas.service';
 import { CreateDeportistaV3Dto } from '../dto/create-deportista-v3.dto';
+import { ActualizarParcialDeportistaV3Dto } from '../dto/actualizar-parcial-deportista-v3.dto';
+import { ReemplazarDeportistaV3Dto } from '../dto/reemplazar-deportista-v3.dto';
 
 @ApiTags('Deportistas v3 Canary')
 @Controller('api/v3/deportistas')
@@ -33,5 +45,35 @@ export class DeportistasV3Controller {
   })
   listar(@Query('nombre') nombre?: string, @Query('email') email?: string) {
     return this.deportistasService.listar(nombre, email);
+  }
+
+  @Put(':id')
+  @ApiOperation({
+    summary: 'Reemplazar deportista completo (v3)',
+  })
+  reemplazar(
+    @Param('id') id: string,
+    @Body() dto: ReemplazarDeportistaV3Dto,
+  ) {
+    return this.deportistasService.reemplazar(id, dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Actualizar deportista parcialmente (v3)',
+  })
+  actualizarParcial(
+    @Param('id') id: string,
+    @Body() dto: ActualizarParcialDeportistaV3Dto,
+  ) {
+    return this.deportistasService.actualizarParcial(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Eliminar deportista (v3)',
+  })
+  eliminar(@Param('id') id: string) {
+    return this.deportistasService.eliminar(id);
   }
 }

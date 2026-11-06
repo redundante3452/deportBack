@@ -11,6 +11,8 @@ import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
 import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
 import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
+import { ActualizarParcialDeportistaV3Dto } from '../dto/actualizar-parcial-deportista-v3.dto';
+import { ReemplazarDeportistaV3Dto } from '../dto/reemplazar-deportista-v3.dto';
 import { ConfigService } from '@nestjs/config';
 import { HttpExternoService } from '../../common/http-externo/http-externo.service';
 import { ResultadoHttpExterno } from '../../common/http-externo/http-externo.types';
@@ -77,7 +79,7 @@ export class DeportistasService {
 
   async reemplazar(
     id: string,
-    dto: ReemplazarDeportistaDto,
+    dto: ReemplazarDeportistaDto | ReemplazarDeportistaV3Dto,
   ): Promise<Deportista> {
     const deportista = await this.buscarPorId(id);
     if (dto.email !== deportista.email) {
@@ -85,12 +87,15 @@ export class DeportistasService {
     }
     deportista.nombre = dto.nombre;
     deportista.email = dto.email;
+    if ('nivel' in dto) {
+      deportista.nivel = dto.nivel ?? null;
+    }
     return this.deportistaRepository.save(deportista);
   }
 
   async actualizarParcial(
     id: string,
-    dto: ActualizarParcialDeportistaDto,
+    dto: ActualizarParcialDeportistaDto | ActualizarParcialDeportistaV3Dto,
   ): Promise<Deportista> {
     const deportista = await this.buscarPorId(id);
     if (dto.email && dto.email !== deportista.email) {
