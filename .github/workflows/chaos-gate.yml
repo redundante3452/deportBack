@@ -5,7 +5,7 @@ on:
     inputs:
       base_url:
         description: URL real de GKE/Cloud Run para la prueba
-        required: true
+        required: false
         type: string
       deportista_id:
         description: ID sintético existente
@@ -60,9 +60,41 @@ jobs:
           GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
 
+      - name: Resolve GKE LoadBalancer URL
+        run: |
+          if [[ -n "${{ inputs.base_url }}" ]]; then
+            BASE_URL="${{ inputs.base_url }}"
+          else
+            for attempt in {1..30}; do
+              ADDRESS="$(kubectl -n "$NAMESPACE" get service deport-back \
+                -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
+              if [[ -z "$ADDRESS" ]]; then
+                ADDRESS="$(kubectl -n "$NAMESPACE" get service deport-back \
+                  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)"
+              fi
+              if [[ -n "$ADDRESS" ]]; then
+                BASE_URL="http://$ADDRESS"
+                break
+              fi
+              echo "Esperando EXTERNAL-IP del LoadBalancer ($attempt/30)..."
+              sleep 10
+            done
+          fi
+
+          if [[ -z "${BASE_URL:-}" ]]; then
+            echo "No se pudo obtener la URL del LoadBalancer de GKE." >&2
+            kubectl -n "$NAMESPACE" get service deport-back -o wide
+            exit 1
+          fi
+
+          echo "BASE_URL=$BASE_URL" >> "$GITHUB_ENV"
+          echo "URL de experimento: $BASE_URL"
+        env:
+          NAMESPACE: ${{ env.NAMESPACE }}
+
       - name: Run round 0
         env:
-          BASE_URL: ${{ inputs.base_url }}
+          BASE_URL: ${{ env.BASE_URL }}
           DEPORTISTA_ID: ${{ inputs.deportista_id }}
           API_KEY: ${{ secrets.TEAM_API_KEY }}
           CHAOS_TARGET: ${{ inputs.chaos_target }}
@@ -73,7 +105,7 @@ jobs:
 
       - name: Run round 1
         env:
-          BASE_URL: ${{ inputs.base_url }}
+          BASE_URL: ${{ env.BASE_URL }}
           DEPORTISTA_ID: ${{ inputs.deportista_id }}
           API_KEY: ${{ secrets.TEAM_API_KEY }}
           CHAOS_TARGET: ${{ inputs.chaos_target }}

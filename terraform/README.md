@@ -132,6 +132,11 @@ La IP del LoadBalancer puede estar vacía durante el primer `apply` porque GCP
 la asigna de forma asíncrona. En ese caso, espera a que el Service tenga
 `EXTERNAL-IP` y vuelve a ejecutar `terraform output`.
 
+El workflow `chaos-gate.yml` también puede resolver automáticamente esa
+dirección desde `kubectl` cuando se omite el input `base_url`. Espera hasta
+cinco minutos por la IP o hostname del Service `deport-back` y lo usa como
+`BASE_URL` en las dos rondas.
+
 Chaos Mesh no se instala automáticamente en el clúster base: sus componentes
 requieren validar compatibilidad con las restricciones de GKE Autopilot y la
 ventana de experimentación del grupo. El experimento declarativo queda
