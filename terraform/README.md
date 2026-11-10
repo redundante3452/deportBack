@@ -1,6 +1,7 @@
 # Infraestructura y Canary Deployment de deport-back en Google Cloud
 
-Esta carpeta despliega la API NestJS en Cloud Run y PostgreSQL 15 en Cloud SQL.
+Esta carpeta despliega la API NestJS en Cloud Run y GKE Autopilot, además de
+PostgreSQL 15 en Cloud SQL.
 También contiene la infraestructura de observabilidad del despliegue Canary.
 Los recursos están separados por servicio para facilitar su revisión y mantenimiento.
 Cloud Run y Artifact Registry usan `region`; Cloud SQL usa `db_region`.
@@ -84,7 +85,7 @@ dashboard `deport-back Canary SLI/SLO`.
 - Google Cloud CLI (`gcloud`) autenticado.
 - Un proyecto GCP con facturación habilitada.
 - Un bucket GCS existente para el estado remoto.
-- Permisos para crear Artifact Registry, Cloud SQL, Cloud Run, Secret Manager e IAM.
+- Permisos para crear Artifact Registry, Cloud SQL, Cloud Run, GKE, Secret Manager e IAM.
 - APIs `monitoring.googleapis.com` y `logging.googleapis.com` habilitadas.
 
 ## Autenticación en GCP
@@ -110,6 +111,33 @@ terraform plan
 terraform apply
 ```
 
+El mismo `terraform apply` crea el clúster GKE Autopilot, el namespace
+`deport-back`, la cuenta de servicio con Workload Identity, la API con dos
+réplicas, el proxy de Cloud SQL, el Service `LoadBalancer` y el HPA. La imagen
+se toma de `var.image`; en CI se entrega una imagen inmutable por digest.
+
+Después de que GCP asigne la IP externa, consulta los outputs:
+
+```bash
+terraform output -raw gke_cluster_name
+terraform output -raw gke_cluster_location
+terraform output -raw gke_load_balancer_ip
+gcloud container clusters get-credentials \
+  "$(terraform output -raw gke_cluster_name)" \
+  --region "$(terraform output -raw gke_cluster_location)" \
+  --project "MI_PROJECT_ID"
+```
+
+La IP del LoadBalancer puede estar vacía durante el primer `apply` porque GCP
+la asigna de forma asíncrona. En ese caso, espera a que el Service tenga
+`EXTERNAL-IP` y vuelve a ejecutar `terraform output`.
+
+Chaos Mesh no se instala automáticamente en el clúster base: sus componentes
+requieren validar compatibilidad con las restricciones de GKE Autopilot y la
+ventana de experimentación del grupo. El experimento declarativo queda
+versionado en `../chaos/experiments/`; solo debe aplicarse después de instalar
+la plataforma aprobada y confirmar el recurso propio objetivo.
+
 El nombre del bucket se entrega a `terraform init` porque Terraform no permite
 referenciar variables dentro del bloque de backend. El archivo `terraform.tfvars`
 no debe subirse al repositorio.
@@ -133,6 +161,11 @@ terraform apply -auto-approve \
 
 El workflow de despliegue automatiza este proceso usando el SHA del commit como
 tag y luego resuelve el digest SHA256 para las revisiones stable/canary.
+Terraform expone la URL base mediante el output `service_url`. El workflow la
+obtiene automáticamente con `terraform output -raw service_url` y la muestra en
+el resumen de GitHub Actions. Después de crear las revisiones, consulta en
+Cloud Run las URLs etiquetadas `stable` y `canary`; no es necesario copiarlas
+manualmente.
 
 ## Workflows
 

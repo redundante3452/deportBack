@@ -38,3 +38,40 @@ variable "image" {
   type        = string
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
+
+variable "gke_cluster_name" {
+  description = "Nombre del clúster GKE Autopilot."
+  type        = string
+  default     = "deport-back-gke"
+}
+
+variable "gke_namespace" {
+  description = "Namespace de Kubernetes para la API."
+  type        = string
+  default     = "deport-back"
+}
+
+variable "api_fastify_url" {
+  description = "URL pública de api-fastify para llamadas entre APIs."
+  type        = string
+  default     = ""
+}
+
+variable "inventario_u_url" {
+  description = "URL pública de Inventario-U para llamadas entre APIs."
+  type        = string
+  default     = ""
+}
+
+variable "redis_host" {
+  description = "IP o hostname de Redis para la aplicación en GKE."
+  type        = string
+  default     = ""
+}
+
+variable "team_api_key" {
+  description = "Clave compartida entre APIs; se entrega por tfvars o CI y no se versiona."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
