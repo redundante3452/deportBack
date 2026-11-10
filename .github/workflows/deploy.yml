@@ -119,6 +119,19 @@ jobs:
             -var="app_name=${{ env.APP_NAME }}" \
             -var="image=$IMAGE"
 
+      - name: Obtener URL de Terraform
+        id: service-url
+        working-directory: terraform
+        run: |
+          SERVICE_URL="$(terraform output -raw service_url)"
+          test -n "$SERVICE_URL"
+          echo "SERVICE_URL=$SERVICE_URL" >> "$GITHUB_ENV"
+          echo "service_url=$SERVICE_URL" >> "$GITHUB_OUTPUT"
+          {
+            echo "### URL de Cloud Run"
+            echo "$SERVICE_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Deploy stable and canary revisions
         env:
           IMAGE: ${{ steps.image.outputs.immutable_image }}
@@ -137,4 +150,11 @@ jobs:
             --format=json)"
           export STABLE_URL="$(jq -r '.status.traffic[] | select(.tag=="stable") | .url' <<<"$SERVICE_JSON")"
           export CANARY_URL="$(jq -r '.status.traffic[] | select(.tag=="canary") | .url' <<<"$SERVICE_JSON")"
+          test -n "$STABLE_URL" && test "$STABLE_URL" != "null"
+          test -n "$CANARY_URL" && test "$CANARY_URL" != "null"
+          {
+            echo "### URLs de revisiones"
+            echo "- Stable: $STABLE_URL"
+            echo "- Canary: $CANARY_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
           bash scripts/canary-promote.sh
