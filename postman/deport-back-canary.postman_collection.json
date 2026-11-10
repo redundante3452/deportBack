@@ -1,0 +1,297 @@
+{
+  "info": {
+    "_postman_id": "c1f1a4f6-2a7f-4f98-9f31-deport-back-v3",
+    "name": "deport-back - API v2 y v3 Canary",
+    "description": "Coleccion para probar las APIs v2 stable y v3 canary de deport-back.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "https://deport-back-ydgwulvqka-uc.a.run.app"
+    },
+    {
+      "key": "STABLE_URL",
+      "value": "https://stable---deport-back-ydgwulvqka-uc.a.run.app"
+    },
+    {
+      "key": "CANARY_URL",
+      "value": "https://canary---deport-back-ydgwulvqka-uc.a.run.app"
+    },
+    {
+      "key": "ID",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "API v2 - stable",
+      "item": [
+        {
+          "name": "Listar deportistas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{STABLE_URL}}/api/v2/deportistas",
+              "host": ["{{STABLE_URL}}"],
+              "path": ["api", "v2", "deportistas"]
+            }
+          }
+        },
+        {
+          "name": "Crear deportista",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Respuesta exitosa', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "const deportista = data.deportista || data;",
+                  "if (deportista.id) pm.collectionVariables.set('ID', deportista.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Deportista v2\",\n  \"email\": \"deportista.v2.{{$timestamp}}@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{STABLE_URL}}/api/v2/deportistas",
+              "host": ["{{STABLE_URL}}"],
+              "path": ["api", "v2", "deportistas"]
+            }
+          }
+        },
+        {
+          "name": "Obtener deportista por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{STABLE_URL}}/api/v2/deportistas/{{ID}}",
+              "host": ["{{STABLE_URL}}"],
+              "path": ["api", "v2", "deportistas", "{{ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Reemplazar deportista",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Deportista v2 actualizado\",\n  \"email\": \"actualizado.v2.{{$timestamp}}@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{STABLE_URL}}/api/v2/deportistas/{{ID}}",
+              "host": ["{{STABLE_URL}}"],
+              "path": ["api", "v2", "deportistas", "{{ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar deportista",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Nombre v2 actualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{STABLE_URL}}/api/v2/deportistas/{{ID}}",
+              "host": ["{{STABLE_URL}}"],
+              "path": ["api", "v2", "deportistas", "{{ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar deportista",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{STABLE_URL}}/api/v2/deportistas/{{ID}}",
+              "host": ["{{STABLE_URL}}"],
+              "path": ["api", "v2", "deportistas", "{{ID}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "API v3 - canary",
+      "item": [
+        {
+          "name": "Listar deportistas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{CANARY_URL}}/api/v3/deportistas",
+              "host": ["{{CANARY_URL}}"],
+              "path": ["api", "v3", "deportistas"]
+            }
+          }
+        },
+        {
+          "name": "Crear deportista con nivel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('Respuesta exitosa', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.collectionVariables.set('ID', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Deportista v3 Canary\",\n  \"email\": \"deportista.v3.{{$timestamp}}@example.com\",\n  \"nivel\": \"intermedio\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CANARY_URL}}/api/v3/deportistas",
+              "host": ["{{CANARY_URL}}"],
+              "path": ["api", "v3", "deportistas"]
+            }
+          }
+        },
+        {
+          "name": "Obtener deportista por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{CANARY_URL}}/api/v3/deportistas/{{ID}}",
+              "host": ["{{CANARY_URL}}"],
+              "path": ["api", "v3", "deportistas", "{{ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Reemplazar deportista con nivel",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Deportista v3 actualizado\",\n  \"email\": \"actualizado.v3.{{$timestamp}}@example.com\",\n  \"nivel\": \"avanzado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CANARY_URL}}/api/v3/deportistas/{{ID}}",
+              "host": ["{{CANARY_URL}}"],
+              "path": ["api", "v3", "deportistas", "{{ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar nivel",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nivel\": \"profesional\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CANARY_URL}}/api/v3/deportistas/{{ID}}",
+              "host": ["{{CANARY_URL}}"],
+              "path": ["api", "v3", "deportistas", "{{ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar deportista",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{CANARY_URL}}/api/v3/deportistas/{{ID}}",
+              "host": ["{{CANARY_URL}}"],
+              "path": ["api", "v3", "deportistas", "{{ID}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
