@@ -1,0 +1,100 @@
+name: Chaos gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: URL real de GKE/Cloud Run para la prueba
+        required: true
+        type: string
+      deportista_id:
+        description: ID sintético existente
+        required: true
+        type: string
+      chaos_target:
+        description: Fragmento de URL de la dependencia propia
+        required: true
+        type: string
+      max_error_rate:
+        description: Tasa máxima de error permitida
+        required: true
+        default: '0.01'
+        type: string
+      max_p95_ms:
+        description: Latencia p95 máxima en milisegundos
+        required: true
+        default: '1000'
+        type: string
+
+env:
+  NAMESPACE: deport-back
+  DEPLOYMENT: deport-back
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: grafana/setup-k6-action@v1
+
+      - name: Authenticate in Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure GKE credentials
+        run: |
+          gcloud container clusters get-credentials "$GKE_CLUSTER" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID"
+        env:
+          GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
+          GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
+
+      - name: Run round 0
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          DEPORTISTA_ID: ${{ inputs.deportista_id }}
+          API_KEY: ${{ secrets.TEAM_API_KEY }}
+          CHAOS_TARGET: ${{ inputs.chaos_target }}
+          CHAOS_CONFIRM: 'true'
+          ROUND: '0'
+          SUMMARY_FILE: round0.json
+        run: bash scripts/run-chaos-experiment.sh
+
+      - name: Run round 1
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          DEPORTISTA_ID: ${{ inputs.deportista_id }}
+          API_KEY: ${{ secrets.TEAM_API_KEY }}
+          CHAOS_TARGET: ${{ inputs.chaos_target }}
+          CHAOS_CONFIRM: 'true'
+          ROUND: '1'
+          SUMMARY_FILE: round1.json
+        run: bash scripts/run-chaos-experiment.sh
+
+      - name: Evaluate chaos gate
+        env:
+          ROUND0_SUMMARY: round0.json
+          ROUND1_SUMMARY: round1.json
+          MAX_ERROR_RATE: ${{ inputs.max_error_rate }}
+          MAX_P95_MS: ${{ inputs.max_p95_ms }}
+        run: bash scripts/chaos-gate.sh
+
+      - name: Upload experiment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-evidence-${{ github.run_id }}
+          path: |
+            round0.json
+            round1.json

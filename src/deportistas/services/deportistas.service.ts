@@ -134,12 +134,22 @@ export class DeportistasService {
 
     if (!articulos.ok) {
       this.logger.warn(
-        `[trace:${traceId}] api-fastify no respondió: ${articulos.error}`,
+        JSON.stringify({
+          event: 'dependency_failure',
+          dependency: 'api-fastify',
+          trace_id: traceId,
+          error: articulos.error,
+        }),
       );
     }
     if (!skus.ok) {
       this.logger.warn(
-        `[trace:${traceId}] Inventario-U no respondió: ${skus.error}`,
+        JSON.stringify({
+          event: 'dependency_failure',
+          dependency: 'inventario-u',
+          trace_id: traceId,
+          error: skus.error,
+        }),
       );
     }
 

@@ -110,6 +110,27 @@ resource "google_logging_metric" "deportistas_created" {
   }
 }
 
+resource "google_logging_metric" "dependency_failures" {
+  name       = "${var.app_name}-dependency-failures"
+  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"dependency_failure\""
+  depends_on = [google_project_iam_member.logging_config_writer]
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    unit        = "1"
+
+    labels {
+      key        = "dependency"
+      value_type = "STRING"
+    }
+  }
+
+  label_extractors = {
+    dependency = "EXTRACT(jsonPayload.dependency)"
+  }
+}
+
 resource "google_monitoring_dashboard" "canary" {
   depends_on = [google_project_iam_member.monitoring_dashboard_editor]
 
@@ -129,6 +150,7 @@ resource "google_monitoring_dashboard" "canary" {
                   perSeriesAligner   = "ALIGN_RATE"
                   crossSeriesReducer = "REDUCE_SUM"
                 }
+
               }
             }
           }
@@ -278,6 +300,83 @@ resource "google_monitoring_dashboard" "canary" {
               }
               plotType = "LINE"
             }]
+          }
+        }
+      ]
+    }
+  })
+}
+
+resource "google_monitoring_dashboard" "chaos" {
+  depends_on = [google_project_iam_member.monitoring_dashboard_editor]
+
+  dashboard_json = jsonencode({
+    displayName = "${var.app_name} Chaos Experiment"
+    gridLayout = {
+      columns = "2"
+      widgets = [
+        {
+          title = "Fallos de dependencias inyectados"
+          xyChart = {
+            dataSets = [{
+              timeSeriesQuery = {
+                timeSeriesFilter = {
+                  filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.dependency_failures.name}\""
+                  aggregation = {
+                    alignmentPeriod    = "60s"
+                    perSeriesAligner   = "ALIGN_RATE"
+                    crossSeriesReducer = "REDUCE_SUM"
+                    groupByFields      = ["metric.label.dependency"]
+                  }
+                }
+              }
+              plotType = "STACKED_AREA"
+            }]
+          }
+        },
+        {
+          title = "Latencia del flujo"
+          xyChart = {
+            dataSets = [{
+              timeSeriesQuery = {
+                timeSeriesFilter = {
+                  filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.http_latency_by_track.name}\""
+                  aggregation = {
+                    alignmentPeriod    = "60s"
+                    perSeriesAligner   = "ALIGN_DELTA"
+                    crossSeriesReducer = "REDUCE_MEAN"
+                    groupByFields      = ["metric.label.track"]
+                  }
+                }
+              }
+              plotType = "LINE"
+            }]
+          }
+        },
+        {
+          title = "Errores 5xx del flujo"
+          xyChart = {
+            dataSets = [{
+              timeSeriesQuery = {
+                timeSeriesFilter = {
+                  filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.http_errors_by_track.name}\""
+                  aggregation = {
+                    alignmentPeriod    = "60s"
+                    perSeriesAligner   = "ALIGN_RATE"
+                    crossSeriesReducer = "REDUCE_SUM"
+                    groupByFields      = ["metric.label.track"]
+                  }
+                }
+              }
+              plotType = "LINE"
+            }]
+          }
+        },
+        {
+          title = "Rondas del experimento"
+          text = {
+            content = "### Comparación\n\n- **Ronda 0:** `RESILIENCE_CIRCUIT_BREAKER_ENABLED=false`\n- **Ronda 1:** `RESILIENCE_CIRCUIT_BREAKER_ENABLED=true`\n- Misma carga, duración, dependencia y umbral.\n- La ventana de inyección se identifica con `dependency_failure`."
+            format  = "MARKDOWN"
           }
         }
       ]

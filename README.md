@@ -278,6 +278,34 @@ Orchestrator, que lo deben propagar), se respeta; si no, se genera uno nuevo con
 `api-fastify` e `Inventario-U` en las llamadas del `api/v2`, y queda en los logs de la app — así
 un mismo mensaje se puede seguir en `kubectl logs` aunque haya cruzado 3 nubes distintas.
 
+## Seguimiento #4: experimento de indisponibilidad
+
+El fallo asignado a `deport-back` es la indisponibilidad de una dependencia
+externa. La aplicación ya tenía timeout y degradación con caché; ahora el cliente
+HTTP añade un circuit breaker que se abre después de tres fallos consecutivos
+durante 30 segundos. Los errores externos no se guardan en caché.
+
+El interruptor controlado para pruebas aisladas es:
+
+```text
+CHAOS_DEPENDENCY_FAILURE=true
+CHAOS_DEPENDENCY_TARGET=api-fastify
+```
+
+Está desactivado por defecto y no existe un endpoint administrativo para
+activarlo. El flujo conserva el `X-Trace-Id` y devuelve la respuesta degradada
+de la dependencia junto con el deportista local.
+
+El perfil reproducible de carga está en [`load/k6-flow.js`](load/k6-flow.js) y
+la especificación declarativa está en
+[`chaos/experiments/dependency-unavailable.yaml`](chaos/experiments/dependency-unavailable.yaml).
+El manifiesto de Chaos Mesh requiere que el grupo etiquete explícitamente una
+dependencia propia en Kubernetes; hasta acordar ese recurso no debe aplicarse
+contra servicios externos. Las instrucciones y condiciones de reversión están
+en [`chaos/README.md`](chaos/README.md).
+Las Rondas 0 y 1 se ejecutan únicamente sobre GKE/GCP con datos sintéticos y
+una ventana acordada; una prueba local no constituye evidencia del experimento.
+
 ## Despliegue en Google Cloud (GKE)
 
 Manifiestos de Kubernetes en [`k8s/`](k8s) para GKE Autopilot. Sin pipeline de CI/CD — el deploy

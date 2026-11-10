@@ -1,0 +1,25 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: deport-back-dependency-unavailable
+  namespace: deport-back
+  labels:
+    experiment: dependency-unavailable
+    owner: deport-back
+spec:
+  action: partition
+  mode: all
+  selector:
+    namespaces:
+      - deport-back
+    labelSelectors:
+      app: deport-back
+  direction: to
+  target:
+    mode: all
+    selector:
+      namespaces:
+        - integrations
+      labelSelectors:
+        chaos-target: external-dependency
+  duration: '2m'

@@ -11,6 +11,9 @@ describe('HttpExternoService', () => {
   beforeEach(() => {
     service = new HttpExternoService();
     global.fetch = jest.fn();
+    delete process.env.CHAOS_DEPENDENCY_FAILURE;
+    delete process.env.CHAOS_DEPENDENCY_TARGET;
+    delete process.env.RESILIENCE_CIRCUIT_BREAKER_ENABLED;
   });
 
   afterAll(() => {
@@ -88,5 +91,51 @@ describe('HttpExternoService', () => {
       ok: false,
       error: 'no se pudo conectar a http://api-externa/skus: Unexpected token',
     });
+  });
+
+  it('abre el circuito después de tres fallos y evita nuevas llamadas', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 503,
+    });
+
+    await service.obtenerJson('http://api-externa/skus');
+    await service.obtenerJson('http://api-externa/skus');
+    await service.obtenerJson('http://api-externa/skus');
+    const resultado = await service.obtenerJson('http://api-externa/skus');
+
+    expect(resultado).toEqual({
+      ok: false,
+      error: 'circuito abierto para http://api-externa/skus',
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('permite inyectar indisponibilidad de una dependencia mediante entorno', async () => {
+    process.env.CHAOS_DEPENDENCY_FAILURE = 'true';
+    process.env.CHAOS_DEPENDENCY_TARGET = 'api-externa';
+
+    const resultado = await service.obtenerJson('http://api-externa/skus');
+
+    expect(resultado).toEqual({
+      ok: false,
+      error: 'dependencia no disponible (caos)',
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('permite desactivar el circuito para la línea base del experimento', async () => {
+    process.env.RESILIENCE_CIRCUIT_BREAKER_ENABLED = 'false';
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 503,
+    });
+
+    await service.obtenerJson('http://api-externa/skus');
+    await service.obtenerJson('http://api-externa/skus');
+    await service.obtenerJson('http://api-externa/skus');
+    await service.obtenerJson('http://api-externa/skus');
+
+    expect(global.fetch).toHaveBeenCalledTimes(4);
   });
 });
