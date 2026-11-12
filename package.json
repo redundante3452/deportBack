@@ -19,6 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:unit:docker": "docker compose -f docker-compose.test.yml run --build --rm unit-tests",
+    "security:detections": "node scripts/validate-security-detections.js",
     "test:e2e:docker": "docker compose -f docker-compose.test.yml run --build --rm e2e-tests",
     "test:docker": "docker compose -f docker-compose.test.yml run --build --rm unit-tests && docker compose -f docker-compose.test.yml run --build --rm e2e-tests",
     "test:cov:merge": "mkdir -p .nyc_output coverage-merged && cp coverage/coverage-final.json .nyc_output/from-unit.json && cp coverage-e2e/coverage-final.json .nyc_output/from-e2e.json && npx nyc merge .nyc_output coverage-merged/coverage-final.json && npx nyc report --temp-dir=coverage-merged --report-dir=coverage --reporter=json-summary --reporter=text"

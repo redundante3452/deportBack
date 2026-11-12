@@ -18,8 +18,14 @@ spec:
     method: usar-identidad-de-prueba-desde-origen-no-previsto
     destructive: false
   signals:
-    - evento-de-denegacion-o-alerta-de-iam
+    - security_authentication_denied
     - trace_id-del-flujo
+  detection:
+    rule: identity-unexpected-origin
+    implementation: src/common/team-api-key/team-api-key.guard.ts
+    start_event: solicitud-rechazada-con-una-identidad-u-origen-no-previsto
+    containment_event: acceso-rechazado-y-solicitud-sin-efecto
+    evidence: security/evidence-schema.json
   stopConditions:
     - afectar-identidad-administrativa
     - acceso-a-datos-reales
