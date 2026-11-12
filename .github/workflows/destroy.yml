@@ -36,14 +36,22 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: terraform
-        run: terraform init -backend-config="bucket=${{ env.TF_STATE_BUCKET }}"
+        run: terraform init -input=false -backend-config="bucket=${{ env.TF_STATE_BUCKET }}"
 
-      - name: Destroy infrastructure
+      - name: Plan infrastructure destruction
         working-directory: terraform
         run: |
-          terraform destroy -auto-approve \
+          terraform plan -destroy -input=false -out destroy.tfplan \
             -lock-timeout=10m \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="region=${{ env.GCP_REGION }}" \
             -var="db_region=${{ env.GCP_REGION }}" \
-            -var="app_name=${{ env.APP_NAME }}"
+            -var="app_name=${{ env.APP_NAME }}" \
+            -var="db_name=deport_db" \
+            -var="db_user=deport_user" \
+            -var="gke_cluster_name=${{ env.APP_NAME }}-gke" \
+            -var="gke_namespace=${{ env.APP_NAME }}"
+
+      - name: Apply destruction plan
+        working-directory: terraform
+        run: terraform apply -input=false -auto-approve -lock-timeout=10m destroy.tfplan

@@ -203,8 +203,28 @@ Para evitar costos, elimina todos los recursos gestionados por Terraform cuando
 termines la sustentación:
 
 ```bash
-terraform destroy -auto-approve
+terraform -chdir=terraform init -input=false \
+  -backend-config="bucket=MI_BUCKET_DE_TF_STATE"
+
+terraform -chdir=terraform plan -destroy -input=false \
+  -out destroy.tfplan \
+  -var="project_id=MI_PROJECT_ID" \
+  -var="region=us-central1" \
+  -var="db_region=us-central1" \
+  -var="app_name=deport-back" \
+  -var="db_name=deport_db" \
+  -var="db_user=deport_user" \
+  -var="gke_cluster_name=deport-back-gke" \
+  -var="gke_namespace=deport-back"
+
+terraform -chdir=terraform apply -input=false \
+  -auto-approve destroy.tfplan
 ```
+
+El workflow manual `destroy.yml` ejecuta estos mismos pasos con el backend
+remoto y las variables de GitHub. Terraform solo elimina recursos presentes en
+el estado remoto; los recursos creados fuera de ese estado deben importarse o
+eliminarse por separado después de verificar su pertenencia al proyecto.
 
 El bucket del estado no es administrado por este módulo y debe eliminarse por separado
 solo cuando ya no necesites conservar el estado.
