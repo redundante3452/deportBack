@@ -36,7 +36,14 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: terraform
-        run: terraform init -input=false -backend-config="bucket=${{ env.TF_STATE_BUCKET }}"
+        run: terraform init -reconfigure -input=false -backend-config="bucket=${{ env.TF_STATE_BUCKET }}"
+
+      - name: Show managed resources
+        working-directory: terraform
+        run: |
+          echo "Recursos administrados por el estado remoto:"
+          terraform state list
+          test -n "$(terraform state list)"
 
       - name: Plan infrastructure destruction
         working-directory: terraform

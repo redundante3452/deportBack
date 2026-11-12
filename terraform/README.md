@@ -204,6 +204,7 @@ termines la sustentación:
 
 ```bash
 terraform -chdir=terraform init -input=false \
+  -reconfigure \
   -backend-config="bucket=MI_BUCKET_DE_TF_STATE"
 
 terraform -chdir=terraform plan -destroy -input=false \
@@ -224,7 +225,16 @@ terraform -chdir=terraform apply -input=false \
 El workflow manual `destroy.yml` ejecuta estos mismos pasos con el backend
 remoto y las variables de GitHub. Terraform solo elimina recursos presentes en
 el estado remoto; los recursos creados fuera de ese estado deben importarse o
-eliminarse por separado después de verificar su pertenencia al proyecto.
+eliminarse por separado después de verificar su pertenencia al proyecto. Antes
+de destruir, revisa el inventario con:
+
+```bash
+terraform -chdir=terraform state list
+```
+
+Si un recurso administrado no aparece, primero impórtalo con su dirección de
+Terraform y su identificador real. No se deben importar recursos de otro
+proyecto ni secretos que no correspondan a este módulo.
 
 El bucket del estado no es administrado por este módulo y debe eliminarse por separado
 solo cuando ya no necesites conservar el estado.
