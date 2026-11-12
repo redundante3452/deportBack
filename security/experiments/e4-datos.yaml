@@ -1,0 +1,36 @@
+apiVersion: security-chaos/v1
+kind: SecurityExperiment
+metadata:
+  name: e4-resiliencia-datos
+spec:
+  owner: grupo-completo
+  control: inmutabilidad-copia-aislada-y-recuperacion
+  hypothesisRef: security/game-day/hipotesis.md#e4---resiliencia-de-datos
+  preconditions:
+    - bucket-o-contenedor-propio-confirmado
+    - objetos-sinteticos-creados
+    - copia-aislada-verificada
+    - inmutabilidad-verificada
+    - restauracion-de-prueba-completada
+  scope:
+    resources: pendiente-de-confirmar
+    data: objetos-sinteticos-desechables
+  injection:
+    method: sobrescritura-o-borrado-simulado-del-objeto-sintetico
+    destructive: true
+  signals:
+    - evento-de-borrado-o-cifrado
+    - alerta-de-proteccion-de-datos
+    - trace_id-del-flujo
+  metrics:
+    - rpo
+    - rto
+    - mttd
+    - mttc
+  stopConditions:
+    - objeto-fuera-del-alcance
+    - copia-aislada-en-riesgo
+    - recuperacion-no-disponible
+  rollback:
+    method: restaurar-desde-copia-aislada-y-confirmar-integridad
+  status: bloqueado-hasta-confirmar-almacenamiento

@@ -1,0 +1,7 @@
+{
+  "event": "protected_object_read",
+  "bucket": "synthetic-authorized-bucket",
+  "object": "game-day/synthetic-object",
+  "execution_id": "fixture-e4-negative",
+  "expected_match": false
+}

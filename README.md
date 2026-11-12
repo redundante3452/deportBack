@@ -28,6 +28,7 @@ terraform/            # infraestructura modular para GCP y Cloud Run
 scripts/              # despliegue, promoción, quality gate y rollback canary
 .github/workflows/    # automatización de deploy y destroy
 k8s/                  # manifiestos alternativos para GKE
+security/             # game day de caos de seguridad y detecciones
 ```
 
 ## Implementaciones DevOps
@@ -45,6 +46,10 @@ k8s/                  # manifiestos alternativos para GKE
   versión; ante una regresión, el tráfico vuelve a `stable=100,canary=0`.
 - **Escalabilidad en GKE:** manifiestos alternativos con réplicas, probes, límites de
   recursos, LoadBalancer y HPA de 2 a 5 réplicas.
+- **Defensa en profundidad:** diseño versionado del game day, inventario de controles,
+  hipótesis, experimentos E1-E4 y detección como código en [`security/`](security/).
+  Esta entrega es independiente del informe DevOps y no contiene resultados que no
+  hayan sido medidos en infraestructura autorizada.
 
 ## Canary Deployment (v3)
 

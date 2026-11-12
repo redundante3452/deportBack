@@ -1,0 +1,32 @@
+version: "0.1"
+platform: pending-confirmation
+rules:
+  - id: identity-unexpected-origin
+    experiment: E1
+    signal: authentication_denied_or_unexpected_origin
+    window_minutes: pending
+    positive_case: fixtures/e1-positive.json
+    negative_case: fixtures/e1-negative.json
+    status: design-only
+    implementation: security_authentication_denied
+  - id: undeclared-route-or-east-west-access
+    experiment: E2
+    signal: unauthorized_network_flow_or_rule_change
+    window_minutes: pending
+    positive_case: fixtures/e2-positive.json
+    negative_case: fixtures/e2-negative.json
+    status: design-only
+  - id: telemetry-heartbeat-missing
+    experiment: E3
+    signal: telemetry_heartbeat_absent
+    window_minutes: pending
+    positive_case: fixtures/e3-positive.json
+    negative_case: fixtures/e3-negative.json
+    status: design-only
+  - id: synthetic-data-protection-event
+    experiment: E4
+    signal: protected_object_change_or_delete
+    window_minutes: pending
+    positive_case: fixtures/e4-positive.json
+    negative_case: fixtures/e4-negative.json
+    status: design-only

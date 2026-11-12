@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Security Chaos Evidence",
+  "type": "object",
+  "required": [
+    "execution_id",
+    "experiment",
+    "round",
+    "timestamp_utc",
+    "trace_id",
+    "events"
+  ],
+  "properties": {
+    "execution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "experiment": {
+      "enum": ["E1", "E2", "E3", "E4"]
+    },
+    "round": {
+      "enum": [0, 1]
+    },
+    "timestamp_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp_utc", "kind", "status"],
+        "properties": {
+          "timestamp_utc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "enum": [
+              "injection_started",
+              "detection",
+              "containment",
+              "recovery_started",
+              "recovery_completed",
+              "rollback"
+            ]
+          },
+          "status": {
+            "enum": ["observed", "not_detected", "not_contained", "pending"]
+          },
+          "source": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "mttd_seconds": {
+          "type": ["number", "string"]
+        },
+        "mttc_seconds": {
+          "type": ["number", "string"]
+        },
+        "rpo_seconds": {
+          "type": ["number", "string"]
+        },
+        "rto_seconds": {
+          "type": ["number", "string"]
+        }
+      }
+    }
+  }
+}

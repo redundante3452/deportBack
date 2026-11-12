@@ -1,0 +1,8 @@
+{
+  "event": "network_flow_denied",
+  "source": "synthetic-workload",
+  "destination": "protected-service",
+  "route": "undeclared",
+  "execution_id": "fixture-e2-positive",
+  "expected_match": true
+}

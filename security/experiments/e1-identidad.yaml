@@ -1,0 +1,29 @@
+apiVersion: security-chaos/v1
+kind: SecurityExperiment
+metadata:
+  name: e1-identidad-maquina
+spec:
+  owner: pendiente-de-confirmar
+  control: identidad-de-maquina-y-minimo-privilegio
+  hypothesisRef: security/game-day/hipotesis.md#e1---identidad-de-máquina-o-agente
+  preconditions:
+    - identidad-de-prueba-propia-confirmada
+    - origen-no-previsto-controlado-y-reversible
+    - auditoria-de-iam-activa
+    - estado-estable-medido
+  scope:
+    resources: pendiente-de-confirmar
+    data: sinteticos-desechables
+  injection:
+    method: usar-identidad-de-prueba-desde-origen-no-previsto
+    destructive: false
+  signals:
+    - evento-de-denegacion-o-alerta-de-iam
+    - trace_id-del-flujo
+  stopConditions:
+    - afectar-identidad-administrativa
+    - acceso-a-datos-reales
+    - perdida-de-trazabilidad
+  rollback:
+    method: revocar-identidad-de-prueba-y-confirmar-denegacion
+  status: diseno-pendiente-de-alcance

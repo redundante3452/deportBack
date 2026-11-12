@@ -1,0 +1,8 @@
+{
+  "event": "network_flow_allowed",
+  "source": "authorized-workload",
+  "destination": "declared-dependency",
+  "route": "declared",
+  "execution_id": "fixture-e2-negative",
+  "expected_match": false
+}

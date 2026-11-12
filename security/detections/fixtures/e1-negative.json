@@ -1,0 +1,7 @@
+{
+  "event": "authentication_succeeded",
+  "identity": "authorized-workload",
+  "origin": "gke-workload",
+  "execution_id": "fixture-e1-negative",
+  "expected_match": false
+}

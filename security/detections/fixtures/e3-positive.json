@@ -1,0 +1,7 @@
+{
+  "event": "telemetry_heartbeat_absent",
+  "component": "synthetic-observer",
+  "window_seconds": 120,
+  "execution_id": "fixture-e3-positive",
+  "expected_match": true
+}

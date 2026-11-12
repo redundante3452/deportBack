@@ -1,0 +1,7 @@
+{
+  "event": "authentication_denied",
+  "identity": "synthetic-machine-identity",
+  "origin": "unauthorized-test-origin",
+  "execution_id": "fixture-e1-positive",
+  "expected_match": true
+}

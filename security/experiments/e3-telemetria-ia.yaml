@@ -1,0 +1,31 @@
+apiVersion: security-chaos/v1
+kind: SecurityExperiment
+metadata:
+  name: e3-telemetria-ia
+spec:
+  owner: api-fastify
+  control: telemetria-separacion-datos-instrucciones-y-humano-en-bucle
+  hypothesisRef: security/game-day/hipotesis.md#e3---telemetría-e-ia
+  preconditions:
+    - componente-ia-real-confirmado
+    - campo-de-entrada-sintetico-confirmado
+    - acciones-permitidas-y-prohibidas-documentadas
+    - alerta-de-ausencia-de-telemetria-activa
+  scope:
+    resources: pendiente-de-confirmar
+    data: sinteticos-desechables
+  injection:
+    method: dato-sintetico-con-instruccion-no-confiable-y-degradacion-controlada-de-telemetria
+    destructive: false
+  signals:
+    - rechazo-o-reporte-del-contenido
+    - alerta-de-heartbeat-ausente
+    - aprobacion-humana-registrada
+    - trace_id-del-flujo
+  stopConditions:
+    - ejecucion-de-accion-con-efecto
+    - perdida-de-auditoria
+    - acceso-a-datos-reales
+  rollback:
+    method: retirar-dato-sintetico-y-restaurar-exportador
+  status: bloqueado-hasta-identificar-ia-real

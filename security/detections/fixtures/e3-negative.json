@@ -1,0 +1,7 @@
+{
+  "event": "telemetry_heartbeat_received",
+  "component": "authorized-observer",
+  "window_seconds": 30,
+  "execution_id": "fixture-e3-negative",
+  "expected_match": false
+}
