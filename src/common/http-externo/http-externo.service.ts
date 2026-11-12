@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ResultadoHttpExterno } from './http-externo.types';
 
 const TIMEOUT_MS_DEFAULT = 5000;
@@ -12,6 +12,7 @@ interface EstadoCircuito {
 
 @Injectable()
 export class HttpExternoService {
+  private readonly logger = new Logger(HttpExternoService.name);
   private readonly circuitos = new Map<string, EstadoCircuito>();
 
   async obtenerJson(
@@ -19,6 +20,19 @@ export class HttpExternoService {
     timeoutMs = TIMEOUT_MS_DEFAULT,
     headers?: Record<string, string>,
   ): Promise<ResultadoHttpExterno> {
+    if (this.urlNoSeguraEnProduccion(url)) {
+      this.logger.warn(
+        JSON.stringify({
+          event: 'security_insecure_dependency_url_blocked',
+          url,
+        }),
+      );
+      return {
+        ok: false,
+        error: `URL no segura bloqueada en producción: ${url}`,
+      };
+    }
+
     const circuitoHabilitado =
       process.env.RESILIENCE_CIRCUIT_BREAKER_ENABLED !== 'false';
     const circuito = this.circuitos.get(url);
@@ -87,6 +101,18 @@ export class HttpExternoService {
 
     const objetivo = process.env.CHAOS_DEPENDENCY_TARGET;
     return !objetivo || url.includes(objetivo);
+  }
+
+  private urlNoSeguraEnProduccion(url: string): boolean {
+    if (process.env.NODE_ENV !== 'production') {
+      return false;
+    }
+
+    try {
+      return new URL(url).protocol !== 'https:';
+    } catch {
+      return true;
+    }
   }
 
   private registrarFallo(

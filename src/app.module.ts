@@ -25,6 +25,8 @@ import { TeamApiKeyGuard } from './common/team-api-key/team-api-key.guard';
         const isCloudSqlSocket = host?.startsWith('/cloudsql/') ?? false;
         const useSsl =
           !isCloudSqlSocket && configService.get<string>('DB_SSL') === 'true';
+        const rejectUnauthorized =
+          configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') !== 'false';
 
         return {
           type: 'postgres',
@@ -47,7 +49,7 @@ import { TeamApiKeyGuard } from './common/team-api-key/team-api-key.guard';
           ...(useSsl
             ? {
                 ssl: {
-                  rejectUnauthorized: false,
+                  rejectUnauthorized,
                 },
               }
             : {}),

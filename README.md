@@ -50,6 +50,9 @@ security/             # game day de caos de seguridad y detecciones
   hipótesis, experimentos E1-E4 y detección como código en [`security/`](security/).
   Esta entrega es independiente del informe DevOps y no contiene resultados que no
   hayan sido medidos en infraestructura autorizada.
+- **Transporte seguro:** en producción se bloquean dependencias configuradas con HTTP;
+  PostgreSQL valida certificados cuando `DB_SSL=true`, salvo una excepción explícita
+  mediante `DB_SSL_REJECT_UNAUTHORIZED=false` para entornos controlados.
 
 ## Canary Deployment (v3)
 

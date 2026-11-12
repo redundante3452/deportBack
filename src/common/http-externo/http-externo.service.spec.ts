@@ -14,6 +14,7 @@ describe('HttpExternoService', () => {
     delete process.env.CHAOS_DEPENDENCY_FAILURE;
     delete process.env.CHAOS_DEPENDENCY_TARGET;
     delete process.env.RESILIENCE_CIRCUIT_BREAKER_ENABLED;
+    delete process.env.NODE_ENV;
   });
 
   afterAll(() => {
@@ -22,6 +23,18 @@ describe('HttpExternoService', () => {
 
   it('debe estar definido', () => {
     expect(service).toBeDefined();
+  });
+
+  it('bloquea dependencias HTTP en producción', async () => {
+    process.env.NODE_ENV = 'production';
+
+    const resultado = await service.obtenerJson('http://api-externa/skus');
+
+    expect(resultado).toEqual({
+      ok: false,
+      error: 'URL no segura bloqueada en producción: http://api-externa/skus',
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('devuelve ok:true con el JSON de la respuesta cuando el servicio externo responde bien', async () => {
