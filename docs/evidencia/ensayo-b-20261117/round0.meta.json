@@ -1,0 +1,11 @@
+{
+  "execution_id": "ensayo-b-20261117-r0",
+  "round": "0",
+  "injection_start_utc": "2026-11-17T06:28:10Z",
+  "injection_end_utc": "2026-11-17T06:32:42Z",
+  "base_url": "http://34.16.0.136",
+  "chaos_target": "trycloudflare",
+  "breaker": "off",
+  "k6_exit_code": 99,
+  "trace_id_prefix": "ensayo-b-20261117-r0"
+}
