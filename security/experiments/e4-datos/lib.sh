@@ -78,11 +78,24 @@ regla_existe() { # 0 existe, 1 no, 2 no medible
 }
 
 borrar_clones() {
-  local nombres n
+  local nombres n i pendientes ok
   nombres="$(gcloud sql instances list --project "$PROJECT" \
     --filter='name~^deport-back-sql-e4-clone-' --format='value(name)' 2>/dev/null || true)"
   for n in $nombres; do
+    # Esperar a que no haya operaciones pendientes (la operacion CLONE puede seguir RUNNING)
+    for i in $(seq 1 60); do
+      pendientes="$(gcloud sql operations list --instance="$n" --project "$PROJECT" \
+        --filter='status!=DONE' --format='value(name)' 2>/dev/null || true)"
+      [[ -z "$pendientes" ]] && break
+      log "Clon $n con operaciones pendientes, esperando 30 s ($i/60)"
+      sleep 30
+    done
     log "Borrando clon $n"
-    gcloud sql instances delete "$n" --project "$PROJECT" --quiet || log "AVISO: no se pudo borrar $n"
+    ok=false
+    for i in 1 2 3; do
+      if gcloud sql instances delete "$n" --project "$PROJECT" --quiet; then ok=true; break; fi
+      [[ "$i" -lt 3 ]] && sleep 30
+    done
+    $ok || log "AVISO: no se pudo borrar $n"
   done
 }
