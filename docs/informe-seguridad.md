@@ -132,9 +132,11 @@ Forma: *dado el control C, cuando ocurra A, esperamos la señal S en ≤ T1 y co
 | MTTC | no contenido | 1,9 s |
 | Borrados | 50/50 | 20/50 (30 × 429) |
 | Cobertura de detección | 0/2 | 1/2 |
-| Falsos positivos | **[pendiente: historial de la alerta en Grafana]** | **[pendiente: historial de la alerta en Grafana]** |
+| Falsos positivos | n/a (la regla no existía) | 0 de 4 disparos (ver nota) |
 | RPO | 50 registros (100 %) | 0 (20/20 restaurados; punto PITR 20:09:40Z, 1 s antes del ataque) |
 | RTO | no recuperable | 1043 s |
+
+**Falsos positivos** (historial de estados de Grafana del 17-nov, 18:00–23:26 UTC; `docs/evidencia/alertas-historial-20261117/`). La alerta E4 pasó a *Alerting* 4 veces: 19:49:10 (ataque del intento 1, 19:48:18), 20:01:10 (la reversión del intento 1 borró 30 registros a las 20:00:38), 20:10:10 (ataque de R1, 20:09:41) y 20:29:10 (la reversión de R1 borró 50 registros a las 20:28:22). Los 4 disparos corresponden a borrados masivos reales, así que hay **0 falsos positivos**. Sin embargo, 2 de los 4 fueron actividad autorizada del propio equipo. Mejora: silenciar la regla durante la ventana de reversión o excluir la identidad del operador cuando exista una credencial propia. El honeytoken se disparó 1 vez (21:17:10), con la prueba de las 21:16:19, y tampoco tuvo falsos positivos.
 
 Cobertura 1/2: T1485 se detecta por la alerta; T1078 no es distinguible porque la clave válida es compartida por el equipo, de modo que un uso legítimo y uno malicioso producen la misma identidad.
 
