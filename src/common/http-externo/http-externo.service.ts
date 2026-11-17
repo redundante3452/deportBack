@@ -47,6 +47,15 @@ export class HttpExternoService {
     }
 
     if (this.dependenciaNoDisponible(url)) {
+      if (process.env.CHAOS_DEPENDENCY_MODE !== 'error') {
+        // modo hang (por defecto): la dependencia no responde, se cuelga hasta el timeout
+        await new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+        return this.registrarFallo(
+          url,
+          `tiempo de espera agotado llamando a ${url} (caos)`,
+          circuitoHabilitado,
+        );
+      }
       return this.registrarFallo(
         url,
         'dependencia no disponible (caos)',
