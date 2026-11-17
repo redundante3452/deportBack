@@ -1,5 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ResultadoHttpExterno } from './http-externo.types';
+import { Injectable } from '@nestjs/common';
+import { logEstructurado } from '../logging/log-estructurado';
+import {
+  ErrorTypeHttpExterno,
+  ResultadoHttpExterno,
+} from './http-externo.types';
 
 const TIMEOUT_MS_DEFAULT = 5000;
 const CIRCUIT_FAILURE_THRESHOLD = 3;
@@ -12,7 +16,6 @@ interface EstadoCircuito {
 
 @Injectable()
 export class HttpExternoService {
-  private readonly logger = new Logger(HttpExternoService.name);
   private readonly circuitos = new Map<string, EstadoCircuito>();
 
   async obtenerJson(
@@ -21,15 +24,13 @@ export class HttpExternoService {
     headers?: Record<string, string>,
   ): Promise<ResultadoHttpExterno> {
     if (this.urlNoSeguraEnProduccion(url)) {
-      this.logger.warn(
-        JSON.stringify({
-          event: 'security_insecure_dependency_url_blocked',
-          url,
-        }),
-      );
+      logEstructurado('WARNING', 'security_insecure_dependency_url_blocked', {
+        url,
+      });
       return {
         ok: false,
         error: `URL no segura bloqueada en producción: ${url}`,
+        errorType: 'insecure_url',
       };
     }
 
@@ -41,9 +42,11 @@ export class HttpExternoService {
         return {
           ok: false,
           error: `circuito abierto para ${url}`,
+          errorType: 'circuit_open',
         };
       }
       this.circuitos.delete(url);
+      logEstructurado('INFO', 'circuit_breaker_half_open', { url });
     }
 
     if (this.dependenciaNoDisponible(url)) {
@@ -53,12 +56,14 @@ export class HttpExternoService {
         return this.registrarFallo(
           url,
           `tiempo de espera agotado llamando a ${url} (caos)`,
+          'timeout',
           circuitoHabilitado,
         );
       }
       return this.registrarFallo(
         url,
         'dependencia no disponible (caos)',
+        'connection_error',
         circuitoHabilitado,
       );
     }
@@ -76,6 +81,7 @@ export class HttpExternoService {
         return this.registrarFallo(
           url,
           `respuesta ${respuesta.status} de ${url}`,
+          'http_error',
           circuitoHabilitado,
         );
       }
@@ -88,6 +94,7 @@ export class HttpExternoService {
         return this.registrarFallo(
           url,
           `tiempo de espera agotado llamando a ${url}`,
+          'timeout',
           circuitoHabilitado,
         );
       }
@@ -96,6 +103,7 @@ export class HttpExternoService {
       return this.registrarFallo(
         url,
         `no se pudo conectar a ${url}: ${mensaje}`,
+        'connection_error',
         circuitoHabilitado,
       );
     } finally {
@@ -127,18 +135,24 @@ export class HttpExternoService {
   private registrarFallo(
     url: string,
     error: string,
+    errorType: ErrorTypeHttpExterno,
     circuitoHabilitado: boolean,
   ): ResultadoHttpExterno {
     if (!circuitoHabilitado) {
-      return { ok: false, error };
+      return { ok: false, error, errorType };
     }
 
     const estado = this.circuitos.get(url) ?? { fallos: 0 };
     estado.fallos += 1;
     if (estado.fallos >= CIRCUIT_FAILURE_THRESHOLD) {
       estado.abiertoDesde = Date.now();
+      logEstructurado('WARNING', 'circuit_breaker_opened', {
+        url,
+        fallos: estado.fallos,
+        cooldown_ms: CIRCUIT_COOLDOWN_MS,
+      });
     }
     this.circuitos.set(url, estado);
-    return { ok: false, error };
+    return { ok: false, error, errorType };
   }
 }
