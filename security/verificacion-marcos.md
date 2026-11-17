@@ -42,6 +42,7 @@ Citar una técnica o contramedida inexistente se penaliza; por eso solo se usan 
 | D3-RAPA | Resource Access Pattern Analysis | alerta de borrado masivo (patrón anómalo de acceso a recursos) |
 | D3-RD | Restore Database | restauración desde clon PITR |
 | D3-RO | Restore Object | copia aislada versionada en el bucket |
+| D3-DO | Decoy Object | honeytoken (deportista señuelo con alerta); verificado 2026-11-17 vía API de D3FEND |
 | D3-UGLPA | User Geolocation Logon Pattern Analysis | ⚠️ existe, pero **no** corresponde al límite de borrados: no usar para el E4 |
 
 El límite de borrados por llamador (HTTP 429) se describe por su función y se traza a NIST SC-5 / AC-3; no se le asigna un ID de D3FEND sin verificar.

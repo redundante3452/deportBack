@@ -5,10 +5,9 @@ independiente del informe de rendimiento y resiliencia del entregable DevOps.
 
 ## Estado de la evidencia
 
-Los archivos de diseño son código y documentación versionados. Todavía no
-contienen resultados de ejecución, alertas, capturas, MTTD, MTTC, RPO ni RTO.
-Esos valores solo se completarán después de ejecutar los experimentos en
-infraestructura propia, con autorización del grupo y datos sintéticos.
+Informe del game day: [docs/informe-seguridad.md](../docs/informe-seguridad.md).
+
+E4 (resiliencia de datos) está ejecutado en dos rondas el 2026-11-17 (evidencia en `docs/evidencia/e4-*`): R0 sin detección ni contención y con RPO de 50 registros; R1 con MTTD 37,5 s, MTTC 1,9 s, RPO 0 y RTO 1043 s. E1, E2 y E3 siguen pendientes de resultados de sus responsables (Marín y Peñuela).
 
 ## Arquitectura comprobada en el repositorio
 

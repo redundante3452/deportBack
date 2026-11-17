@@ -1,12 +1,10 @@
 # Informe de Game Day de Caos de Seguridad
 
-> Plantilla independiente del informe de DevOps. No completar con resultados
-> supuestos: toda cifra debe tener evidencia, `execution_id`, `trace_id` y
-> timestamp UTC.
+> El informe completo y vigente está en [docs/informe-seguridad.md](../docs/informe-seguridad.md). Este archivo conserva la estructura de la plantilla.
 
 ## 1. Resumen ejecutivo
 
-Pendiente de ejecución.
+E4 ejecutado (2026-11-17): R0 no detectado ni contenido, 50/50 borrados, RPO 50 registros; R1 MTTD 37,5 s, MTTC 1,9 s, 20/50 borrados, RPO 0, RTO 1043 s. E1–E3: pendiente.
 
 ## 2. Arquitectura y fronteras de confianza
 
