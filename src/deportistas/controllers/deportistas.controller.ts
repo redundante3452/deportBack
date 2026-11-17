@@ -9,7 +9,9 @@ import {
   Post,
   Put,
   Query,
+  Req,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +26,9 @@ import { CreateDeportistaDto } from '../dto/create-deportista.dto';
 import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
 import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
 import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
+import { LimiteBorradoGuard } from '../../common/security/limite-borrado.guard';
+import { registrarBorrado } from '../../common/security/registrar-borrado';
+import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
 
 @ApiTags('Deportistas')
 @Controller('deportistas')
@@ -125,12 +130,18 @@ export class DeportistasController {
   }
 
   @Delete(':id')
+  @UseGuards(LimiteBorradoGuard)
   @ApiOperation({ summary: 'Eliminar deportista' })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista eliminado.' })
   @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
-  eliminar(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.deportistasService.eliminar(id);
+  async eliminar(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() request: RequestConTraceId,
+  ) {
+    const resultado = await this.deportistasService.eliminar(id);
+    registrarBorrado(request, id, 'v1');
+    return resultado;
   }
 }

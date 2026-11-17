@@ -11,6 +11,7 @@ import {
   Query,
   Req,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,6 +28,8 @@ import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
 import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deportista.dto';
 import { obtenerTraceId } from '../../common/trace-id/trace-id.util';
 import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
+import { LimiteBorradoGuard } from '../../common/security/limite-borrado.guard';
+import { registrarBorrado } from '../../common/security/registrar-borrado';
 
 @ApiTags('Deportistas v2')
 @Controller('api/v2/deportistas')
@@ -162,6 +165,7 @@ export class DeportistasV2Controller {
   }
 
   @Delete(':id')
+  @UseGuards(LimiteBorradoGuard)
   @ApiOperation({
     summary: 'Eliminar deportista (v2)',
     description:
@@ -176,6 +180,7 @@ export class DeportistasV2Controller {
     @Req() request: RequestConTraceId,
   ) {
     await this.deportistasService.eliminar(id);
+    registrarBorrado(request, id, 'v2');
     return { eliminado: true, id, trace_id: obtenerTraceId(request) };
   }
 }
