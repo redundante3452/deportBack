@@ -228,6 +228,11 @@ el estado remoto; los recursos creados fuera de ese estado deben importarse o
 eliminarse por separado después de verificar su pertenencia al proyecto. Antes
 de destruir, revisa el inventario con:
 
+El despliegue automático de `deploy.yml` permanece desactivado salvo que la
+variable de repositorio `ENABLE_GCP_DEPLOY` tenga exactamente el valor
+`true`. Esto evita que un `push` vuelva a crear recursos y costos después de un
+destroy.
+
 ```bash
 terraform -chdir=terraform state list
 ```

@@ -18,6 +18,7 @@ env:
 
 jobs:
   deploy:
+    if: ${{ vars.ENABLE_GCP_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
     concurrency:
       group: terraform-deport-back-state
