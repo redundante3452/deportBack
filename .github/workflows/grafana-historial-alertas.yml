@@ -1,0 +1,71 @@
+name: Grafana - historial de alertas
+
+# Exporta el historial de estados de las reglas de alerta E4 y honeytoken
+# (para calcular falsos positivos). Solo lectura. No imprime el token.
+on:
+  workflow_dispatch:
+    inputs:
+      desde:
+        description: Inicio de la ventana (UTC, ISO 8601)
+        required: false
+        default: '2026-11-17T18:00:00Z'
+
+jobs:
+  historial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+      DESDE: ${{ inputs.desde }}
+    steps:
+      - name: Exportar historial
+        run: |
+          set -uo pipefail
+          mkdir -p resultados
+          FROM_S="$(date -u -d "$DESDE" +%s)"; TO_S="$(date -u +%s)"
+          BASE="${GRAFANA_URL%/}"
+          {
+            echo "## Historial de alertas (desde $DESDE)"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          for UID_R in e4-borrado-masivo honeytoken-deportista; do
+            OUT="resultados/historial-$UID_R.json"
+            RAW="resultados/raw-$UID_R.json"
+            CODE="$(curl -s --max-time 30 -o "$RAW" -w '%{http_code}' \
+              -H "Authorization: Bearer $GRAFANA_TOKEN" \
+              "$BASE/api/v1/rules/history?ruleUID=$UID_R&from=$FROM_S&to=$TO_S&limit=1000")"
+            echo "regla $UID_R: history HTTP $CODE"
+            FUENTE="rules/history"
+            if [ "$CODE" = "200" ] && jq -e '.data.values' "$RAW" >/dev/null 2>&1; then
+              jq '[ (.data.values[0]) as $ts | (.data.values[1]) as $ln
+                    | range(0; ($ts|length)) as $i
+                    | ($ln[$i] | if type=="string" then (fromjson? // {}) else . end) as $l
+                    | {t_utc: (($ts[$i]/1000)|floor|todate), previous: ($l.previous // ""), current: ($l.current // "")}
+                    | select((.previous+" "+.current) | test("Alerting|Firing"; "i")) ]
+                  | sort_by(.t_utc)' "$RAW" > "$OUT"
+            else
+              FUENTE="annotations (fallback)"
+              curl -s --max-time 30 -H "Authorization: Bearer $GRAFANA_TOKEN" \
+                "$BASE/api/annotations?type=alert&from=$((FROM_S*1000))&to=$((TO_S*1000))&limit=1000" > "$RAW"
+              jq --arg u "$UID_R" '[ .[]? | select((.ruleUID // "")==$u or ((.text // "")+(.alertName // "")|test($u)))
+                    | {t_utc: ((.time/1000)|floor|todate), previous: (.prevState // ""), current: (.newState // "")}
+                    | select((.previous+" "+.current) | test("Alerting|Firing"; "i")) ] | sort_by(.t_utc)' "$RAW" > "$OUT"
+            fi
+            rm -f "$RAW"
+            {
+              echo "### $UID_R (fuente: $FUENTE, HTTP $CODE)"
+              echo
+              echo "| t_utc | previous | current |"
+              echo "|---|---|---|"
+              jq -r '.[] | "| \(.t_utc) | \(.previous) | \(.current) |"' "$OUT"
+              echo
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "transiciones: $(jq length "$OUT")"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resultados
+          path: resultados
