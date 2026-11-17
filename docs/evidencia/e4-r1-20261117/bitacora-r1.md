@@ -1,0 +1,35 @@
+# Bitacora E4 ronda 1 (gd-exp4-r1-20261117T200522Z)
+- 2026-11-17T20:05:22Z == a. Estado estable ==
+- 2026-11-17T20:05:22Z Deportistas (API): 2
+- 2026-11-17T20:05:23Z Backups=true PITR=true
+- 2026-11-17T20:05:24Z Control SECURITY_DELETE_LIMIT_ENABLED previo: false
+- 2026-11-17T20:05:25Z Regla de alerta 'E4 - Borrado masivo de deportistas': existe
+- 2026-11-17T20:05:25Z AVISO: la alerta ya esta firing antes del ataque; esperando hasta 5 min a que se resuelva
+- 2026-11-17T20:06:12Z == b. Ronda 1: activando control de contencion ==
+- 2026-11-17T20:07:19Z == c. Siembra de 50 registros sinteticos ==
+- 2026-11-17T20:07:23Z Sembrados: 50. T_siembra_fin=2026-11-17T20:07:23Z
+- 2026-11-17T20:07:23Z Exportando copia aislada a gs://deport-back-e4-copias-542943328704/e4/r1200522.sql.gz
+- 2026-11-17T20:07:41Z Export OK
+- 2026-11-17T20:07:41Z Espera de 120 s (log de transacciones posterior a la siembra para el PITR)
+- 2026-11-17T20:09:41Z == d. Ataque: borrado masivo con credencial valida (ATT&CK T1078 + T1485) ==
+- 2026-11-17T20:09:46Z Ataque fin 2026-11-17T20:09:46Z: borrados=20 bloqueados(429)=30 otros=0
+- 2026-11-17T20:09:46Z == e. Deteccion (hasta 10 min, cada 15 s) ==
+- 2026-11-17T20:10:19Z Detectado en 2026-11-17T20:10:19Z. MTTD=37.5s (resolucion de sondeo 15 s)
+- 2026-11-17T20:10:19Z Contenido: primer 429 en 2026-11-17T20:09:43Z. MTTC=1.9s
+- 2026-11-17T20:10:19Z == g. Recuperacion ==
+- 2026-11-17T20:10:19Z Clonando a 2026-11-17T20:09:40Z -> deport-back-sql-e4-clone-r1-2010
+- 2026-11-17T20:27:03Z Filas a restaurar desde el clon: 20
+- 2026-11-17T20:27:05Z Restaurados 20/20. RPO=0 registros (ventana PITR 1 s antes del ataque). RTO=1043s
+- 2026-11-17T20:27:06Z Borrando clon deport-back-sql-e4-clone-r1-2010
+- 2026-11-17T20:27:07Z AVISO: no se pudo borrar deport-back-sql-e4-clone-r1-2010
+- 2026-11-17T20:27:08Z Retencion del bucket: {  "retention_policy": {    "effectiveTime": "2026-11-17T19:40:57.537000+00:00",    "retentionPeriod": "21600"  }}
+- 2026-11-17T20:27:09Z El borrado del export SE PERMITIO (no hay inmutabilidad efectiva)
+- 2026-11-17T20:27:09Z Resultado escrito en /home/runner/work/deportBack/deportBack/resultados/e4/resultado-r1.json
+- 2026-11-17T20:27:09Z Limpieza final (trap EXIT, codigo original 0)
+- 2026-11-17T20:27:09Z == Reversion E4 (ronda 1) ==
+- 2026-11-17T20:27:09Z Restaurando SECURITY_DELETE_LIMIT_ENABLED=false (estaba 'true')
+- 2026-11-17T20:28:22Z Registros sinteticos eliminados en la reversion: 50
+- 2026-11-17T20:28:23Z Borrando clon deport-back-sql-e4-clone-r1-2010
+- 2026-11-17T20:28:24Z AVISO: no se pudo borrar deport-back-sql-e4-clone-r1-2010
+- 2026-11-17T20:28:25Z FALLO: quedan clones: deport-back-sql-e4-clone-r1-2010
+- 2026-11-17T20:28:25Z AVISO: revertir.sh fallo en la limpieza
