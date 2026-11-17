@@ -1,0 +1,42 @@
+[
+  {
+    "t_utc": "2026-11-17T19:49:10Z",
+    "previous": "Normal",
+    "current": "Alerting"
+  },
+  {
+    "t_utc": "2026-11-17T19:54:10Z",
+    "previous": "Alerting",
+    "current": "Normal"
+  },
+  {
+    "t_utc": "2026-11-17T20:01:10Z",
+    "previous": "Normal (NoData)",
+    "current": "Alerting"
+  },
+  {
+    "t_utc": "2026-11-17T20:06:10Z",
+    "previous": "Alerting",
+    "current": "Normal"
+  },
+  {
+    "t_utc": "2026-11-17T20:10:10Z",
+    "previous": "Normal (NoData)",
+    "current": "Alerting"
+  },
+  {
+    "t_utc": "2026-11-17T20:15:10Z",
+    "previous": "Alerting",
+    "current": "Normal"
+  },
+  {
+    "t_utc": "2026-11-17T20:29:10Z",
+    "previous": "Normal (NoData)",
+    "current": "Alerting"
+  },
+  {
+    "t_utc": "2026-11-17T20:34:10Z",
+    "previous": "Alerting",
+    "current": "Normal"
+  }
+]
