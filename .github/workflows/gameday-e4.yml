@@ -1,0 +1,95 @@
+name: Game Day E4 (resiliencia de datos)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ronda:
+        description: Ronda del experimento
+        required: true
+        default: '0'
+        type: choice
+        options: ['0', '1']
+      accion:
+        description: Accion
+        required: true
+        default: iniciar
+        type: choice
+        options: [iniciar, parar, revertir]
+
+concurrency:
+  group: gameday-e4-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  e4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      BASE_URL: http://34.16.0.136
+      PROJECT: deport-back
+      API_KEY: ${{ secrets.TEAM_API_KEY }}
+      GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+      E4_BUCKET: ${{ vars.E4_BUCKET }}
+      RONDA: ${{ inputs.ronda }}
+      RESULT_DIR: ${{ github.workspace }}/resultados/e4
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate in Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ vars.GKE_CLUSTER }}
+          location: us-central1
+          project_id: deport-back
+
+      - name: Install psql and cloud-sql-proxy
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql-client jq
+          curl -fsSL -o cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.0/cloud-sql-proxy.linux.amd64
+          sudo install -m 0755 cloud-sql-proxy /usr/local/bin/cloud-sql-proxy
+          cloud-sql-proxy --version
+
+      - name: Ejecutar ${{ inputs.accion }} (ronda ${{ inputs.ronda }})
+        run: |
+          mkdir -p "$RESULT_DIR"
+          case "${{ inputs.accion }}" in
+            iniciar)  bash security/experiments/e4-datos/ejecutar.sh ;;
+            parar)    bash security/experiments/e4-datos/parar.sh ;;
+            revertir) bash security/experiments/e4-datos/revertir.sh ;;
+          esac
+
+      - name: Resumen
+        if: always()
+        run: |
+          {
+            echo "## E4 - ronda ${{ inputs.ronda }} - ${{ inputs.accion }}"
+            for f in "$RESULT_DIR"/resultado-r*.json; do
+              [ -f "$f" ] && { echo '```json'; cat "$f"; echo '```'; }
+            done
+            for f in "$RESULT_DIR"/bitacora-r*.md; do
+              [ -f "$f" ] && { echo "### $(basename "$f")"; cat "$f"; }
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Subir resultados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e4-resultados-r${{ inputs.ronda }}-${{ github.run_id }}
+          path: resultados/e4
+          if-no-files-found: ignore
