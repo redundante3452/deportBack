@@ -387,7 +387,7 @@ con la misma carga, y exige tasa de error < 1 % y p95 < 1000 ms (valores por def
 | Autenticación `X-Api-Key` y correlación `X-Trace-Id` | Conservada | `src/common/team-api-key/`, `src/common/trace-id/` |
 | Caché distribuida Redis (`/cache`, caché de 30 s de `apis_externas`) | Conservada en el código; infraestructura **por confirmar** | `src/common/cache-distribuida/`; `terraform/` solo recibe `redis_host` y no crea Memorystore |
 | `k8s/` frente a `terraform/gke_workloads.tf` | Duplicidad: ambos definen los mismos recursos de GKE. **Por confirmar** cuál es la fuente oficial (en `k8s/configmap.yaml` el host de Redis está fijo) | `k8s/`, `terraform/gke_workloads.tf` |
-| Despliegue a Railway | **Retirar (por confirmar)**: sigue en `ci-production.yml` y `ci-testing.yml`, pero el despliegue vigente es GCP | `.github/workflows/ci-production.yml`, `ci-testing.yml` |
+| Despliegue a Railway | **Retirada**: se eliminó de `ci-production.yml` y `ci-testing.yml`; el despliegue vigente es GCP y se lanza manualmente | `.github/workflows/deploy.yml` |
 | Chaos Mesh, circuit breaker, chaos gate, k6 | Nueva en este seguimiento | `chaos/`, `load/`, `scripts/chaos-gate.sh` |
 
 ### Enlaces
