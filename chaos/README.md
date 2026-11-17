@@ -58,6 +58,34 @@ Para ejecutar una ronda sobre GKE se usa
 `CHAOS_CONFIRM=true` solo valida la configuración; al terminar, el script
 elimina el recurso de caos, restaura las variables y espera el rollout estable.
 
+## Ejecución con Chaos Toolkit
+
+`experiments/dependency-unavailable.experiment.json` es la definición
+declarativa completa (estado estable, hipótesis, blast radius, duración,
+condiciones de aborto y rollbacks). Requiere `chaostoolkit`, `kubectl` y
+contexto GKE:
+
+```bash
+export BASE_URL=https://<url-real-de-gke>
+export API_KEY=<secreto-del-grupo>
+export DEPORTISTA_ID=<id-sintetico-real>
+export CHAOS_TARGET=<dependencia-propia>
+chaos run chaos/experiments/dependency-unavailable.experiment.json
+```
+
+Abortar: Ctrl+C en `chaos run` (ejecuta los rollbacks), o manualmente:
+
+```bash
+kubectl -n deport-back set env deployment/deport-back \
+  CHAOS_DEPENDENCY_FAILURE=false CHAOS_DEPENDENCY_TARGET= \
+  RESILIENCE_CIRCUIT_BREAKER_ENABLED=true
+kubectl delete -f chaos/experiments/dependency-unavailable.yaml --ignore-not-found
+```
+
+Abortar también si la tasa de error supera 50% durante 60 s o los pods dejan
+de estar Ready. Las métricas (éxito >= 99%, p95 < 1000 ms) son objetivos a
+medir en Ronda 0, no resultados.
+
 La Ronda 1 se ejecuta repitiendo el mismo comando con `ROUND=1`. El perfil de
 carga, la duración, el fallo y el instrumento deben ser idénticos a la Ronda 0.
 Los resultados y el dashboard de Cloud Monitoring son la evidencia oficial.
