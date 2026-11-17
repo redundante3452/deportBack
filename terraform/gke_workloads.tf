@@ -38,6 +38,7 @@ resource "kubernetes_config_map" "app" {
     REDIS_PORT                         = "6379"
     CHAOS_DEPENDENCY_FAILURE           = "false"
     CHAOS_DEPENDENCY_TARGET            = ""
+    CHAOS_DEPENDENCY_MODE              = "hang"
     RESILIENCE_CIRCUIT_BREAKER_ENABLED = "true"
   }
 }
