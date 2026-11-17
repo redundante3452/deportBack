@@ -1,7 +1,259 @@
 {
-  "event": "protected_object_delete_denied",
-  "bucket": "synthetic-authorized-bucket",
-  "object": "game-day/synthetic-object",
+  "event": "deportista_deleted",
+  "window_seconds": 60,
+  "threshold": 10,
+  "events": [
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 0.0,
+      "deportista_id": "e4-fixture-0"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 1.2,
+      "deportista_id": "e4-fixture-1"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 2.4,
+      "deportista_id": "e4-fixture-2"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 3.5999999999999996,
+      "deportista_id": "e4-fixture-3"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 4.8,
+      "deportista_id": "e4-fixture-4"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 6.0,
+      "deportista_id": "e4-fixture-5"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 7.199999999999999,
+      "deportista_id": "e4-fixture-6"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 8.4,
+      "deportista_id": "e4-fixture-7"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 9.6,
+      "deportista_id": "e4-fixture-8"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 10.799999999999999,
+      "deportista_id": "e4-fixture-9"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 12.0,
+      "deportista_id": "e4-fixture-10"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 13.2,
+      "deportista_id": "e4-fixture-11"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 14.399999999999999,
+      "deportista_id": "e4-fixture-12"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 15.6,
+      "deportista_id": "e4-fixture-13"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 16.8,
+      "deportista_id": "e4-fixture-14"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 18.0,
+      "deportista_id": "e4-fixture-15"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 19.2,
+      "deportista_id": "e4-fixture-16"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 20.4,
+      "deportista_id": "e4-fixture-17"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 21.599999999999998,
+      "deportista_id": "e4-fixture-18"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 22.8,
+      "deportista_id": "e4-fixture-19"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 24.0,
+      "deportista_id": "e4-fixture-20"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 25.2,
+      "deportista_id": "e4-fixture-21"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 26.4,
+      "deportista_id": "e4-fixture-22"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 27.599999999999998,
+      "deportista_id": "e4-fixture-23"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 28.799999999999997,
+      "deportista_id": "e4-fixture-24"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 30.0,
+      "deportista_id": "e4-fixture-25"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 31.2,
+      "deportista_id": "e4-fixture-26"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 32.4,
+      "deportista_id": "e4-fixture-27"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 33.6,
+      "deportista_id": "e4-fixture-28"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 34.8,
+      "deportista_id": "e4-fixture-29"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 36.0,
+      "deportista_id": "e4-fixture-30"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 37.199999999999996,
+      "deportista_id": "e4-fixture-31"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 38.4,
+      "deportista_id": "e4-fixture-32"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 39.6,
+      "deportista_id": "e4-fixture-33"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 40.8,
+      "deportista_id": "e4-fixture-34"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 42.0,
+      "deportista_id": "e4-fixture-35"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 43.199999999999996,
+      "deportista_id": "e4-fixture-36"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 44.4,
+      "deportista_id": "e4-fixture-37"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 45.6,
+      "deportista_id": "e4-fixture-38"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 46.8,
+      "deportista_id": "e4-fixture-39"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 48.0,
+      "deportista_id": "e4-fixture-40"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 49.199999999999996,
+      "deportista_id": "e4-fixture-41"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 50.4,
+      "deportista_id": "e4-fixture-42"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 51.6,
+      "deportista_id": "e4-fixture-43"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 52.8,
+      "deportista_id": "e4-fixture-44"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 54.0,
+      "deportista_id": "e4-fixture-45"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 55.199999999999996,
+      "deportista_id": "e4-fixture-46"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 56.4,
+      "deportista_id": "e4-fixture-47"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 57.599999999999994,
+      "deportista_id": "e4-fixture-48"
+    },
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 58.8,
+      "deportista_id": "e4-fixture-49"
+    }
+  ],
   "execution_id": "fixture-e4-positive",
   "expected_match": true
 }

@@ -1,7 +1,14 @@
 {
-  "event": "protected_object_read",
-  "bucket": "synthetic-authorized-bucket",
-  "object": "game-day/synthetic-object",
+  "event": "deportista_deleted",
+  "window_seconds": 60,
+  "threshold": 10,
+  "events": [
+    {
+      "event": "deportista_deleted",
+      "timestamp_offset_s": 0,
+      "deportista_id": "e4-fixture-solo"
+    }
+  ],
   "execution_id": "fixture-e4-negative",
   "expected_match": false
 }
