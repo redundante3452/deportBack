@@ -1,0 +1,23 @@
+# Bitacora E4 ronda 0 (gd-exp4-r0-20261117T191413Z)
+- 2026-11-17T19:14:13Z == a. Estado estable ==
+- 2026-11-17T19:14:13Z Deportistas (API): 2
+- 2026-11-17T19:14:14Z Backups=false PITR=false
+- 2026-11-17T19:14:14Z Control SECURITY_DELETE_LIMIT_ENABLED previo: false
+- 2026-11-17T19:14:16Z Regla de alerta: NO existe
+- 2026-11-17T19:14:16Z == b. Ronda 0: control desactivado ==
+- 2026-11-17T19:14:16Z == c. Siembra de 50 registros sinteticos ==
+- 2026-11-17T19:14:21Z Sembrados: 50. T_siembra_fin=2026-11-17T19:14:21Z
+- 2026-11-17T19:14:21Z Espera de 120 s (log de transacciones posterior a la siembra para el PITR)
+- 2026-11-17T19:16:21Z == d. Ataque: borrado masivo con credencial valida (ATT&CK T1078 + T1485) ==
+- 2026-11-17T19:16:26Z Ataque fin 2026-11-17T19:16:26Z: borrados=50 bloqueados(429)=0 otros=0
+- 2026-11-17T19:16:26Z == e. Deteccion (hasta 10 min, cada 15 s) ==
+- 2026-11-17T19:26:29Z no detectado en 10 min
+- 2026-11-17T19:26:29Z no contenido (ningun 429)
+- 2026-11-17T19:26:29Z == g. Recuperacion ==
+- 2026-11-17T19:26:29Z sin copia: RPO = perdida de 50 registros (100 % de los borrados); RTO = no recuperable
+- 2026-11-17T19:26:29Z Resultado escrito en /home/runner/work/deportBack/deportBack/resultados/e4/resultado-r0.json
+- 2026-11-17T19:26:29Z Limpieza final (trap EXIT, codigo original 0)
+- 2026-11-17T19:26:29Z == Reversion E4 (ronda 0) ==
+- 2026-11-17T19:26:30Z Control ya en false
+- 2026-11-17T19:26:33Z Registros sinteticos eliminados en la reversion: 0
+- 2026-11-17T19:26:35Z REVERSION OK
