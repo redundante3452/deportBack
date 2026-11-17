@@ -1,0 +1,66 @@
+name: Honeytoken - prueba de disparo
+
+# Accede al deportista señuelo con la credencial valida (simula T1078: abuso de credencial
+# valida que enumera registros) y mide el MTTD de la alerta "Honeytoken - acceso a deportista senuelo".
+# Ejecucion manual. Solo lectura: GET por id, no modifica datos.
+on:
+  workflow_dispatch:
+
+jobs:
+  prueba:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      BASE_URL: http://34.16.0.136
+      API_KEY: ${{ secrets.TEAM_API_KEY }}
+      GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+      HONEYTOKEN_IDS: ${{ vars.HONEYTOKEN_IDS }}
+      ALERTA: Honeytoken - acceso a deportista señuelo
+    steps:
+      - name: Disparar y medir MTTD
+        run: |
+          set -euo pipefail
+          mkdir -p resultados
+          ID="${HONEYTOKEN_IDS%%,*}"
+          test -n "$ID"
+          firing() {
+            curl -s --max-time 20 -H "Authorization: Bearer $GRAFANA_TOKEN" \
+              "${GRAFANA_URL%/}/api/prometheus/grafana/api/v1/alerts" \
+              | jq --arg t "$ALERTA" '[.data.alerts[]? | select(.labels.alertname==$t and (.state|ascii_downcase|test("firing|alerting")))] | length'
+          }
+          echo "Estado previo de la alerta (firing): $(firing)"
+          TRACE="gd-honeytoken-$(date -u +%Y%m%dT%H%M%SZ)"
+          T0_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; T0="$(date -u +%s.%N)"
+          ST="$(curl -s -o /dev/null -w '%{http_code}' -H "X-Api-Key: $API_KEY" -H "X-Trace-Id: $TRACE" "$BASE_URL/api/v2/deportistas/$ID")"
+          echo "$T0_ISO acceso al señuelo: HTTP $ST (trace $TRACE)"
+          T1_ISO=""; T1=""
+          for _ in $(seq 1 40); do
+            if [[ "$(firing)" -gt 0 ]]; then T1_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; T1="$(date -u +%s.%N)"; break; fi
+            sleep 15
+          done
+          if [[ -n "$T1" ]]; then
+            MTTD="$(awk -v a="$T1" -v b="$T0" 'BEGIN{printf "%.1f", a-b}')"
+            echo "Alerta firing en $T1_ISO -> MTTD=${MTTD}s (resolucion de sondeo 15 s)"
+          else
+            MTTD=null; echo "No detectado en 10 min"
+          fi
+          jq -n --arg trace "$TRACE" --arg t0 "$T0_ISO" --arg t1 "$T1_ISO" --arg st "$ST" --argjson mttd "$MTTD" \
+            '{trace_id:$trace, t_acceso:$t0, http_status:($st|tonumber), t_deteccion:(if $t1=="" then null else $t1 end), mttd_s:$mttd}' \
+            | tee resultados/honeytoken.json
+          {
+            echo "### Honeytoken"
+            echo "| trace_id | acceso (UTC) | HTTP | alerta (UTC) | MTTD (s) |"
+            echo "|---|---|---|---|---|"
+            echo "| $TRACE | $T0_ISO | $ST | ${T1_ISO:-no detectado} | $MTTD |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          [[ "$MTTD" != null ]]
+
+      - name: Subir resultado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: honeytoken-${{ github.run_id }}
+          path: resultados
