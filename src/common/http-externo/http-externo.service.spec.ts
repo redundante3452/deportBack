@@ -34,6 +34,7 @@ describe('HttpExternoService', () => {
     expect(resultado).toEqual({
       ok: false,
       error: 'URL no segura bloqueada en producción: http://api-externa/skus',
+      errorType: 'insecure_url',
     });
     expect(global.fetch).not.toHaveBeenCalled();
   });
@@ -61,6 +62,7 @@ describe('HttpExternoService', () => {
     expect(resultado).toEqual({
       ok: false,
       error: 'respuesta 503 de http://api-externa/skus',
+      errorType: 'http_error',
     });
   });
 
@@ -74,6 +76,7 @@ describe('HttpExternoService', () => {
     expect(resultado).toEqual({
       ok: false,
       error: 'no se pudo conectar a http://api-externa/skus: fetch failed',
+      errorType: 'connection_error',
     });
   });
 
@@ -89,6 +92,7 @@ describe('HttpExternoService', () => {
     expect(resultado).toEqual({
       ok: false,
       error: 'tiempo de espera agotado llamando a http://api-externa/skus',
+      errorType: 'timeout',
     });
   });
 
@@ -104,6 +108,7 @@ describe('HttpExternoService', () => {
     expect(resultado).toEqual({
       ok: false,
       error: 'no se pudo conectar a http://api-externa/skus: Unexpected token',
+      errorType: 'connection_error',
     });
   });
 
@@ -121,6 +126,7 @@ describe('HttpExternoService', () => {
     expect(resultado).toEqual({
       ok: false,
       error: 'circuito abierto para http://api-externa/skus',
+      errorType: 'circuit_open',
     });
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
@@ -154,6 +160,7 @@ describe('HttpExternoService', () => {
       expect(await promesa).toEqual({
         ok: false,
         error: `tiempo de espera agotado llamando a ${url} (caos)`,
+        errorType: 'timeout',
       });
       expect(global.fetch).not.toHaveBeenCalled();
     });
@@ -165,6 +172,7 @@ describe('HttpExternoService', () => {
       expect(await promesa).toEqual({
         ok: false,
         error: `tiempo de espera agotado llamando a ${url} (caos)`,
+        errorType: 'timeout',
       });
     });
 
@@ -177,6 +185,7 @@ describe('HttpExternoService', () => {
       expect(resultado).toEqual({
         ok: false,
         error: 'dependencia no disponible (caos)',
+        errorType: 'connection_error',
       });
     });
 
@@ -194,6 +203,7 @@ describe('HttpExternoService', () => {
       expect(resultado).toEqual({
         ok: false,
         error: `circuito abierto para ${url}`,
+        errorType: 'circuit_open',
       });
     });
 
@@ -213,6 +223,7 @@ describe('HttpExternoService', () => {
         expect(await promesa).toEqual({
           ok: false,
           error: `tiempo de espera agotado llamando a ${url} (caos)`,
+          errorType: 'timeout',
         });
       }
     });
@@ -228,6 +239,7 @@ describe('HttpExternoService', () => {
     expect(resultado).toEqual({
       ok: false,
       error: 'dependencia no disponible (caos)',
+      errorType: 'connection_error',
     });
     expect(global.fetch).not.toHaveBeenCalled();
   });
@@ -245,5 +257,58 @@ describe('HttpExternoService', () => {
     await service.obtenerJson('http://api-externa/skus');
 
     expect(global.fetch).toHaveBeenCalledTimes(4);
+  });
+
+  describe('eventos estructurados del circuit breaker', () => {
+    let escrituras: string[];
+    let stdoutSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      escrituras = [];
+      stdoutSpy = jest
+        .spyOn(process.stdout, 'write')
+        .mockImplementation((chunk: string | Uint8Array) => {
+          escrituras.push(String(chunk));
+          return true;
+        });
+    });
+
+    afterEach(() => stdoutSpy.mockRestore());
+
+    it('emite circuit_breaker_opened al tercer fallo y half_open tras el cooldown', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      const url = 'http://api-externa/skus';
+
+      await service.obtenerJson(url);
+      await service.obtenerJson(url);
+      expect(escrituras).toHaveLength(0);
+      await service.obtenerJson(url);
+
+      const eventos = escrituras.map(
+        (l) => JSON.parse(l) as Record<string, unknown>,
+      );
+      expect(eventos).toHaveLength(1);
+      expect(eventos[0]).toMatchObject({
+        severity: 'WARNING',
+        event: 'circuit_breaker_opened',
+        url,
+        fallos: 3,
+        cooldown_ms: 30_000,
+      });
+
+      // rechazo rápido: no emite log
+      await service.obtenerJson(url);
+      expect(escrituras).toHaveLength(1);
+
+      const ahora = Date.now();
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(ahora + 31_000);
+      await service.obtenerJson(url);
+      dateSpy.mockRestore();
+
+      const eventosFinal = escrituras.map(
+        (l) => (JSON.parse(l) as { event: string }).event,
+      );
+      expect(eventosFinal).toContain('circuit_breaker_half_open');
+    });
   });
 });
