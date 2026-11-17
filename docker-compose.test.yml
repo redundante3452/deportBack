@@ -13,10 +13,10 @@ services:
 
   # ─────────────────────────────────────────────────────────────
   # Base de datos de prueba local — solo para entorno local
-  # En CI/CD se usa la BD de Supabase via variables de entorno
+  # En CI/CD tambien se usa este Postgres efimero (sin secretos)
   # ─────────────────────────────────────────────────────────────
   db-test:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: deport_test
       POSTGRES_PASSWORD: deport_test
@@ -29,25 +29,21 @@ services:
 
   # ─────────────────────────────────────────────────────────────
   # Pruebas E2E
-  # - Local: usa db-test (PostgreSQL en Docker)
-  # - CI/CD: usa variables de entorno de GitHub Secrets (BD Supabase)
+  # - Local y CI/CD: usan db-test (PostgreSQL 15 efimero en Docker)
   # Ejecutar: pnpm test:e2e:docker
   # ─────────────────────────────────────────────────────────────
   e2e-tests:
     build:
       context: .
       dockerfile: Dockerfile.test
-    env_file:
-      - path: .env.test
-        required: false
     environment:
-      # Si no se proveen variables externas, usa la BD local de Docker
-      DB_HOST: ${DB_HOST:-db-test}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_USERNAME: ${DB_USERNAME:-deport_test}
-      DB_PASSWORD: ${DB_PASSWORD:-deport_test}
-      DB_NAME: ${DB_NAME:-deport_test_db}
-      DB_SSL: ${DB_SSL:-false}
+      # Credenciales fijas de prueba (no secretas) del Postgres efimero
+      DB_HOST: db-test
+      DB_PORT: "5432"
+      DB_USERNAME: deport_test
+      DB_PASSWORD: deport_test
+      DB_NAME: deport_test_db
+      DB_SSL: "false"
       NODE_ENV: test
     depends_on:
       db-test:
