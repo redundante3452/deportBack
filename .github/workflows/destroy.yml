@@ -45,6 +45,18 @@ jobs:
           terraform state list
           test -n "$(terraform state list)"
 
+      - name: Limpiar recursos del experimento E4
+        run: |
+          for b in $(gcloud storage buckets list --project="${{ env.GCP_PROJECT_ID }}" --format='value(name)' 2>/dev/null | grep -- '-e4-copias-' || true); do
+            echo "Limpiando bucket $b"
+            gcloud storage buckets update "gs://$b" --clear-retention-period || true
+            gcloud storage rm -r --all-versions "gs://$b/**" || true
+          done
+          for i in $(gcloud sql instances list --project="${{ env.GCP_PROJECT_ID }}" --format='value(name)' 2>/dev/null | grep '^deport-back-sql-e4-clone' || true); do
+            echo "Borrando instancia $i"
+            gcloud sql instances delete "$i" --project="${{ env.GCP_PROJECT_ID }}" --quiet || true
+          done
+
       - name: Plan infrastructure destruction
         working-directory: terraform
         run: |
@@ -56,6 +68,7 @@ jobs:
             -var="app_name=${{ env.APP_NAME }}" \
             -var="db_name=deport_db" \
             -var="db_user=deport_user" \
+            -var="enable_db_backups=${{ vars.ENABLE_DB_BACKUPS || 'false' }}" \
             -var="gke_cluster_name=${{ env.APP_NAME }}-gke" \
             -var="gke_namespace=${{ env.APP_NAME }}"
 
