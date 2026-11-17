@@ -1,0 +1,25 @@
+# Bitacora E4 ronda 1 (gd-exp4-r1-20261117T194446Z)
+- 2026-11-17T19:44:46Z == a. Estado estable ==
+- 2026-11-17T19:44:46Z Deportistas (API): 2
+- 2026-11-17T19:44:47Z Backups=true PITR=true
+- 2026-11-17T19:44:48Z Control SECURITY_DELETE_LIMIT_ENABLED previo: false
+- 2026-11-17T19:44:48Z Regla de alerta 'E4 - Borrado masivo de deportistas': existe
+- 2026-11-17T19:44:48Z == b. Ronda 1: activando control de contencion ==
+- 2026-11-17T19:45:55Z == c. Siembra de 50 registros sinteticos ==
+- 2026-11-17T19:46:00Z Sembrados: 50. T_siembra_fin=2026-11-17T19:46:00Z
+- 2026-11-17T19:46:00Z Exportando copia aislada a gs://deport-back-e4-copias-542943328704/e4/r1194446.sql.gz
+- 2026-11-17T19:46:18Z Export OK
+- 2026-11-17T19:46:18Z Espera de 120 s (log de transacciones posterior a la siembra para el PITR)
+- 2026-11-17T19:48:18Z == d. Ataque: borrado masivo con credencial valida (ATT&CK T1078 + T1485) ==
+- 2026-11-17T19:48:23Z Ataque fin 2026-11-17T19:48:23Z: borrados=20 bloqueados(429)=30 otros=0
+- 2026-11-17T19:48:23Z == e. Deteccion (hasta 10 min, cada 15 s) ==
+- 2026-11-17T19:49:27Z Detectado en 2026-11-17T19:49:27Z. MTTD=68.3s (resolucion de sondeo 15 s)
+- 2026-11-17T19:49:27Z Contenido: primer 429 en 2026-11-17T19:48:20Z. MTTC=1.8s
+- 2026-11-17T19:49:27Z == g. Recuperacion ==
+- 2026-11-17T19:49:27Z Clonando a 2026-11-17T19:48:17Z -> deport-back-sql-e4-clone-r1-1949
+- 2026-11-17T19:59:26Z Limpieza final (trap EXIT, codigo original 1)
+- 2026-11-17T19:59:26Z == Reversion E4 (ronda 1) ==
+- 2026-11-17T19:59:27Z Restaurando SECURITY_DELETE_LIMIT_ENABLED=false (estaba 'true')
+- 2026-11-17T20:00:38Z Registros sinteticos eliminados en la reversion: 30
+- 2026-11-17T20:00:39Z Borrando clon deport-back-sql-e4-clone-r1-1949
+- 2026-11-17T20:02:55Z REVERSION OK
