@@ -8,6 +8,7 @@ import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { logEstructurado } from './common/logging/log-estructurado';
 import { DeportistasService } from './deportistas/services/deportistas.service';
 import { BuscarDeportistasDto } from './deportistas/dto/buscar-deportistas.dto';
 import { HabitosService } from './habitos/services/habitos.service';
@@ -100,9 +101,10 @@ function registrarMetadatosCanary(app: NestFastifyApplication): void {
     const requestWithTiming = request as typeof request & {
       canaryStartedAt?: number;
     };
-    console.log(
-      JSON.stringify({
-        event: 'http_request',
+    logEstructurado(
+      reply.statusCode >= 500 ? 'ERROR' : 'INFO',
+      'http_request',
+      {
         app_version: version,
         app_track: track,
         method: request.method,
@@ -111,7 +113,7 @@ function registrarMetadatosCanary(app: NestFastifyApplication): void {
         duration_ms: requestWithTiming.canaryStartedAt
           ? Date.now() - requestWithTiming.canaryStartedAt
           : undefined,
-      }),
+      },
     );
     done();
   });

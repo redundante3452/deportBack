@@ -16,6 +16,7 @@ import { ReemplazarDeportistaV3Dto } from '../dto/reemplazar-deportista-v3.dto';
 import { ConfigService } from '@nestjs/config';
 import { HttpExternoService } from '../../common/http-externo/http-externo.service';
 import { ResultadoHttpExterno } from '../../common/http-externo/http-externo.types';
+import { logEstructurado } from '../../common/logging/log-estructurado';
 import { CacheDistribuidaService } from '../../common/cache-distribuida/cache-distribuida.service';
 
 function datoOError(resultado: ResultadoHttpExterno): unknown {
@@ -133,24 +134,20 @@ export class DeportistasService {
     ]);
 
     if (!articulos.ok) {
-      this.logger.warn(
-        JSON.stringify({
-          event: 'dependency_failure',
-          dependency: 'api-fastify',
-          trace_id: traceId,
-          error: articulos.error,
-        }),
-      );
+      logEstructurado('WARNING', 'dependency_failure', {
+        dependency: 'api-fastify',
+        trace_id: traceId,
+        error: articulos.error,
+        error_type: articulos.errorType,
+      });
     }
     if (!skus.ok) {
-      this.logger.warn(
-        JSON.stringify({
-          event: 'dependency_failure',
-          dependency: 'inventario-u',
-          trace_id: traceId,
-          error: skus.error,
-        }),
-      );
+      logEstructurado('WARNING', 'dependency_failure', {
+        dependency: 'inventario-u',
+        trace_id: traceId,
+        error: skus.error,
+        error_type: skus.errorType,
+      });
     }
 
     const resultado = {
@@ -180,6 +177,7 @@ export class DeportistasService {
       return Promise.resolve({
         ok: false,
         error: `no hay URL configurada para ${ruta}`,
+        errorType: 'no_url',
       });
     }
     const teamApiKey = this.configService.get<string>('TEAM_API_KEY');
