@@ -98,6 +98,40 @@ resource "google_logging_metric" "http_latency_by_track" {
   }
 }
 
+# La métrica anterior usa buckets lineales hasta 2000 ms: cualquier latencia mayor
+# (p. ej. los ~5 s de la Ronda 0) queda saturada en el último bucket. Esta versión
+# usa buckets exponenciales (10 ms · 1,5^n, hasta ~33 s) para ver la cola completa.
+resource "google_logging_metric" "http_latency_exp" {
+  name       = "${var.app_name}-http-latency-exp"
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") AND jsonPayload.event=\"http_request\""
+  depends_on = [google_project_iam_member.logging_config_writer]
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "DISTRIBUTION"
+    unit        = "ms"
+
+    labels {
+      key        = "track"
+      value_type = "STRING"
+    }
+  }
+
+  value_extractor = "EXTRACT(jsonPayload.duration_ms)"
+
+  bucket_options {
+    exponential_buckets {
+      num_finite_buckets = 20
+      growth_factor      = 1.5
+      scale              = 10
+    }
+  }
+
+  label_extractors = {
+    track = "EXTRACT(jsonPayload.app_track)"
+  }
+}
+
 resource "google_logging_metric" "deportistas_created" {
   name       = "${var.app_name}-deportistas-created"
   filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") AND jsonPayload.event=\"deportista_created\""
