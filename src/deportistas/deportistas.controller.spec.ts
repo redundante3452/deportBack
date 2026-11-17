@@ -90,7 +90,24 @@ describe('DeportistasController', () => {
 
   it('debe eliminar deportista', async () => {
     service.eliminar.mockResolvedValue(undefined);
-    await controller.eliminar('dep-1');
+    const escribir = jest
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    await controller.eliminar('dep-1', {
+      headers: { 'x-api-key': 'k', 'x-forwarded-for': '1.2.3.4, 5.6.7.8' },
+      traceId: 't-1',
+    });
+    const linea = JSON.parse(String(escribir.mock.calls[0][0]));
+    escribir.mockRestore();
     expect(service.eliminar).toHaveBeenCalledWith('dep-1');
+    expect(linea).toMatchObject({
+      severity: 'INFO',
+      event: 'deportista_deleted',
+      deportista_id: 'dep-1',
+      trace_id: 't-1',
+      api_version: 'v1',
+      client_ip: '1.2.3.4',
+    });
+    expect(linea.caller).toMatch(/^[0-9a-f]{12}$/);
   });
 });
