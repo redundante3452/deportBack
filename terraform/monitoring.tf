@@ -1,6 +1,6 @@
 resource "google_logging_metric" "http_requests_by_track" {
   name       = "${var.app_name}-http-requests-by-track"
-  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\""
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") ANDjsonPayload.event=\"http_request\""
   depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
@@ -27,7 +27,7 @@ resource "google_logging_metric" "http_requests_by_track" {
 
 resource "google_logging_metric" "http_errors_by_track" {
   name       = "${var.app_name}-http-errors-by-track"
-  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\" AND jsonPayload.status >= 500"
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") ANDjsonPayload.event=\"http_request\" AND jsonPayload.status >= 500"
   depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
@@ -48,7 +48,7 @@ resource "google_logging_metric" "http_errors_by_track" {
 
 resource "google_logging_metric" "http_client_errors_by_track" {
   name       = "${var.app_name}-http-client-errors-by-track"
-  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\" AND jsonPayload.status >= 400 AND jsonPayload.status < 500"
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") ANDjsonPayload.event=\"http_request\" AND jsonPayload.status >= 400 AND jsonPayload.status < 500"
   depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
@@ -69,7 +69,7 @@ resource "google_logging_metric" "http_client_errors_by_track" {
 
 resource "google_logging_metric" "http_latency_by_track" {
   name       = "${var.app_name}-http-latency-by-track"
-  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"http_request\""
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") ANDjsonPayload.event=\"http_request\""
   depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
@@ -100,7 +100,7 @@ resource "google_logging_metric" "http_latency_by_track" {
 
 resource "google_logging_metric" "deportistas_created" {
   name       = "${var.app_name}-deportistas-created"
-  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"deportista_created\""
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") ANDjsonPayload.event=\"deportista_created\""
   depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
@@ -112,7 +112,7 @@ resource "google_logging_metric" "deportistas_created" {
 
 resource "google_logging_metric" "dependency_failures" {
   name       = "${var.app_name}-dependency-failures"
-  filter     = "resource.type=\"cloud_run_revision\" AND jsonPayload.event=\"dependency_failure\""
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") ANDjsonPayload.event=\"dependency_failure\""
   depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
