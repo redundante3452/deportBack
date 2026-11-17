@@ -112,6 +112,7 @@ jobs:
           TF_VAR_api_fastify_url: ${{ vars.API_FASTIFY_URL }}
           TF_VAR_inventario_u_url: ${{ vars.INVENTARIO_U_URL }}
           TF_VAR_enable_db_backups: ${{ vars.ENABLE_DB_BACKUPS || 'false' }}
+          TF_VAR_honeytoken_ids: ${{ vars.HONEYTOKEN_IDS }}
         run: |
           terraform apply -auto-approve \
             -lock-timeout=10m \

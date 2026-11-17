@@ -81,3 +81,9 @@ variable "enable_db_backups" {
   type        = bool
   default     = false
 }
+
+variable "honeytoken_ids" {
+  description = "UUIDs (separados por coma) de deportistas señuelo; cualquier acceso a ellos dispara la alerta de honeytoken. Vacío = desactivado."
+  type        = string
+  default     = ""
+}

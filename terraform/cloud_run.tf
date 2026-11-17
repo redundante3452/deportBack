@@ -69,6 +69,11 @@ resource "google_cloud_run_v2_service" "app" {
       }
 
       env {
+        name  = "SECURITY_HONEYTOKEN_IDS"
+        value = var.honeytoken_ids
+      }
+
+      env {
         name = "TEAM_API_KEY"
 
         value_source {
