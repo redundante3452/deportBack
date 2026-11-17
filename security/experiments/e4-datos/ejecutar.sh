@@ -157,8 +157,8 @@ elif [[ "$PITR" == true ]]; then
   PITR_PUNTO="$(date -u -d "$T_ATAQUE_INICIO - 1 second" +%Y-%m-%dT%H:%M:%SZ)"
   CLON="deport-back-sql-e4-clone-r${RONDA}-$(date -u +%H%M)"
   log "Clonando a $PITR_PUNTO -> $CLON"
-  gcloud sql instances clone "$SQL_INSTANCE" "$CLON" --point-in-time="$PITR_PUNTO" --project "$PROJECT" --quiet
-  for _ in $(seq 1 60); do
+  gcloud sql instances clone "$SQL_INSTANCE" "$CLON" --point-in-time="$PITR_PUNTO" --project "$PROJECT" --quiet --async  # el cliente corta a los ~10 min; el estado se sondea abajo
+  for _ in $(seq 1 120); do
     EST="$(gcloud sql instances describe "$CLON" --project "$PROJECT" --format='value(state)' 2>/dev/null || true)"
     [[ "$EST" == RUNNABLE ]] && break
     sleep 20
