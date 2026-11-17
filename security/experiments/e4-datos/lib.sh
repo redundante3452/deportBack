@@ -23,17 +23,19 @@ log() {
   echo "$linea" | tee -a "$BITACORA" >&2
 }
 
+# api() se invoca dentro de $(...) (subshell): no puede asignar variables al llamador,
+# por eso el cuerpo va a un archivo fijo creado aqui y el status HTTP sale por stdout.
+API_BODY="$(mktemp)"
 api() { # api METODO RUTA [cuerpo]  -> imprime "<status>\n<cuerpo>" en $API_BODY y status en stdout
   local metodo="$1" ruta="$2" cuerpo="${3:-}" trace="${TRACE_ID:-gd-exp4-r${RONDA}-manual}"
-  API_BODY="$(mktemp)"
   if [[ -n "$cuerpo" ]]; then
     curl -s -o "$API_BODY" -w '%{http_code}' --max-time 30 -X "$metodo" \
       -H "X-Api-Key: ${API_KEY}" -H "X-Trace-Id: ${trace}" -H 'Content-Type: application/json' \
-      -d "$cuerpo" "${BASE_URL}${ruta}" || echo 000
+      -d "$cuerpo" "${BASE_URL}${ruta}" || true
   else
     curl -s -o "$API_BODY" -w '%{http_code}' --max-time 30 -X "$metodo" \
       -H "X-Api-Key: ${API_KEY}" -H "X-Trace-Id: ${trace}" \
-      "${BASE_URL}${ruta}" || echo 000
+      "${BASE_URL}${ruta}" || true
   fi
 }
 
