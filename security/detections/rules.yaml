@@ -26,14 +26,14 @@ rules:
   - id: mass-delete-deportistas
     experiment: E4
     signal: mass_delete_deportistas
-    window_minutes: 1
+    window_minutes: 5
     positive_case: fixtures/e4-positive.json
     negative_case: fixtures/e4-negative.json
     status: implemented
     platform: grafana
     alert_title: "E4 - Borrado masivo de deportistas"
     metric: logging.googleapis.com/user/deport-back-deportistas-deleted
-    grafana_query: "sum(increase(deport-back-deportistas-deleted[1m])) > 10"
-    threshold: "> 10 borrados en 1 min"
+    grafana_query: "sum(increase(deport-back-deportistas-deleted[5m])) >= 10"
+    threshold: ">= 10 borrados en 5 min"
     cloud_logging_filter: 'resource.type="k8s_container" AND jsonPayload.event="deportista_deleted"'
     implementation: deportista_deleted

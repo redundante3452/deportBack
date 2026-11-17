@@ -7,7 +7,7 @@ ronda 1: backups + PITR, export a bucket con retencion no bloqueada, alerta de b
 borrados por clave), cuando ocurra la condicion adversa A (borrado masivo de deportistas con una credencial
 valida, ATT&CK T1078 Valid Accounts + T1485 Data Destruction; IDs **pendientes de marcar como "verificado en
 attack.mitre.org"**), esperamos la senal S (alerta `E4 - Borrado masivo de deportistas` en Grafana, metrica
-`deport-back-deportistas-deleted` > 10 en 1 min) en <= T1 = 5 min y la contencion (HTTP 429) en <= T2 = 2 min.
+`deport-back-deportistas-deleted` >= 10 en 5 min) en <= T1 = 5 min y la contencion (HTTP 429) en <= T2 = 2 min.
 
 ## Metricas
 
@@ -61,7 +61,7 @@ No ejecutar mientras corre otro experimento ni desplegar durante la ronda.
 | | Ronda 0 | Ronda 1 |
 |---|---|---|
 | Backups / PITR | apagados (estado de partida) | activos |
-| Control de borrados (429 > 10/min) | apagado | `SECURITY_DELETE_LIMIT_ENABLED=true` |
+| Control de borrados (429 al superar 10/min) | apagado | `SECURITY_DELETE_LIMIT_ENABLED=true` |
 | Alerta de borrado masivo | medida igual | medida igual |
 | Copia aislada (export a bucket) | no | si, si hay `E4_BUCKET` |
 | Recuperacion | no recuperable (RPO = 100 %) | clon PITR + restauracion parcial |
