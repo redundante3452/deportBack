@@ -98,7 +98,13 @@ Patrones: **timeout por dependencia (5 s)**, **circuit breaker** (abre tras 3 fa
 
 ## 9. Tablero
 
-**[pendiente]** Grafana con la ventana de inyección (anotaciones desde `*.meta.json`), la métrica objetivo por ronda, fallos de dependencia por tipo y aperturas del circuit breaker, para las tres nubes. Capturas y enlace se añadirán aquí.
+Grafana Cloud, fuente **Google Cloud Monitoring** (service account de solo lectura `grafana-reader`, rol `monitoring.viewer`):
+
+- deport-back: <https://niftyivy3144.grafana.net/d/caos-deport-back-b> (carpeta *Caos - Indisponibilidad de dependencia (GCP)*), versionado como código en `observability/grafana/caos-deport-back.json` (generado por `build_dashboard.py`).
+- api-fastify: carpeta *Caos - Latencia saliente (Azure)* en la misma instancia.
+- Muestra las ventanas de inyección del estado estable, la Ronda 0 y la Ronda 1 como anotaciones con `execution_id`, junto a la latencia p95 del servidor, el throughput, los 5xx, los fallos de dependencia por tipo, las aperturas del circuit breaker y la CPU por pod.
+- Limitación detectada: la métrica de latencia original usa buckets lineales hasta 2000 ms y satura en la Ronda 0. Se añadió `http-latency-exp` con buckets exponenciales. El p95 oficial es el de k6.
+- Capturas: **[pendiente]**.
 
 ## 10. Uso de IA (declaración)
 
