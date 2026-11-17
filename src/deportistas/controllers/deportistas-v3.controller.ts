@@ -11,6 +11,7 @@ import {
   Req,
   ParseUUIDPipe,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { DeportistasService } from '../services/deportistas.service';
@@ -18,10 +19,12 @@ import { CreateDeportistaV3Dto } from '../dto/create-deportista-v3.dto';
 import { ActualizarParcialDeportistaV3Dto } from '../dto/actualizar-parcial-deportista-v3.dto';
 import { ReemplazarDeportistaV3Dto } from '../dto/reemplazar-deportista-v3.dto';
 import { LimiteBorradoGuard } from '../../common/security/limite-borrado.guard';
+import { HoneytokenInterceptor } from '../../common/security/honeytoken.interceptor';
 import { registrarBorrado } from '../../common/security/registrar-borrado';
 import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
 
 @ApiTags('Deportistas v3 Canary')
+@UseInterceptors(HoneytokenInterceptor)
 @Controller('api/v3/deportistas')
 export class DeportistasV3Controller {
   constructor(private readonly deportistasService: DeportistasService) {}

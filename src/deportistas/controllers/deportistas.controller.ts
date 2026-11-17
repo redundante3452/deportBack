@@ -12,6 +12,7 @@ import {
   Req,
   ParseUUIDPipe,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,10 +28,12 @@ import { ActualizarParcialDeportistaDto } from '../dto/actualizar-parcial-deport
 import { ReemplazarDeportistaDto } from '../dto/reemplazar-deportista.dto';
 import { BuscarDeportistasDto } from '../dto/buscar-deportistas.dto';
 import { LimiteBorradoGuard } from '../../common/security/limite-borrado.guard';
+import { HoneytokenInterceptor } from '../../common/security/honeytoken.interceptor';
 import { registrarBorrado } from '../../common/security/registrar-borrado';
 import type { RequestConTraceId } from '../../common/trace-id/trace-id.util';
 
 @ApiTags('Deportistas')
+@UseInterceptors(HoneytokenInterceptor)
 @Controller('deportistas')
 export class DeportistasController {
   constructor(private readonly deportistasService: DeportistasService) {}
