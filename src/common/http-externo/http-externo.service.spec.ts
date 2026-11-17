@@ -13,6 +13,7 @@ describe('HttpExternoService', () => {
     global.fetch = jest.fn();
     delete process.env.CHAOS_DEPENDENCY_FAILURE;
     delete process.env.CHAOS_DEPENDENCY_TARGET;
+    delete process.env.CHAOS_DEPENDENCY_MODE;
     delete process.env.RESILIENCE_CIRCUIT_BREAKER_ENABLED;
     delete process.env.NODE_ENV;
   });
@@ -124,9 +125,103 @@ describe('HttpExternoService', () => {
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
+  describe('caos de dependencia (CHAOS_DEPENDENCY_MODE)', () => {
+    const url = 'http://api-externa/skus';
+
+    beforeEach(() => {
+      process.env.CHAOS_DEPENDENCY_FAILURE = 'true';
+      process.env.CHAOS_DEPENDENCY_TARGET = 'api-externa';
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      delete process.env.CHAOS_DEPENDENCY_MODE;
+    });
+
+    it('modo hang espera timeoutMs y devuelve ok:false', async () => {
+      process.env.CHAOS_DEPENDENCY_MODE = 'hang';
+      let resuelto = false;
+      const promesa = service.obtenerJson(url, 2000).then((r) => {
+        resuelto = true;
+        return r;
+      });
+
+      await jest.advanceTimersByTimeAsync(1999);
+      expect(resuelto).toBe(false);
+      await jest.advanceTimersByTimeAsync(1);
+
+      expect(await promesa).toEqual({
+        ok: false,
+        error: `tiempo de espera agotado llamando a ${url} (caos)`,
+      });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('modo hang es el valor por defecto', async () => {
+      const promesa = service.obtenerJson(url, 500);
+      await jest.advanceTimersByTimeAsync(500);
+
+      expect(await promesa).toEqual({
+        ok: false,
+        error: `tiempo de espera agotado llamando a ${url} (caos)`,
+      });
+    });
+
+    it('modo error falla inmediatamente sin esperar', async () => {
+      process.env.CHAOS_DEPENDENCY_MODE = 'error';
+
+      // sin avanzar los timers: si esperara, la promesa no se resolvería
+      const resultado = await service.obtenerJson(url, 60_000);
+
+      expect(resultado).toEqual({
+        ok: false,
+        error: 'dependencia no disponible (caos)',
+      });
+    });
+
+    it('con breaker ON, tras 3 fallos en modo hang la 4ª llamada no espera', async () => {
+      process.env.CHAOS_DEPENDENCY_MODE = 'hang';
+
+      for (let i = 0; i < 3; i++) {
+        const promesa = service.obtenerJson(url, 1000);
+        await jest.advanceTimersByTimeAsync(1000);
+        await promesa;
+      }
+
+      // sin avanzar timers: debe resolverse de inmediato por circuito abierto
+      const resultado = await service.obtenerJson(url, 1000);
+      expect(resultado).toEqual({
+        ok: false,
+        error: `circuito abierto para ${url}`,
+      });
+    });
+
+    it('con breaker OFF cada llamada espera el timeout', async () => {
+      process.env.CHAOS_DEPENDENCY_MODE = 'hang';
+      process.env.RESILIENCE_CIRCUIT_BREAKER_ENABLED = 'false';
+
+      for (let i = 0; i < 4; i++) {
+        let resuelto = false;
+        const promesa = service.obtenerJson(url, 1000).then((r) => {
+          resuelto = true;
+          return r;
+        });
+        await jest.advanceTimersByTimeAsync(999);
+        expect(resuelto).toBe(false);
+        await jest.advanceTimersByTimeAsync(1);
+        expect(await promesa).toEqual({
+          ok: false,
+          error: `tiempo de espera agotado llamando a ${url} (caos)`,
+        });
+      }
+    });
+  });
+
   it('permite inyectar indisponibilidad de una dependencia mediante entorno', async () => {
     process.env.CHAOS_DEPENDENCY_FAILURE = 'true';
     process.env.CHAOS_DEPENDENCY_TARGET = 'api-externa';
+    process.env.CHAOS_DEPENDENCY_MODE = 'error';
 
     const resultado = await service.obtenerJson('http://api-externa/skus');
 
