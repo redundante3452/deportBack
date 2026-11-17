@@ -117,7 +117,15 @@ Grafana Cloud, fuente **Google Cloud Monitoring** (service account de solo lectu
 - api-fastify: carpeta *Caos - Latencia saliente (Azure)* en la misma instancia.
 - Muestra las ventanas de inyección del estado estable, la Ronda 0 y la Ronda 1 como anotaciones con `execution_id`, junto a la latencia p95 del servidor, el throughput, los 5xx, los fallos de dependencia por tipo, las aperturas del circuit breaker y la CPU por pod.
 - Limitación detectada: la métrica de latencia original usa buckets lineales hasta 2000 ms y satura en la Ronda 0. Se añadió `http-latency-exp` con buckets exponenciales. El p95 oficial es el de k6.
-- Capturas: **[pendiente]**.
+- Capturas del tablero `caos-deport-back-b` (vista de 24 h del 17-nov; las franjas punteadas rojas son las anotaciones de inyección del experimento oficial ~05:30 y del ensayo ~06:28–06:38 UTC):
+
+![Paneles del tablero: p95 en servidor, throughput, fallos de dependencia por tipo y aperturas del breaker](evidencia/capturas/tablero-paneles-24h.png)
+
+En la Ronda 0 el p95 en servidor sube a ~5–6 s (umbral 1 s en rojo) y el throughput cae; en la Ronda 1 aparecen los `circuit_open` (fallos rápidos) y las aperturas del breaker, y el throughput sube porque las respuestas degradadas son inmediatas.
+
+![Errores HTTP 5xx](evidencia/capturas/tablero-5xx-24h.png)
+
+El pico de 5xx de ~05:28 UTC es anterior a las ventanas medidas: corresponde al hallazgo del sidecar `cloud-sql-proxy` durante un rollout (corregido con `preStop`); dentro de las ventanas de inyección los 5xx son 0.
 
 ## 10. Uso de IA (declaración)
 
