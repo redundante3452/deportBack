@@ -1,0 +1,11 @@
+{
+  "execution_id": "exp-b-20261117-base",
+  "round": "base",
+  "injection_start_utc": "2026-11-17T05:34:34Z",
+  "injection_end_utc": "2026-11-17T05:39:04Z",
+  "base_url": "http://34.16.0.136",
+  "chaos_target": "",
+  "breaker": "on",
+  "k6_exit_code": 0,
+  "trace_id_prefix": "exp-b-20261117-base"
+}

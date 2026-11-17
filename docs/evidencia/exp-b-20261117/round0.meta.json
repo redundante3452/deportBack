@@ -1,0 +1,11 @@
+{
+  "execution_id": "exp-b-20261117-r0",
+  "round": "0",
+  "injection_start_utc": "2026-11-17T05:40:12Z",
+  "injection_end_utc": "2026-11-17T05:44:45Z",
+  "base_url": "http://34.16.0.136",
+  "chaos_target": "trycloudflare",
+  "breaker": "off",
+  "k6_exit_code": 99,
+  "trace_id_prefix": "exp-b-20261117-r0"
+}
