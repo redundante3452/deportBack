@@ -215,13 +215,34 @@ resource "google_logging_metric" "deportistas_deleted" {
 
 resource "google_logging_metric" "mass_delete_blocked" {
   name       = "${var.app_name}-mass-delete-blocked"
-  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") AND jsonPayload.event=\"mass_delete_blocked\""
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") AND jsonPayload.event=\"security_mass_delete_blocked\""
   depends_on = [google_project_iam_member.logging_config_writer]
 
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"
     unit        = "1"
+  }
+}
+
+resource "google_logging_metric" "honeytoken_triggered" {
+  name       = "${var.app_name}-honeytoken-triggered"
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") AND jsonPayload.event=\"security_honeytoken_triggered\""
+  depends_on = [google_project_iam_member.logging_config_writer]
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    unit        = "1"
+
+    labels {
+      key        = "method"
+      value_type = "STRING"
+    }
+  }
+
+  label_extractors = {
+    method = "EXTRACT(jsonPayload.method)"
   }
 }
 
