@@ -286,7 +286,66 @@ Orchestrator, que lo deben propagar), se respeta; si no, se genera uno nuevo con
 `api-fastify` e `Inventario-U` en las llamadas del `api/v2`, y queda en los logs de la app — así
 un mismo mensaje se puede seguir en `kubectl logs` aunque haya cruzado 3 nubes distintas.
 
-## Seguimiento #4: experimento de indisponibilidad
+## Ingeniería del Caos — Seguimiento #4
+
+El flujo multinube es `api-fastify` (Azure/AKS) → `Inventario-U` (OCI) → `deport-back` (GCP).
+El coordinador oficial del flujo **está por confirmar**; el diagrama lo marca así.
+
+### Diagrama del flujo y del radio de impacto
+
+```mermaid
+flowchart LR
+    K6["k6 (cliente)<br/>load/k6-flow.js<br/>mide error y p95 e2e"] -->|"X-Api-Key + X-Trace-Id"| COORD["Coordinador / punto de entrada<br/>(por confirmar)"]
+
+    subgraph AZ["Azure — api-fastify (AKS)"]
+        AF["API Artículos"]
+        FA["⚡ Fallo a: latencia en llamada saliente<br/>(por confirmar con el equipo)"]
+        AF --- FA
+    end
+
+    subgraph OCI["OCI — Inventario-U"]
+        INV["API SKUs"]
+        FC["⚡ Fallo c: agotamiento de recurso<br/>(por confirmar con el equipo)"]
+        INV --- FC
+    end
+
+    subgraph GCP["GCP — deport-back"]
+        subgraph BR["Radio de impacto del experimento (namespace deport-back, datos sintéticos)"]
+            API["API Deportistas<br/>Cloud Run / GKE Autopilot"]
+            CB["Timeout 5 s + circuit breaker<br/>(3 fallos, 30 s) + degradación<br/>(apis_externas.ok=false, caché 30 s)"]
+            FB["⚡ Fallo b: indisponibilidad de dependencia<br/>Chaos Mesh NetworkChaos o<br/>CHAOS_DEPENDENCY_FAILURE"]
+            API --> CB
+            FB -.-> CB
+        end
+        DB[("Cloud SQL Postgres 15")]
+        MON["Cloud Logging → métricas basadas en logs<br/>dashboards canary y chaos<br/>(Cloud Monitoring)"]
+        API --> DB
+        API -.->|"logs JSON"| MON
+    end
+
+    COORD -->|"X-Trace-Id"| AF
+    AF -->|"X-Trace-Id"| INV
+    INV -->|"X-Trace-Id"| API
+    CB -.->|"llamadas salientes api/v2"| AF
+    CB -.->|"llamadas salientes api/v2"| INV
+```
+
+Dónde se mide: **k6** mide en el cliente la tasa de error (`http_req_failed`) y el p95
+(`http_req_duration`) del flujo extremo a extremo; **Cloud Monitoring** (GCP) mide el
+comportamiento interno de `deport-back` (peticiones, errores, latencia y `dependency_failures`
+desde logs JSON). Por ahora no hay medición propia en Azure ni en OCI: por confirmar con el equipo.
+
+### Matriz integrante – fallo – métrica – patrón
+
+| Integrante | Servicio / nube | Fallo | Métrica objetivo | Patrón de resiliencia |
+|---|---|---|---|---|
+| Integrante GCP | `deport-back` (GCP) | **b**: indisponibilidad de dependencia externa | p95 de latencia e2e de `GET /api/v2/deportistas/:id` < 1000 ms (guardarraíl: tasa de error < 1 %) | Timeout de 5 s por dependencia + circuit breaker (3 fallos, 30 s de cooldown, toggle `RESILIENCE_CIRCUIT_BREAKER_ENABLED`) + degradación elegante (respuesta parcial con `apis_externas.ok=false`, caché de 30 s) |
+| Integrante Azure | `api-fastify` (Azure/AKS) | **a**: latencia en llamada saliente | Por confirmar con el equipo | Por confirmar con el equipo |
+| Integrante OCI | `Inventario-U` (OCI) | **c**: agotamiento de recurso | Por confirmar con el equipo | Por confirmar con el equipo |
+
+Los umbrales de `deport-back` son objetivos, no resultados medidos.
+
+### Detalle del experimento de `deport-back`
 
 El fallo asignado a `deport-back` es la indisponibilidad de una dependencia
 externa. La aplicación ya tenía timeout y degradación con caché; ahora el cliente
@@ -313,6 +372,30 @@ contra servicios externos. Las instrucciones y condiciones de reversión están
 en [`chaos/README.md`](chaos/README.md).
 Las Rondas 0 y 1 se ejecutan únicamente sobre GKE/GCP con datos sintéticos y
 una ventana acordada; una prueba local no constituye evidencia del experimento.
+
+El **chaos gate** ([`.github/workflows/chaos-gate.yml`](.github/workflows/chaos-gate.yml),
+disparo manual) ejecuta la Ronda 0 (circuit breaker desactivado) y la Ronda 1 (activado)
+con la misma carga, y exige tasa de error < 1 % y p95 < 1000 ms (valores por defecto, configurables).
+
+### Piezas conservadas y retiradas respecto a la entrega anterior
+
+| Pieza | Estado | Evidencia en el repo |
+|---|---|---|
+| Cloud Run + Cloud SQL + Secret Manager (Terraform) | Conservada | `terraform/cloud_run.tf`, `cloud_sql.tf`, `secrets.tf`; `deploy.yml` |
+| GKE Autopilot: 2 réplicas, probes, requests/limits, HPA 2-5 al 70 % CPU | Conservada | `terraform/gke_workloads.tf` y `k8s/` |
+| Observabilidad (logs JSON, métricas basadas en logs, dashboards canary y chaos) | Conservada y ampliada | `terraform/monitoring.tf` |
+| Autenticación `X-Api-Key` y correlación `X-Trace-Id` | Conservada | `src/common/team-api-key/`, `src/common/trace-id/` |
+| Caché distribuida Redis (`/cache`, caché de 30 s de `apis_externas`) | Conservada en el código; infraestructura **por confirmar** | `src/common/cache-distribuida/`; `terraform/` solo recibe `redis_host` y no crea Memorystore |
+| `k8s/` frente a `terraform/gke_workloads.tf` | Duplicidad: ambos definen los mismos recursos de GKE. **Por confirmar** cuál es la fuente oficial (en `k8s/configmap.yaml` el host de Redis está fijo) | `k8s/`, `terraform/gke_workloads.tf` |
+| Despliegue a Railway | **Retirar (por confirmar)**: sigue en `ci-production.yml` y `ci-testing.yml`, pero el despliegue vigente es GCP | `.github/workflows/ci-production.yml`, `ci-testing.yml` |
+| Chaos Mesh, circuit breaker, chaos gate, k6 | Nueva en este seguimiento | `chaos/`, `load/`, `scripts/chaos-gate.sh` |
+
+### Enlaces
+
+- Experimentos: [`chaos/experiments/`](chaos/experiments/)
+- Carga: [`load/k6-flow.js`](load/k6-flow.js)
+- Chaos gate: [`.github/workflows/chaos-gate.yml`](.github/workflows/chaos-gate.yml)
+- Informe del experimento: `docs/informe-caos.md` — **pendiente de resultados reales** (el archivo aún no existe en el repo).
 
 ## Despliegue en Google Cloud (GKE)
 
