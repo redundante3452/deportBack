@@ -25,10 +25,19 @@ on:
         required: true
         default: '1000'
         type: string
+      execution_id:
+        description: ID de ejecución (opcional; por defecto github.run_id)
+        required: false
+        type: string
+
+concurrency:
+  group: chaos-gate-${{ github.repository }}
+  cancel-in-progress: false
 
 env:
   NAMESPACE: deport-back
   DEPLOYMENT: deport-back
+  EXECUTION_ID: ${{ inputs.execution_id || github.run_id }}
 
 jobs:
   experiment:
@@ -46,6 +55,8 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - uses: google-github-actions/setup-gcloud@v2
+        with:
+          install_components: gke-gcloud-auth-plugin
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
@@ -92,6 +103,18 @@ jobs:
         env:
           NAMESPACE: ${{ env.NAMESPACE }}
 
+      - name: Run steady state
+        env:
+          BASE_URL: ${{ env.BASE_URL }}
+          DEPORTISTA_ID: ${{ inputs.deportista_id }}
+          API_KEY: ${{ secrets.TEAM_API_KEY }}
+          CHAOS_TARGET: ${{ inputs.chaos_target }}
+          CHAOS_CONFIRM: 'true'
+          ROUND: 'base'
+          SUMMARY_FILE: base.json
+          EXECUTION_ID: ${{ inputs.execution_id || github.run_id }}-base
+        run: bash scripts/run-chaos-experiment.sh
+
       - name: Run round 0
         env:
           BASE_URL: ${{ env.BASE_URL }}
@@ -101,6 +124,7 @@ jobs:
           CHAOS_CONFIRM: 'true'
           ROUND: '0'
           SUMMARY_FILE: round0.json
+          EXECUTION_ID: ${{ inputs.execution_id || github.run_id }}-r0
         run: bash scripts/run-chaos-experiment.sh
 
       - name: Run round 1
@@ -112,10 +136,12 @@ jobs:
           CHAOS_CONFIRM: 'true'
           ROUND: '1'
           SUMMARY_FILE: round1.json
+          EXECUTION_ID: ${{ inputs.execution_id || github.run_id }}-r1
         run: bash scripts/run-chaos-experiment.sh
 
       - name: Evaluate chaos gate
         env:
+          BASE_SUMMARY: base.json
           ROUND0_SUMMARY: round0.json
           ROUND1_SUMMARY: round1.json
           MAX_ERROR_RATE: ${{ inputs.max_error_rate }}
@@ -128,5 +154,7 @@ jobs:
         with:
           name: chaos-evidence-${{ github.run_id }}
           path: |
+            base.json
             round0.json
             round1.json
+            *.meta.json
