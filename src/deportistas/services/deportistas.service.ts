@@ -133,7 +133,9 @@ export class DeportistasService {
       this.consultarSiHayUrl(inventarioUUrl, '/skus', traceId),
     ]);
 
-    if (!articulos.ok) {
+    // una dependencia sin URL configurada es una decisión de despliegue, no un
+    // fallo: registrarla inundaría la métrica dependency_failures con ruido
+    if (!articulos.ok && articulos.errorType !== 'no_url') {
       logEstructurado('WARNING', 'dependency_failure', {
         dependency: 'api-fastify',
         trace_id: traceId,
@@ -141,7 +143,7 @@ export class DeportistasService {
         error_type: articulos.errorType,
       });
     }
-    if (!skus.ok) {
+    if (!skus.ok && skus.errorType !== 'no_url') {
       logEstructurado('WARNING', 'dependency_failure', {
         dependency: 'inventario-u',
         trace_id: traceId,
