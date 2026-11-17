@@ -21,7 +21,8 @@ export class CrearHabitoDto {
   descripcion: string;
 
   @ApiProperty({
-    description: 'Frecuencia del hábito (p.ej. diario, semanal, lunes-miércoles-viernes)',
+    description:
+      'Frecuencia del hábito (p.ej. diario, semanal, lunes-miércoles-viernes)',
     example: 'diario',
     maxLength: 50,
   })

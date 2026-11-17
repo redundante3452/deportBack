@@ -51,10 +51,7 @@ export class DeportistasV3Controller {
   @ApiOperation({
     summary: 'Reemplazar deportista completo (v3)',
   })
-  reemplazar(
-    @Param('id') id: string,
-    @Body() dto: ReemplazarDeportistaV3Dto,
-  ) {
+  reemplazar(@Param('id') id: string, @Body() dto: ReemplazarDeportistaV3Dto) {
     return this.deportistasService.reemplazar(id, dto);
   }
 

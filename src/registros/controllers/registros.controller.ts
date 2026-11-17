@@ -9,12 +9,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { RegistrosService } from '../services/registros.service';
 import { CrearRegistroDto } from '../dto/crear-registro.dto';
 import { BuscarRegistrosDto } from '../dto/buscar-registros.dto';
@@ -29,7 +24,8 @@ export class RegistrosController {
   @Post()
   @ApiOperation({
     summary: 'Crear un registro de entrenamiento',
-    description: 'Registra una sesión de entrenamiento para un hábito específico.',
+    description:
+      'Registra una sesión de entrenamiento para un hábito específico.',
   })
   @ApiResponse({ status: 201, description: 'Registro creado exitosamente.' })
   @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })
@@ -40,7 +36,8 @@ export class RegistrosController {
   @Get()
   @ApiOperation({
     summary: 'Historial de registros',
-    description: 'Devuelve el historial de registros de entrenamiento con filtros opcionales.',
+    description:
+      'Devuelve el historial de registros de entrenamiento con filtros opcionales.',
   })
   @ApiResponse({ status: 200, description: 'Historial de registros.' })
   historial(@Query() dto: BuscarRegistrosDto) {
@@ -77,7 +74,10 @@ export class RegistrosController {
     description: 'Actualiza únicamente duración y/o notas del registro.',
   })
   @ApiParam({ name: 'id', description: 'UUID del registro', format: 'uuid' })
-  @ApiResponse({ status: 200, description: 'Registro parcialmente actualizado.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Registro parcialmente actualizado.',
+  })
   @ApiResponse({ status: 404, description: 'Registro no encontrado.' })
   actualizarParcial(
     @Param('id') id: string,

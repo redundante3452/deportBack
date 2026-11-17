@@ -129,9 +129,7 @@ export class RegistrosService {
 
     if (dto.rpeMin !== undefined && dto.rpeMin !== null) {
       const rpeMinVal =
-        typeof dto.rpeMin === 'number'
-          ? dto.rpeMin
-          : parseInt(dto.rpeMin as string, 10);
+        typeof dto.rpeMin === 'number' ? dto.rpeMin : parseInt(dto.rpeMin, 10);
       query.andWhere('registro.rpe >= :rpeMin', { rpeMin: rpeMinVal });
     }
 
@@ -139,7 +137,7 @@ export class RegistrosService {
       const durMinVal =
         typeof dto.duracionMinima === 'number'
           ? dto.duracionMinima
-          : parseInt(dto.duracionMinima as string, 10);
+          : parseInt(dto.duracionMinima, 10);
       query.andWhere('registro.duracionMinutos >= :duracionMinima', {
         duracionMinima: durMinVal,
       });

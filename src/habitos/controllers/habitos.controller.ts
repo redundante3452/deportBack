@@ -43,10 +43,21 @@ export class HabitosController {
   @Get()
   @ApiOperation({
     summary: 'Listar hábitos',
-    description: 'Devuelve todos los hábitos. Permite filtrar por frecuencia y/o deportistaId.',
+    description:
+      'Devuelve todos los hábitos. Permite filtrar por frecuencia y/o deportistaId.',
   })
-  @ApiQuery({ name: 'frecuencia', required: false, description: 'Filtro por frecuencia', example: 'diario' })
-  @ApiQuery({ name: 'deportistaId', required: false, description: 'Filtro por UUID de deportista', format: 'uuid' })
+  @ApiQuery({
+    name: 'frecuencia',
+    required: false,
+    description: 'Filtro por frecuencia',
+    example: 'diario',
+  })
+  @ApiQuery({
+    name: 'deportistaId',
+    required: false,
+    description: 'Filtro por UUID de deportista',
+    format: 'uuid',
+  })
   @ApiResponse({ status: 200, description: 'Lista de hábitos.' })
   listarHabitos(
     @Query('frecuencia') frecuencia?: string,
@@ -81,7 +92,8 @@ export class HabitosController {
   @Put(':id')
   @ApiOperation({
     summary: 'Reemplazar hábito completo (PUT)',
-    description: 'Sustituye todos los campos del hábito por los nuevos valores.',
+    description:
+      'Sustituye todos los campos del hábito por los nuevos valores.',
   })
   @ApiParam({ name: 'id', description: 'UUID del hábito', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Hábito reemplazado.' })

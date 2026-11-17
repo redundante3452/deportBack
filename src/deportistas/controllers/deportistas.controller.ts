@@ -43,10 +43,21 @@ export class DeportistasController {
   @Get()
   @ApiOperation({
     summary: 'Listar deportistas',
-    description: 'Devuelve todos los deportistas. Permite filtrar por nombre y/o email.',
+    description:
+      'Devuelve todos los deportistas. Permite filtrar por nombre y/o email.',
   })
-  @ApiQuery({ name: 'nombre', required: false, description: 'Filtro por nombre del deportista', example: 'Juan' })
-  @ApiQuery({ name: 'email', required: false, description: 'Filtro por correo electrónico', example: 'juan@ejemplo.com' })
+  @ApiQuery({
+    name: 'nombre',
+    required: false,
+    description: 'Filtro por nombre del deportista',
+    example: 'Juan',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    description: 'Filtro por correo electrónico',
+    example: 'juan@ejemplo.com',
+  })
   @ApiResponse({ status: 200, description: 'Lista de deportistas.' })
   listarDeportistas(
     @Query('nombre') nombre?: string,
@@ -81,7 +92,8 @@ export class DeportistasController {
   @Put(':id')
   @ApiOperation({
     summary: 'Reemplazar deportista completo (PUT)',
-    description: 'Sustituye todos los campos del deportista por los nuevos valores.',
+    description:
+      'Sustituye todos los campos del deportista por los nuevos valores.',
   })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista reemplazado.' })
