@@ -90,6 +90,10 @@ Patrones: **timeout por dependencia (5 s)**, **circuit breaker** (abre tras 3 fa
 
 **api-fastify (fallo a, reportado por el integrante):** estado estable p95 441 ms · Ronda 0 p95 **3312 ms** (refuta; timeout de 5 s mayor que la latencia inyectada de 3 s → timeouts demasiado largos) · Ronda 1 p95 **496 ms** (−85 %) con timeout de 1 s + circuit breaker + degradación; 26 % de respuestas degradadas y 0 errores HTTP. Reversión verificada en 2 s.
 
+![api-fastify: métrica objetivo p95 extremo a extremo (umbral 2 s) y latencia por nube durante la inyección](evidencia/capturas/api-fastify-metrica-objetivo.png)
+
+*Captura del tablero de api-fastify (Azure), aportada por el integrante. Más paneles en `docs/evidencia/capturas/api-fastify-*.png`.*
+
 **Inventario-U (fallo c):** **[pendiente]**
 
 ## 7. Hallazgos inesperados
