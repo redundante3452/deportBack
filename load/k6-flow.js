@@ -23,6 +23,7 @@ export const PERFIL_CARGA = {
 };
 
 const round = __ENV.ROUND || 'sin-ronda';
+const executionId = __ENV.EXECUTION_ID;
 
 export const options = {
   stages: PERFIL_CARGA.stages,
@@ -33,7 +34,9 @@ export const options = {
 };
 
 export default function () {
-  const traceId = `k6-${__VU}-${__ITER}-${Date.now()}`;
+  const traceId = executionId
+    ? `${executionId}-${__VU}-${__ITER}`
+    : `k6-${__VU}-${__ITER}-${Date.now()}`;
   const headers = {
     'X-Trace-Id': traceId,
   };
@@ -44,7 +47,14 @@ export default function () {
 
   const response = http.get(
     `${baseUrl}/api/v2/deportistas/${deportistaId}`,
-    { headers, tags: { perfil: PERFIL_CARGA.nombre, round } },
+    {
+      headers,
+      tags: {
+        perfil: PERFIL_CARGA.nombre,
+        round,
+        ...(executionId ? { execution_id: executionId } : {}),
+      },
+    },
   );
 
   check(response, {
