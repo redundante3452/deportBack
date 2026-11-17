@@ -1,0 +1,81 @@
+name: Canary release (Cloud Run)
+
+# Flujo de una entrega anterior (despliegue canary con quality gates en Cloud Run).
+# Separado del despliegue actual: se lanza solo manualmente desde
+# Actions > Canary release (Cloud Run) > Run workflow, después de "Deploy to Google Cloud".
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Imagen inmutable (repo@sha256:...). Vacío = la imagen actual del servicio
+        required: false
+        type: string
+
+env:
+  APP_NAME: deport-back
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  CANARY_BAKE_SECONDS: '60'
+  CANARY_SAMPLE_SIZE: '20'
+  CANARY_MAX_ERROR_RATE: '0'
+  CANARY_MAX_LATENCY_MS: '1000'
+
+jobs:
+  canary:
+    if: ${{ vars.ENABLE_GCP_DEPLOY == 'true' }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cloud-run-canary-deport-back
+      cancel-in-progress: false
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate in Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Resolve image
+        id: image
+        run: |
+          IMAGE="${{ inputs.image }}"
+          if [[ -z "$IMAGE" ]]; then
+            IMAGE="$(gcloud run services describe "${{ env.APP_NAME }}" \
+              --project="${{ env.GCP_PROJECT_ID }}" \
+              --region="${{ env.GCP_REGION }}" \
+              --format='value(spec.template.spec.containers[0].image)')"
+          fi
+          test -n "$IMAGE"
+          echo "immutable_image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "### Imagen canary: \`$IMAGE\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy stable and canary revisions
+        env:
+          IMAGE: ${{ steps.image.outputs.immutable_image }}
+        run: bash scripts/deploy-canary.sh
+
+      - name: Promote canary through quality gates
+        env:
+          IMAGE: ${{ steps.image.outputs.immutable_image }}
+        run: |
+          SERVICE_JSON="$(gcloud run services describe "${{ env.APP_NAME }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --format=json)"
+          export STABLE_URL="$(jq -r '.status.traffic[] | select(.tag=="stable") | .url' <<<"$SERVICE_JSON")"
+          export CANARY_URL="$(jq -r '.status.traffic[] | select(.tag=="canary") | .url' <<<"$SERVICE_JSON")"
+          test -n "$STABLE_URL" && test "$STABLE_URL" != "null"
+          test -n "$CANARY_URL" && test "$CANARY_URL" != "null"
+          {
+            echo "### URLs de revisiones"
+            echo "- Stable: $STABLE_URL"
+            echo "- Canary: $CANARY_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
+          bash scripts/canary-promote.sh
