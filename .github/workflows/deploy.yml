@@ -42,6 +42,7 @@ jobs:
         run: |
           gcloud services enable \
             artifactregistry.googleapis.com \
+            container.googleapis.com \
             run.googleapis.com \
             sqladmin.googleapis.com \
             secretmanager.googleapis.com \
