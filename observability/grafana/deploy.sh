@@ -8,7 +8,12 @@ set -euo pipefail
 : "${GRAFANA_TOKEN:?Define GRAFANA_TOKEN}"
 FOLDER_TITLE="${FOLDER_TITLE:-Caos - Indisponibilidad de dependencia (GCP)}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
-PY="$(command -v python3 || command -v python)"
+# Primer intérprete que realmente funcione (en Windows "python3" puede ser un alias vacío de la Store)
+PY=""
+for c in python3 python; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys' >/dev/null 2>&1; then PY="$c"; break; fi
+done
+[[ -n "$PY" ]] || { echo "No se encontró Python" >&2; exit 1; }
 
 "$PY" "$DIR/build_dashboard.py" "$DIR/caos-deport-back.json"
 
