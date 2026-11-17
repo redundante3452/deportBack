@@ -1,0 +1,15 @@
+{
+  "event": "security_honeytoken_triggered",
+  "window_seconds": 300,
+  "threshold": 1,
+  "events": [
+    {
+      "event": "security_honeytoken_triggered",
+      "timestamp_offset_s": 0,
+      "deportista_id": "00000000-0000-4000-8000-0000000000aa",
+      "method": "GET"
+    }
+  ],
+  "execution_id": "fixture-honeytoken-positive",
+  "expected_match": true
+}

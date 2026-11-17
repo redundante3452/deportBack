@@ -1,0 +1,8 @@
+{
+  "event": "security_honeytoken_triggered",
+  "window_seconds": 300,
+  "threshold": 1,
+  "events": [],
+  "execution_id": "fixture-honeytoken-negative",
+  "expected_match": false
+}

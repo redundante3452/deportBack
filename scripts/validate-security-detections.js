@@ -59,7 +59,7 @@ function validateRule(rule) {
 
 try {
   const rules = readRules();
-  assert(rules.length === 4, `Se esperaban 4 reglas y se encontraron ${rules.length}`);
+  assert(rules.length === 5, `Se esperaban 5 reglas y se encontraron ${rules.length}`);
   rules.forEach(validateRule);
   console.log(`Detecciones válidas: ${rules.length} reglas y ${rules.length * 2} fixtures`);
 } catch (error) {

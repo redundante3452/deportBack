@@ -37,3 +37,17 @@ rules:
     threshold: ">= 10 borrados en 5 min"
     cloud_logging_filter: 'resource.type="k8s_container" AND jsonPayload.event="deportista_deleted"'
     implementation: deportista_deleted
+  - id: honeytoken-deportista
+    experiment: E4
+    signal: honeytoken_deportista
+    window_minutes: 5
+    positive_case: fixtures/honeytoken-positive.json
+    negative_case: fixtures/honeytoken-negative.json
+    status: implemented
+    platform: grafana
+    alert_title: "Honeytoken - acceso a deportista señuelo"
+    metric: logging.googleapis.com/user/deport-back-honeytoken-triggered
+    grafana_query: "sum(increase(deport-back-honeytoken-triggered[5m])) > 0"
+    threshold: "> 0 accesos en 5 min"
+    cloud_logging_filter: 'resource.type="k8s_container" AND jsonPayload.event="security_honeytoken_triggered"'
+    implementation: security_honeytoken_triggered
