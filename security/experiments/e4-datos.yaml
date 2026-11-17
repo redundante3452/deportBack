@@ -3,34 +3,41 @@ kind: SecurityExperiment
 metadata:
   name: e4-resiliencia-datos
 spec:
-  owner: grupo-completo
-  control: inmutabilidad-copia-aislada-y-recuperacion
-  hypothesisRef: security/game-day/hipotesis.md#e4---resiliencia-de-datos
+  owner: deport-back
+  control: contencion-de-borrado-masivo-backups-pitr-y-copia-aislada
+  hypothesisRef: security/experiments/e4-datos/README.md
   preconditions:
-    - bucket-o-contenedor-propio-confirmado
-    - objetos-sinteticos-creados
-    - copia-aislada-verificada
-    - inmutabilidad-verificada
-    - restauracion-de-prueba-completada
+    - lote-sintetico-de-50-registros-e4-creado-por-el-script
+    - ids-del-flujo-fuera-del-alcance
+    - regla-de-alerta-borrado-masivo-en-grafana
+    - ronda-1-backups-y-pitr-activos
   scope:
-    resources: pendiente-de-confirmar
-    data: objetos-sinteticos-desechables
+    resources: deport-back-sql/deport_db/deportistas
+    data: registros-sinteticos-e4-example-com
   injection:
-    method: sobrescritura-o-borrado-simulado-del-objeto-sintetico
+    method: borrado-masivo-via-api-con-credencial-valida
+    mitre: T1078+T1485-pendiente-verificar-en-attack.mitre.org
     destructive: true
+    script: security/experiments/e4-datos/ejecutar.sh
   signals:
-    - evento-de-borrado-o-cifrado
-    - alerta-de-proteccion-de-datos
-    - trace_id-del-flujo
+    - evento-deportista_deleted
+    - evento-security_mass_delete_blocked
+    - alerta-E4-Borrado-masivo-de-deportistas
+    - trace_id-gd-exp4
   metrics:
     - rpo
     - rto
     - mttd
     - mttc
   stopConditions:
-    - objeto-fuera-del-alcance
-    - copia-aislada-en-riesgo
-    - recuperacion-no-disponible
+    - id-del-flujo-afectado
+    - clon-no-disponible
+    - parar-manual
+    - script: security/experiments/e4-datos/parar.sh
   rollback:
-    method: restaurar-desde-copia-aislada-y-confirmar-integridad
-  status: bloqueado-hasta-confirmar-almacenamiento
+    method: borrar-lote-e4-restaurar-control-y-borrar-clones
+    script: security/experiments/e4-datos/revertir.sh
+    success: REVERSION OK
+  workflow: .github/workflows/gameday-e4.yml
+  status: listo-para-ejecutar
+version: "0.2"
