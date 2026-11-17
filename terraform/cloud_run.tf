@@ -57,12 +57,37 @@ resource "google_cloud_run_v2_service" "app" {
         }
       }
 
+      env {
+        name = "TEAM_API_KEY"
+
+        value_source {
+          secret_key_ref {
+            secret  = data.google_secret_manager_secret.team_api_key.secret_id
+            version = "latest"
+          }
+        }
+      }
+
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
   }
+
+  depends_on = [google_secret_manager_secret_iam_member.team_api_key_accessor]
+}
+
+# La clave compartida entre las tres APIs se rota fuera de Terraform en el
+# secreto "team-api-key"; Cloud Run lee siempre la última versión.
+data "google_secret_manager_secret" "team_api_key" {
+  secret_id = "team-api-key"
+}
+
+resource "google_secret_manager_secret_iam_member" "team_api_key_accessor" {
+  secret_id = data.google_secret_manager_secret.team_api_key.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.cloud_run.email}"
 }
 
 resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
