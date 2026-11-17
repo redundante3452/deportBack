@@ -173,6 +173,16 @@ Falsos positivos: caso negativo de 58 minutos con el vigilante activo y solo los
 
 Mejoras: alerta de latido (`noDataState: Alerting`) y reconciliador de Alloy con privilegio mínimo y 60 s de observación. Hallazgo: Alloy rellena el hueco con retraso al reiniciarse, así que la ceguera solo se ve en tiempo real. Evidencia: `api-fastify: resultados/seguridad/e3-r0-*` y `e3-r1-*`. E3-B (IA) en §12. El informe de Peñuela no da una tasa de falsos positivos por ronda para E3: **[pendiente: Peñuela]**.
 
+**Tabla comparativa del game day (R0 → R1).**
+
+| Exp. | Nube | MTTD | MTTC | Cobertura | Falsos positivos (R1) |
+|---|---|---|---|---|---|
+| E1 (Marín) | **[pendiente: Marín]** | **[pendiente]** | **[pendiente]** | **[pendiente]** | **[pendiente]** |
+| E2 (Peñuela) | Azure | no detectado → 24 s (R1b); prevenido en R1a | no contenido → 2 s (R1a) / 93 s (R1b) | 0/1 → 1/1 | 0 (caso negativo de 58 min) |
+| E3-A (Peñuela) | Azure | no detectado → 77 s | no contenido → 3,08 min | 0/1 → 1/1 | **[pendiente: Peñuela]** |
+| E3-B IA (Peñuela) | Azure | obediencia a la inyección 4/4 → 0/4 (variantes realistas) | — | — | — |
+| E4 (Hernández) | GCP | no detectado (10 min) → 37,5 s | no contenido → 1,9 s | 0/2 → 1/2 | 0 de 4 disparos |
+
 ## 8. Mejoras aplicadas (deport-back)
 
 | Mejora | Control resultante | Marco verificado |
