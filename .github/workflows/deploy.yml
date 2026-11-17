@@ -112,6 +112,7 @@ jobs:
         working-directory: terraform
         env:
           IMAGE: ${{ steps.image.outputs.immutable_image }}
+          TF_VAR_team_api_key: ${{ secrets.TEAM_API_KEY }}
         run: |
           terraform apply -auto-approve \
             -lock-timeout=10m \
