@@ -4,6 +4,9 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Deportista } from './entities/deportista.entity';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { HttpExternoService } from '../common/http-externo/http-externo.service';
+import { CacheDistribuidaService } from '../common/cache-distribuida/cache-distribuida.service';
 
 import { UpdateDeportistaDto } from './dto/update-deportista.dto';
 
@@ -38,6 +41,12 @@ describe('DeportistasService', () => {
         {
           provide: getRepositoryToken(Deportista),
           useValue: mockRepository,
+        },
+        { provide: HttpExternoService, useValue: { get: jest.fn() } },
+        { provide: ConfigService, useValue: { get: jest.fn() } },
+        {
+          provide: CacheDistribuidaService,
+          useValue: { obtener: jest.fn(), guardar: jest.fn() },
         },
       ],
     }).compile();
