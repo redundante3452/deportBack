@@ -36,7 +36,7 @@ DEL=0; BLOQ=0; OTROS=0
 T_PRIMER_429=""; T_DETECCION=""; T_REC_INICIO=""; T_REC_FIN=""
 MTTD="null"; MTTC="null"; RTO="null"; RPO="null"; RESTAURADOS=0
 DETECTADO=false; CONTENIDO=false
-PITR_PUNTO=""; VENTANA_RPO_S="null"
+PITR_PUNTO=""; VENTANA_RPO_S="null"; EXPORT_RETENIDO="null"
 CLON=""; PROXY_PID=""
 
 # ---- a. Estado estable
@@ -196,8 +196,17 @@ fi
 if [[ -n "$EXPORT_URI" ]]; then
   log "Retencion del bucket: $(gcloud storage buckets describe "gs://${E4_BUCKET}" --format='json(retention_policy,versioning)' 2>&1 | tr -d '\n')"
   if gcloud storage rm "$EXPORT_URI" >"$RESULT_DIR/intento-borrado-export.log" 2>&1; then
-    log "El borrado del export SE PERMITIO (no hay inmutabilidad efectiva)"
+    gcloud storage ls -a "$EXPORT_URI" >"$RESULT_DIR/versiones-export.txt" 2>&1 || true
+    VERSION_EXPORT="$(grep -m1 '#' "$RESULT_DIR/versiones-export.txt" || true)"
+    if [[ -n "$VERSION_EXPORT" ]]; then
+      log "Borrado logico del export permitido, pero la version queda retenida (versionado + retencion): $VERSION_EXPORT"
+      EXPORT_RETENIDO=true
+    else
+      log "El borrado del export SE PERMITIO y no quedo version (sin inmutabilidad efectiva)"
+      EXPORT_RETENIDO=false
+    fi
   else
+    EXPORT_RETENIDO=true
     log "Borrado del export DENEGADO (inmutabilidad evidenciada): $(tr -d '\n' <"$RESULT_DIR/intento-borrado-export.log" | cut -c1-300)"
   fi
 fi
@@ -210,12 +219,12 @@ jq -n --arg exec "$EXECUTION_ID" --argjson ronda "$RONDA" \
   --argjson sem "$SEMBRADOS" --argjson del "$DEL" --argjson bloq "$BLOQ" \
   --argjson mttd "$MTTD" --argjson mttc "$MTTC" --argjson rpo "${RPO:-null}" --argjson rto "$RTO" \
   --argjson rest "$RESTAURADOS" --argjson det "$DETECTADO" --argjson cont "$CONTENIDO" \
-  --argjson bk "$BACKUPS" --argjson pitr "$PITR" \
+  --argjson bk "$BACKUPS" --argjson pitr "$PITR" --argjson expret "$EXPORT_RETENIDO" \
   '{execution_id:$exec,ronda:$ronda,t_siembra_fin:$ts,t_ataque_inicio:$ti,t_ataque_fin:$tf,
     t_primer_429:(if $t429=="" then null else $t429 end),t_deteccion:(if $tdet=="" then null else $tdet end),
     t_recuperacion_inicio:(if $trec=="" then null else $trec end),t_recuperacion_fin:(if $trecf=="" then null else $trecf end),
     punto_pitr:(if $pitrp=="" then null else $pitrp end),
     total_sembrados:$sem,borrados:$del,bloqueados:$bloq,mttd_s:$mttd,mttc_s:$mttc,
-    rpo_registros:$rpo,rto_s:$rto,restaurados:$rest,detectado:$det,contenido:$cont,backups:$bk,pitr:$pitr}' \
+    rpo_registros:$rpo,rto_s:$rto,restaurados:$rest,detectado:$det,contenido:$cont,backups:$bk,pitr:$pitr,export_retenido:$expret}' \
   >"$RESULT_DIR/resultado-r${RONDA}.json"
 log "Resultado escrito en $RESULT_DIR/resultado-r${RONDA}.json"
