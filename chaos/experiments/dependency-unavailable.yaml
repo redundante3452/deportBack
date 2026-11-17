@@ -6,6 +6,14 @@ metadata:
   labels:
     experiment: dependency-unavailable
     owner: deport-back
+  annotations:
+    chaos.deport-back/steady-state: "a medir en Ronda 0: tasa de exito >= 99%, p95 < 1000 ms (objetivos, no medidos)"
+    chaos.deport-back/hypothesis: "Dado el perfil de carga load/k6-flow.js, cuando se inyecte la indisponibilidad de la dependencia externa durante 4m30s, el flujo GET /api/v2/deportistas/:id mantendra el p95 de latencia por debajo de 1000 ms"
+    chaos.deport-back/target-metric: "p95 de latencia de GET /api/v2/deportistas/:id < 1000 ms"
+    chaos.deport-back/blast-radius: "solo namespace deport-back; solo la llamada saliente desde deport-back; datos sinteticos"
+    chaos.deport-back/duration: "4m30s"
+    chaos.deport-back/abort-conditions: "tasa de error > 50% durante 60 s; pods no Ready; parada manual (kubectl delete -f)"
+    chaos.deport-back/rollback: "duration expira solo el recurso; ademas kubectl delete -f y restaurar CHAOS_DEPENDENCY_FAILURE=false (ver scripts/run-chaos-experiment.sh y dependency-unavailable.experiment.json)"
 spec:
   action: partition
   mode: all
@@ -22,4 +30,4 @@ spec:
         - integrations
       labelSelectors:
         chaos-target: external-dependency
-  duration: '2m'
+  duration: '4m30s' # = duracion total de PERFIL_CARGA (load/k6-flow.js)
