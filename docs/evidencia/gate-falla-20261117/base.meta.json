@@ -1,0 +1,11 @@
+{
+  "execution_id": "gate-falla-b-20261117-base",
+  "round": "base",
+  "injection_start_utc": "2026-11-17T20:51:59Z",
+  "injection_end_utc": "2026-11-17T20:56:29Z",
+  "base_url": "http://34.16.0.136",
+  "chaos_target": "",
+  "breaker": "on",
+  "k6_exit_code": 0,
+  "trace_id_prefix": "gate-falla-b-20261117-base"
+}

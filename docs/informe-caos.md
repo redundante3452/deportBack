@@ -58,6 +58,7 @@ Misma carga, mismo fallo, misma duración, mismo instrumento.
 
 - Estado estable → Ronda 0: p95 **+1660 %** → **hipótesis refutada**.
 - Ronda 0 → Ronda 1: p95 **−99,0 %** → **hipótesis cumplida**. El chaos gate **aprobó**.
+- **El gate también falla cuando debe:** con el mismo experimento y `max_p95_ms=20` ([run 44173523895](https://github.com/redundante3452/deportBack/actions/runs/44173523895)) el paso *Evaluate chaos gate* termina en exit 1 con `FALLO: Ronda 1 supera el umbral de p95: 30.34 ms > 20 ms` y publica la tabla como artefacto (`docs/evidencia/gate-falla-20261117/`).
 
 | Fallos de dependencia (Cloud Logging) | Timeout 5 s | Circuito abierto |
 |---|---|---|
