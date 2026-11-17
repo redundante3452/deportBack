@@ -1,0 +1,52 @@
+{
+  "uid": "e4-borrado-masivo",
+  "title": "E4 - Borrado masivo de deportistas",
+  "ruleGroup": "e4-seguridad",
+  "condition": "C",
+  "for": "0s",
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "labels": {
+    "experimento": "e4",
+    "severidad": "critica",
+    "servicio": "deport-back"
+  },
+  "annotations": {
+    "summary": "Borrado masivo de deportistas: {{ $values.B }} borrados en 5 min (umbral >= 10)",
+    "description": "Posible destruccion de datos con credencial valida (ATT&CK T1078 + T1485). Revisar eventos deportista_deleted en Cloud Logging, contener (rotar TEAM_API_KEY / limite de borrados) y restaurar desde clon PITR. Runbook: deport-back/security/experiments/e4-datos/README.md"
+  },
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": { "from": 300, "to": 0 },
+      "datasourceUid": "gcp-deport-back",
+      "model": {
+        "refId": "A",
+        "queryType": "timeSeriesList",
+        "timeSeriesList": {
+          "projectName": "deport-back",
+          "filters": ["metric.type", "=", "logging.googleapis.com/user/deport-back-deportistas-deleted"],
+          "perSeriesAligner": "ALIGN_DELTA",
+          "crossSeriesReducer": "REDUCE_SUM",
+          "alignmentPeriod": "+60s",
+          "groupBys": []
+        }
+      }
+    },
+    {
+      "refId": "B",
+      "datasourceUid": "__expr__",
+      "model": { "refId": "B", "type": "reduce", "expression": "A", "reducer": "sum", "settings": { "mode": "dropNN" } }
+    },
+    {
+      "refId": "C",
+      "datasourceUid": "__expr__",
+      "model": {
+        "refId": "C",
+        "type": "threshold",
+        "expression": "B",
+        "conditions": [{ "evaluator": { "type": "gt", "params": [9.5] } }]
+      }
+    }
+  ]
+}
