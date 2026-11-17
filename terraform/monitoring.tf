@@ -124,10 +124,37 @@ resource "google_logging_metric" "dependency_failures" {
       key        = "dependency"
       value_type = "STRING"
     }
+
+    labels {
+      key        = "error_type"
+      value_type = "STRING"
+    }
   }
 
   label_extractors = {
     dependency = "EXTRACT(jsonPayload.dependency)"
+    error_type = "EXTRACT(jsonPayload.error_type)"
+  }
+}
+
+resource "google_logging_metric" "circuit_breaker_opened" {
+  name       = "${var.app_name}-circuit-breaker-opened"
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") AND jsonPayload.event=\"circuit_breaker_opened\""
+  depends_on = [google_project_iam_member.logging_config_writer]
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    unit        = "1"
+
+    labels {
+      key        = "url"
+      value_type = "STRING"
+    }
+  }
+
+  label_extractors = {
+    url = "EXTRACT(jsonPayload.url)"
   }
 }
 
@@ -331,6 +358,44 @@ resource "google_monitoring_dashboard" "chaos" {
                 }
               }
               plotType = "STACKED_AREA"
+            }]
+          }
+        },
+        {
+          title = "Fallos de dependencia por tipo"
+          xyChart = {
+            dataSets = [{
+              timeSeriesQuery = {
+                timeSeriesFilter = {
+                  filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.dependency_failures.name}\""
+                  aggregation = {
+                    alignmentPeriod    = "60s"
+                    perSeriesAligner   = "ALIGN_RATE"
+                    crossSeriesReducer = "REDUCE_SUM"
+                    groupByFields      = ["metric.label.error_type"]
+                  }
+                }
+              }
+              plotType = "STACKED_BAR"
+            }]
+          }
+        },
+        {
+          title = "Aperturas del circuit breaker"
+          xyChart = {
+            dataSets = [{
+              timeSeriesQuery = {
+                timeSeriesFilter = {
+                  filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.circuit_breaker_opened.name}\""
+                  aggregation = {
+                    alignmentPeriod    = "60s"
+                    perSeriesAligner   = "ALIGN_SUM"
+                    crossSeriesReducer = "REDUCE_SUM"
+                    groupByFields      = ["metric.label.url"]
+                  }
+                }
+              }
+              plotType = "STACKED_BAR"
             }]
           }
         },
