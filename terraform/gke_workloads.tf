@@ -136,17 +136,37 @@ resource "kubernetes_deployment" "app" {
             initial_delay_seconds = 20
             period_seconds        = 20
           }
+
+          # Drenaje: el balanceador deja de enviar tráfico antes del SIGTERM
+          lifecycle {
+            pre_stop {
+              exec {
+                command = ["sh", "-c", "sleep 10"]
+              }
+            }
+          }
         }
 
         container {
           name  = "cloud-sql-proxy"
-          image = "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0"
+          image = "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0-alpine"
 
           args = [
             "--structured-logs",
             "--port=5432",
+            "--max-sigterm-delay=10s",
             google_sql_database_instance.postgres.connection_name,
           ]
+
+          # El proxy debe sobrevivir a la app: sin esto, en un rolling update el
+          # proxy muere al instante y la app responde 500 (ECONNREFUSED 127.0.0.1:5432)
+          lifecycle {
+            pre_stop {
+              exec {
+                command = ["sh", "-c", "sleep 15"]
+              }
+            }
+          }
 
           resources {
             requests = {
