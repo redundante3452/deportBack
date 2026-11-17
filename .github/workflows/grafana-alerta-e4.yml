@@ -1,0 +1,28 @@
+name: Grafana - alerta E4
+
+# Publica la regla "E4 - Borrado masivo de deportistas" usando el secreto GRAFANA_TOKEN
+# (el token nunca pasa por la consola local). Ejecucion manual.
+on:
+  workflow_dispatch:
+
+jobs:
+  alerta:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publicar regla de alerta
+        run: bash observability/grafana/deploy-alerta-e4.sh
+
+      - name: Verificar salud de la regla
+        run: |
+          sleep 75
+          curl -fsS -H "Authorization: Bearer $GRAFANA_TOKEN" "${GRAFANA_URL%/}/api/prometheus/grafana/api/v1/rules" \
+            | jq '[.data.groups[]?.rules[]? | select(.name=="E4 - Borrado masivo de deportistas") | {name, state, health, lastError, lastEvaluation}]' \
+            | tee regla.json
+          jq -e 'length == 1 and (.[0].health == "ok")' regla.json
