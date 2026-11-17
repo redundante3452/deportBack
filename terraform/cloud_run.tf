@@ -57,6 +57,17 @@ resource "google_cloud_run_v2_service" "app" {
         }
       }
 
+      # Dependencias externas del flujo (vacías = no se llama a esa API)
+      env {
+        name  = "API_FASTIFY_URL"
+        value = var.api_fastify_url
+      }
+
+      env {
+        name  = "INVENTARIO_U_URL"
+        value = var.inventario_u_url
+      }
+
       env {
         name = "TEAM_API_KEY"
 
