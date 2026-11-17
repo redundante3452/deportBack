@@ -112,6 +112,9 @@ jobs:
         env:
           IMAGE: ${{ steps.image.outputs.immutable_image }}
           TF_VAR_team_api_key: ${{ secrets.TEAM_API_KEY }}
+          # URLs de las APIs de los compañeros: variables del repo (Settings > Variables)
+          TF_VAR_api_fastify_url: ${{ vars.API_FASTIFY_URL }}
+          TF_VAR_inventario_u_url: ${{ vars.INVENTARIO_U_URL }}
         run: |
           terraform apply -auto-approve \
             -lock-timeout=10m \
