@@ -55,21 +55,17 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - uses: google-github-actions/setup-gcloud@v2
-        with:
-          install_components: gke-gcloud-auth-plugin
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
 
+      # Kubeconfig con token de corta duración: no depende de gke-gcloud-auth-plugin
       - name: Configure GKE credentials
-        run: |
-          gcloud container clusters get-credentials "$GKE_CLUSTER" \
-            --region "$GCP_REGION" \
-            --project "$GCP_PROJECT_ID"
-        env:
-          GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
-          GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
-          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ vars.GKE_CLUSTER }}
+          location: ${{ vars.GCP_REGION || 'us-central1' }}
+          project_id: ${{ vars.GCP_PROJECT_ID || 'deport-back' }}
 
       - name: Resolve GKE LoadBalancer URL
         run: |
