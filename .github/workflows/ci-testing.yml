@@ -30,32 +30,10 @@ jobs:
           docker compose -f docker-compose.test.yml run --rm -v "$PWD/coverage:/app/coverage" unit-tests \
             sh -c "pnpm test:cov --coverageReporters=json --forceExit"
 
-      - name: Verificar credenciales de base de datos
-        run: |
-          if [ -z "$DB_HOST" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ]; then
-            echo "::error::Faltan secrets de base de datos. Configura DB_HOST_TESTING, DB_PORT_TESTING, DB_USERNAME_TESTING, DB_PASSWORD_TESTING y DB_NAME_TESTING en Settings > Secrets."
-            exit 1
-          fi
-          echo "Conectando a: $DB_HOST:$DB_PORT/$DB_NAME como $DB_USERNAME (SSL=$DB_SSL)"
-        env:
-          DB_HOST: ${{ secrets.DB_HOST_TESTING }}
-          DB_PORT: ${{ secrets.DB_PORT_TESTING }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
-          DB_NAME: ${{ secrets.DB_NAME_TESTING }}
-          DB_SSL: "false"
-
       - name: Ejecutar pruebas E2E con cobertura
         run: |
           docker compose -f docker-compose.test.yml run --rm -v "$PWD/coverage-e2e:/app/coverage-e2e" e2e-tests \
             sh -c "pnpm test:e2e --coverage --forceExit"
-        env:
-          DB_HOST: ${{ secrets.DB_HOST_TESTING }}
-          DB_PORT: ${{ secrets.DB_PORT_TESTING }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME_TESTING }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD_TESTING }}
-          DB_NAME: ${{ secrets.DB_NAME_TESTING }}
-          DB_SSL: "false"
 
       - name: Combinar cobertura de unitarios + e2e
         run: |
