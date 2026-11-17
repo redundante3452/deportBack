@@ -164,7 +164,7 @@ Cobertura 1/2: T1485 se detecta por la alerta; T1078 no es distinguible porque l
 
 ## 10. Tendencias
 
-**(a) Honeytoken con alerta.** Implementado en deport-back: `HoneytokenInterceptor` emite el evento `security_honeytoken_triggered` cuando se consulta un id señuelo (`SECURITY_HONEYTOKEN_IDS`) sin alterar la respuesta, la métrica `deport-back-honeytoken-triggered` lo cuenta y la alerta “Honeytoken - acceso a deportista señuelo” dispara con > 0 en 5 min. Resultado: **[pendiente: prueba de disparo y MTTD]**. Fuentes: la rúbrica del curso lista “honeytoken con alerta” como ejemplo de tendencia; MITRE D3FEND D3-DO Decoy Object (consultado 2026-11-17).
+**(a) Honeytoken con alerta.** Implementado en deport-back: `HoneytokenInterceptor` emite el evento `security_honeytoken_triggered` cuando se consulta un id señuelo (`SECURITY_HONEYTOKEN_IDS`) sin alterar la respuesta, la métrica `deport-back-honeytoken-triggered` lo cuenta y la alerta “Honeytoken - acceso a deportista señuelo” dispara con > 0 en 5 min. Resultado: **prueba ejecutada el 2026-11-17 (run 44178025923): acceso con credencial válida al señuelo a las 21:16:19 UTC (HTTP 200, trace `gd-honeytoken-20261117T211619Z`), evento `security_honeytoken_triggered` en Cloud Logging a las 21:16:19.51 y alerta en *firing* a las 21:17:22 → **MTTD 63,4 s**. Evidencia: `docs/evidencia/honeytoken-20261117/`**. Fuentes: la rúbrica del curso lista “honeytoken con alerta” como ejemplo de tendencia; MITRE D3FEND D3-DO Decoy Object (consultado 2026-11-17).
 
 **(b)** **[pendiente: segunda tendencia — Peñuela (E3)]**.
 
