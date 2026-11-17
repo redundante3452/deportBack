@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -84,8 +85,9 @@ export class HabitosController {
   @ApiOperation({ summary: 'Obtener hábito por ID' })
   @ApiParam({ name: 'id', description: 'UUID del hábito', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Hábito encontrado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Hábito no encontrado.' })
-  buscarPorId(@Param('id') id: string) {
+  buscarPorId(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.habitosService.buscarPorId(id);
   }
 
@@ -97,8 +99,12 @@ export class HabitosController {
   })
   @ApiParam({ name: 'id', description: 'UUID del hábito', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Hábito reemplazado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Hábito no encontrado.' })
-  reemplazar(@Param('id') id: string, @Body() dto: ReemplazarHabitoDto) {
+  reemplazar(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: ReemplazarHabitoDto,
+  ) {
     return this.habitosService.reemplazar(id, dto);
   }
 
@@ -109,9 +115,10 @@ export class HabitosController {
   })
   @ApiParam({ name: 'id', description: 'UUID del hábito', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Frecuencia actualizada.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Hábito no encontrado.' })
   actualizarFrecuencia(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ActualizarFrecuenciaHabitoDto,
   ) {
     return this.habitosService.actualizarFrecuencia(id, dto);
@@ -121,8 +128,9 @@ export class HabitosController {
   @ApiOperation({ summary: 'Eliminar hábito' })
   @ApiParam({ name: 'id', description: 'UUID del hábito', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Hábito eliminado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Hábito no encontrado.' })
-  eliminar(@Param('id') id: string) {
+  eliminar(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.habitosService.eliminar(id);
   }
 }

@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { DeportistasService } from '../services/deportistas.service';
@@ -51,7 +52,10 @@ export class DeportistasV3Controller {
   @ApiOperation({
     summary: 'Reemplazar deportista completo (v3)',
   })
-  reemplazar(@Param('id') id: string, @Body() dto: ReemplazarDeportistaV3Dto) {
+  reemplazar(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: ReemplazarDeportistaV3Dto,
+  ) {
     return this.deportistasService.reemplazar(id, dto);
   }
 
@@ -60,7 +64,7 @@ export class DeportistasV3Controller {
     summary: 'Actualizar deportista parcialmente (v3)',
   })
   actualizarParcial(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ActualizarParcialDeportistaV3Dto,
   ) {
     return this.deportistasService.actualizarParcial(id, dto);
@@ -70,7 +74,7 @@ export class DeportistasV3Controller {
   @ApiOperation({
     summary: 'Eliminar deportista (v3)',
   })
-  eliminar(@Param('id') id: string) {
+  eliminar(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.deportistasService.eliminar(id);
   }
 }

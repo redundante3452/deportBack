@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   Req,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -106,9 +107,10 @@ export class DeportistasV2Controller {
     status: 200,
     description: 'Deportista encontrado, con apis_externas.',
   })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
   async obtenerPorId(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Req() request: RequestConTraceId,
   ) {
     const traceId = obtenerTraceId(request);
@@ -129,9 +131,10 @@ export class DeportistasV2Controller {
   })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista reemplazado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
   async reemplazar(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ReemplazarDeportistaDto,
     @Req() request: RequestConTraceId,
   ) {
@@ -147,9 +150,10 @@ export class DeportistasV2Controller {
   })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista actualizado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
   async actualizarParcial(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ActualizarParcialDeportistaDto,
     @Req() request: RequestConTraceId,
   ) {
@@ -165,8 +169,12 @@ export class DeportistasV2Controller {
   })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista eliminado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
-  async eliminar(@Param('id') id: string, @Req() request: RequestConTraceId) {
+  async eliminar(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() request: RequestConTraceId,
+  ) {
     await this.deportistasService.eliminar(id);
     return { eliminado: true, id, trace_id: obtenerTraceId(request) };
   }

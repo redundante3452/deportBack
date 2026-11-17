@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -84,8 +85,9 @@ export class DeportistasController {
   @ApiOperation({ summary: 'Obtener deportista por ID' })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista encontrado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
-  buscarPorId(@Param('id') id: string) {
+  buscarPorId(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.deportistasService.buscarPorId(id);
   }
 
@@ -97,8 +99,12 @@ export class DeportistasController {
   })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista reemplazado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
-  reemplazar(@Param('id') id: string, @Body() dto: ReemplazarDeportistaDto) {
+  reemplazar(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: ReemplazarDeportistaDto,
+  ) {
     return this.deportistasService.reemplazar(id, dto);
   }
 
@@ -109,9 +115,10 @@ export class DeportistasController {
   })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista actualizado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
   actualizarParcial(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ActualizarParcialDeportistaDto,
   ) {
     return this.deportistasService.actualizarParcial(id, dto);
@@ -121,8 +128,9 @@ export class DeportistasController {
   @ApiOperation({ summary: 'Eliminar deportista' })
   @ApiParam({ name: 'id', description: 'UUID del deportista', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Deportista eliminado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Deportista no encontrado.' })
-  eliminar(@Param('id') id: string) {
+  eliminar(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.deportistasService.eliminar(id);
   }
 }

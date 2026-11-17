@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { RegistrosService } from '../services/registros.service';
@@ -48,8 +49,9 @@ export class RegistrosController {
   @ApiOperation({ summary: 'Obtener detalle de un registro por ID' })
   @ApiParam({ name: 'id', description: 'UUID del registro', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Detalle del registro.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Registro no encontrado.' })
-  detalle(@Param('id') id: string) {
+  detalle(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.registrosService.buscarPorId(id);
   }
 
@@ -60,9 +62,10 @@ export class RegistrosController {
   })
   @ApiParam({ name: 'id', description: 'UUID del registro', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Registro actualizado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Registro no encontrado.' })
   actualizarCompleto(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ActualizarRegistroDto,
   ) {
     return this.registrosService.actualizarCompleto(id, dto);
@@ -78,9 +81,10 @@ export class RegistrosController {
     status: 200,
     description: 'Registro parcialmente actualizado.',
   })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Registro no encontrado.' })
   actualizarParcial(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ActualizarParcialRegistroDto,
   ) {
     return this.registrosService.actualizarParcial(id, dto);
@@ -90,8 +94,9 @@ export class RegistrosController {
   @ApiOperation({ summary: 'Eliminar registro de entrenamiento' })
   @ApiParam({ name: 'id', description: 'UUID del registro', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Registro eliminado.' })
+  @ApiResponse({ status: 400, description: 'id no es un UUID válido.' })
   @ApiResponse({ status: 404, description: 'Registro no encontrado.' })
-  eliminar(@Param('id') id: string) {
+  eliminar(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.registrosService.eliminar(id);
   }
 }
