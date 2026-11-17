@@ -1,9 +1,8 @@
 name: Deploy to Google Cloud
 
+# Despliegue manual: se lanza desde Actions > Deploy to Google Cloud > Run workflow
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 env:
   APP_NAME: deport-back
