@@ -51,5 +51,6 @@ k6 run \
   -e "BASE_URL=$BASE_URL" \
   -e "DEPORTISTA_ID=$DEPORTISTA_ID" \
   -e "API_KEY=$API_KEY" \
+  -e "ROUND=ronda-$ROUND" \
   --summary-export "$SUMMARY_FILE" \
   load/k6-flow.js
