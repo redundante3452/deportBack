@@ -1,0 +1,52 @@
+{
+  "uid": "honeytoken-deportista",
+  "title": "Honeytoken - acceso a deportista señuelo",
+  "ruleGroup": "e4-seguridad",
+  "condition": "C",
+  "for": "0s",
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "labels": {
+    "experimento": "honeytoken",
+    "severidad": "critica",
+    "servicio": "deport-back"
+  },
+  "annotations": {
+    "summary": "Acceso a deportista senuelo (honeytoken): {{ $values.B }} accesos en 5 min",
+    "description": "Un registro senuelo fue consultado, modificado o borrado: posible abuso de credencial valida (ATT&CK T1078) o reconocimiento de datos. Revisar eventos security_honeytoken_triggered en Cloud Logging (caller, trace_id), rotar TEAM_API_KEY si procede. Runbook: deport-back/security/experiments/e4-datos/README.md"
+  },
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": { "from": 300, "to": 0 },
+      "datasourceUid": "gcp-deport-back",
+      "model": {
+        "refId": "A",
+        "queryType": "timeSeriesList",
+        "timeSeriesList": {
+          "projectName": "deport-back",
+          "filters": ["metric.type", "=", "logging.googleapis.com/user/deport-back-honeytoken-triggered"],
+          "perSeriesAligner": "ALIGN_DELTA",
+          "crossSeriesReducer": "REDUCE_SUM",
+          "alignmentPeriod": "+60s",
+          "groupBys": []
+        }
+      }
+    },
+    {
+      "refId": "B",
+      "datasourceUid": "__expr__",
+      "model": { "refId": "B", "type": "reduce", "expression": "A", "reducer": "sum", "settings": { "mode": "dropNN" } }
+    },
+    {
+      "refId": "C",
+      "datasourceUid": "__expr__",
+      "model": {
+        "refId": "C",
+        "type": "threshold",
+        "expression": "B",
+        "conditions": [{ "evaluator": { "type": "gt", "params": [0.5] } }]
+      }
+    }
+  ]
+}

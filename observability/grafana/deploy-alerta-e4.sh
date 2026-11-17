@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publica (upsert) la regla de alerta del E4 en Grafana por la API de provisioning.
+# Publica (upsert) las reglas de alerta del grupo e4-seguridad (E4 + honeytoken) en Grafana por la API de provisioning.
 # Requiere GRAFANA_URL y GRAFANA_TOKEN (service account Editor). Nunca guardes el token en el repo.
 # Umbral: >= 10 borrados en 5 min (el limite de la Ronda 1 deja pasar 10/min; ventana de 5 min
 # para no partir el ataque entre dos buckets de 1 min).
@@ -19,7 +19,5 @@ if [[ -z "$FOLDER_UID" ]]; then
 fi
 echo "Carpeta: $FOLDER_TITLE ($FOLDER_UID)"
 
-jq --arg f "$FOLDER_UID" '. + {folderUID:$f}' "$DIR/alerta-e4.json" \
-  | jq --arg g "$GROUP" '{title:$g, interval:30, rules:[.]}' \
-  | api -X PUT "$URL/api/v1/provisioning/folder/$FOLDER_UID/rule-groups/$GROUP" --data-binary @- >/dev/null
-echo "Regla publicada: E4 - Borrado masivo de deportistas (grupo $GROUP, evaluacion cada 30 s)"
+jq -s --arg f "$FOLDER_UID" --arg g "$GROUP"   '{title:$g, interval:30, rules:(map(. + {folderUID:$f}))}' "$DIR/alerta-e4.json" "$DIR/alerta-honeytoken.json"   | api -X PUT "$URL/api/v1/provisioning/folder/$FOLDER_UID/rule-groups/$GROUP" --data-binary @- >/dev/null
+echo "Reglas publicadas (grupo $GROUP, evaluacion cada 30 s): E4 - Borrado masivo de deportistas; Honeytoken - acceso a deportista senuelo"
