@@ -1,0 +1,133 @@
+{
+  "version": "1.0.0",
+  "title": "deport-back: indisponibilidad de una dependencia externa (fallo tipo b)",
+  "description": "Dado el perfil de carga load/k6-flow.js (perfil P), cuando se inyecte la indisponibilidad de la dependencia externa (CHAOS_DEPENDENCY_FAILURE=true) durante 4 minutos 30 segundos (toda la carga del perfil P), el flujo GET /api/v2/deportistas/:id mantendra la tasa de exito >= 99% (error rate <= 1%) con p95 < 1000 ms. Los valores objetivo son hipotesis a medir en Ronda 0; no son resultados medidos.",
+  "tags": ["deport-back", "gke", "dependency-unavailable", "circuit-breaker", "fallo-tipo-b"],
+  "extensions": [
+    {
+      "name": "chaos-metadata",
+      "steady_state": {
+        "estado": "a medir en Ronda 0",
+        "success_rate": ">= 99% (objetivo, a medir en Ronda 0)",
+        "p95_latency_ms": "< 1000 (objetivo, a medir en Ronda 0)",
+        "instrumento": "load/k6-flow.js (MAX_ERROR_RATE=0.01, MAX_P95_MS=1000) y dashboard de Cloud Monitoring"
+      },
+      "load_profile": "P = load/k6-flow.js, identico en Ronda 0 y Ronda 1",
+      "hypothesis": "Dado el perfil de carga P (load/k6-flow.js), cuando se inyecte el fallo F (dependencia externa no disponible via CHAOS_DEPENDENCY_FAILURE=true) durante D=4m30s (toda la carga del perfil P), el flujo GET /api/v2/deportistas/:id mantendra la metrica M (p95 de latencia) dentro del umbral U (< 1000 ms). Falsable: si p95 >= 1000 ms la hipotesis se refuta.",
+      "target_metric": {
+        "metric": "p95 de latencia de GET /api/v2/deportistas/:id",
+        "threshold": "< 1000 ms",
+        "secondary_guardrail": "tasa de error <= 1%"
+      },
+      "injection_method": "kubectl set env deployment/deport-back CHAOS_DEPENDENCY_FAILURE=true CHAOS_DEPENDENCY_MODE=hang CHAOS_DEPENDENCY_TARGET=<dependencia> (modo hang: la dependencia no responde y la llamada cuelga hasta el timeout; modo error: fallo inmediato) (alternativa declarativa: NetworkChaos en dependency-unavailable.yaml)",
+      "blast_radius": {
+        "namespace": "solo deport-back",
+        "scope": "solo la llamada saliente desde deport-back hacia la dependencia externa",
+        "data": "datos sinteticos unicamente",
+        "excluded": "otras dependencias, otros namespaces y terceros"
+      },
+      "duration": "4m30s de fallo (pausa de 270 s, igual a la duracion del perfil P) mas verificaciones de estado estable y reversion",
+      "abort_conditions": [
+        "tasa de error > 50% sostenida durante 60 s",
+        "pods de deport-back no Ready",
+        "parada manual (Ctrl+C en chaos run / kubectl delete -f dependency-unavailable.yaml)"
+      ],
+      "rollback": "automatico: seccion rollbacks establece CHAOS_DEPENDENCY_FAILURE=false, CHAOS_DEPENDENCY_TARGET vacio y RESILIENCE_CIRCUIT_BREAKER_ENABLED=true, y espera rollout estable"
+    }
+  ],
+  "configuration": {
+    "base_url": { "type": "env", "key": "BASE_URL" },
+    "api_key": { "type": "env", "key": "API_KEY" },
+    "trace_id": { "type": "env", "key": "TRACE_ID", "default": "chaos-dependency-unavailable" },
+    "deportista_id": { "type": "env", "key": "DEPORTISTA_ID" },
+    "chaos_target": { "type": "env", "key": "CHAOS_TARGET", "default": "api-fastify" },
+    "namespace": "deport-back",
+    "deployment": "deport-back"
+  },
+  "steady-state-hypothesis": {
+    "title": "El servicio responde 200 en la raiz y en el detalle de deportista",
+    "probes": [
+      {
+        "type": "probe",
+        "name": "raiz-responde-200",
+        "tolerance": 200,
+        "provider": {
+          "type": "http",
+          "url": "${base_url}/",
+          "method": "GET",
+          "headers": {
+            "X-Api-Key": "${api_key}",
+            "X-Trace-Id": "${trace_id}"
+          },
+          "timeout": 5
+        }
+      },
+      {
+        "type": "probe",
+        "name": "deportista-responde-200",
+        "tolerance": 200,
+        "provider": {
+          "type": "http",
+          "url": "${base_url}/api/v2/deportistas/${deportista_id}",
+          "method": "GET",
+          "headers": {
+            "X-Api-Key": "${api_key}",
+            "X-Trace-Id": "${trace_id}"
+          },
+          "timeout": 5
+        }
+      }
+    ]
+  },
+  "method": [
+    {
+      "type": "action",
+      "name": "activar-fallo-dependencia",
+      "provider": {
+        "type": "process",
+        "path": "kubectl",
+        "arguments": "-n ${namespace} set env deployment/${deployment} CHAOS_DEPENDENCY_FAILURE=true CHAOS_DEPENDENCY_MODE=hang CHAOS_DEPENDENCY_TARGET=${chaos_target}"
+      }
+    },
+    {
+      "type": "probe",
+      "name": "esperar-rollout-con-fallo",
+      "provider": {
+        "type": "process",
+        "path": "kubectl",
+        "arguments": "-n ${namespace} rollout status deployment/${deployment} --timeout=180s"
+      }
+    },
+    {
+      "type": "action",
+      "name": "mantener-fallo-4m30s",
+      "provider": {
+        "type": "process",
+        "path": "sleep",
+        "arguments": "270"
+      },
+      "pauses": { "after": 0 }
+    }
+  ],
+  "rollbacks": [
+    {
+      "type": "action",
+      "name": "desactivar-fallo-dependencia",
+      "provider": {
+        "type": "process",
+        "path": "kubectl",
+        "arguments": "-n ${namespace} set env deployment/${deployment} CHAOS_DEPENDENCY_FAILURE=false CHAOS_DEPENDENCY_MODE=hang CHAOS_DEPENDENCY_TARGET= RESILIENCE_CIRCUIT_BREAKER_ENABLED=true"
+      }
+    },
+    {
+      "type": "action",
+      "name": "esperar-rollout-estable",
+      "provider": {
+        "type": "process",
+        "path": "kubectl",
+        "arguments": "-n ${namespace} rollout status deployment/${deployment} --timeout=180s"
+      },
+      "pauses": { "after": 10 }
+    }
+  ]
+}
