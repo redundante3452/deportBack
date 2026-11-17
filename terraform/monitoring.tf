@@ -192,6 +192,39 @@ resource "google_logging_metric" "circuit_breaker_opened" {
   }
 }
 
+resource "google_logging_metric" "deportistas_deleted" {
+  name       = "${var.app_name}-deportistas-deleted"
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") AND jsonPayload.event=\"deportista_deleted\""
+  depends_on = [google_project_iam_member.logging_config_writer]
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    unit        = "1"
+
+    labels {
+      key        = "api_version"
+      value_type = "STRING"
+    }
+  }
+
+  label_extractors = {
+    api_version = "EXTRACT(jsonPayload.api_version)"
+  }
+}
+
+resource "google_logging_metric" "mass_delete_blocked" {
+  name       = "${var.app_name}-mass-delete-blocked"
+  filter     = "(resource.type=\"cloud_run_revision\" OR resource.type=\"k8s_container\") AND jsonPayload.event=\"mass_delete_blocked\""
+  depends_on = [google_project_iam_member.logging_config_writer]
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    unit        = "1"
+  }
+}
+
 resource "google_monitoring_dashboard" "canary" {
   depends_on = [google_project_iam_member.monitoring_dashboard_editor]
 
