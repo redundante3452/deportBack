@@ -59,6 +59,14 @@ kubectl -n "$NAMESPACE" set env deployment/"$DEPLOYMENT" \
   RESILIENCE_CIRCUIT_BREAKER_ENABLED="$BREAKER"
 kubectl -n "$NAMESPACE" rollout status deployment/"$DEPLOYMENT" --timeout=180s
 
+# El rollout termina cuando los pods nuevos están Ready, pero los viejos siguen
+# drenando unos segundos: se espera a que solo queden pods de la nueva revisión
+# para que la medición no incluya la transición (que no es parte del fallo).
+SETTLE_SECONDS="${SETTLE_SECONDS:-40}"
+echo "Esperando ${SETTLE_SECONDS}s a que termine el drenaje de los pods anteriores..."
+sleep "$SETTLE_SECONDS"
+kubectl -n "$NAMESPACE" get pods -o wide
+
 if [[ "$ROUND" != "base" ]]; then
   if crd_exists; then
     kubectl apply -f "$MANIFEST"
