@@ -33,7 +33,7 @@ def q(ref, metric, aligner, reducer, group_bys=None, resource="k8s_container", e
     return t
 
 
-def ts(pid, title, targets, x, y, w=12, h=8, unit="short", desc="", threshold=None, bars=False):
+def ts(pid, title, targets, x, y, w=12, h=8, unit="short", desc="", threshold=None, bars=False, no_value=None):
     p = {
         "id": pid,
         "type": "timeseries",
@@ -56,6 +56,8 @@ def ts(pid, title, targets, x, y, w=12, h=8, unit="short", desc="", threshold=No
         },
         "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
     }
+    if no_value is not None:
+        p["fieldConfig"]["defaults"]["noValue"] = no_value
     if threshold is not None:
         p["fieldConfig"]["defaults"]["thresholds"] = {
             "mode": "absolute",
@@ -112,15 +114,15 @@ panels = [
        desc="En la Ronda 0 cae a ~1 req/s: los VUs de k6 quedan bloqueados 5 s por petición (timeout demasiado largo)."),
     ts(6, "Fallos de dependencia por tipo",
        [q("A", U + "deport-back-dependency-failures", "ALIGN_RATE", "REDUCE_SUM", group_bys=["metric.label.error_type"], alias="{{metric.label.error_type}}")],
-       0, 19, unit="reqps",
+       0, 19, unit="reqps", no_value="Sin eventos en el rango (métrica disponible desde 2026-11-17 06:00 UTC)",
        desc="timeout = espera completa a la dependencia; circuit_open = rechazo rápido del circuit breaker. Disponible desde la corrección de logs JSON (ejecuciones posteriores al experimento oficial)."),
     ts(7, "Aperturas del circuit breaker",
        [q("A", U + "deport-back-circuit-breaker-opened", "ALIGN_DELTA", "REDUCE_SUM", alias="aperturas")],
-       12, 19, unit="short", bars=True,
+       12, 19, unit="short", bars=True, no_value="Sin aperturas en el rango (métrica disponible desde 2026-11-17 06:00 UTC)",
        desc="Evento circuit_breaker_opened (al tercer fallo consecutivo). Disponible desde la corrección de logs JSON."),
     ts(8, "Errores HTTP 5xx (peticiones/s)",
        [q("A", U + "deport-back-http-errors-by-track", "ALIGN_RATE", "REDUCE_SUM", alias="5xx/s")],
-       0, 27, unit="reqps",
+       0, 27, unit="reqps", no_value="0",
        desc="Debe ser 0: la degradación responde 200 con apis_externas.inventario_u en error."),
     ts(9, "CPU del contenedor deport-back (núcleos)",
        [q("A", "kubernetes.io/container/cpu/core_usage_time", "ALIGN_RATE", "REDUCE_SUM",

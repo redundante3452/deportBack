@@ -300,7 +300,8 @@
             "lineWidth": 2,
             "fillOpacity": 15,
             "spanNulls": false
-          }
+          },
+          "noValue": "Sin eventos en el rango (métrica disponible desde 2026-11-17 06:00 UTC)"
         },
         "overrides": []
       },
@@ -365,7 +366,8 @@
             "lineWidth": 2,
             "fillOpacity": 15,
             "spanNulls": false
-          }
+          },
+          "noValue": "Sin aperturas en el rango (métrica disponible desde 2026-11-17 06:00 UTC)"
         },
         "overrides": []
       },
@@ -430,7 +432,8 @@
             "lineWidth": 2,
             "fillOpacity": 15,
             "spanNulls": false
-          }
+          },
+          "noValue": "0"
         },
         "overrides": []
       },
