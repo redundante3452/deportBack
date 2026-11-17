@@ -289,23 +289,23 @@ un mismo mensaje se puede seguir en `kubectl logs` aunque haya cruzado 3 nubes d
 ## Ingeniería del Caos — Seguimiento #4
 
 El flujo multinube es `api-fastify` (Azure/AKS) → `Inventario-U` (OCI) → `deport-back` (GCP).
-El coordinador oficial del flujo **está por confirmar**; el diagrama lo marca así.
+El coordinador del flujo es `api-fastify` (Azure, `http://20.228.125.209`), confirmado.
 
 ### Diagrama del flujo y del radio de impacto
 
 ```mermaid
 flowchart LR
-    K6["k6 (cliente)<br/>load/k6-flow.js<br/>mide error y p95 e2e"] -->|"X-Api-Key + X-Trace-Id"| COORD["Coordinador / punto de entrada<br/>(por confirmar)"]
+    K6["k6 (cliente)<br/>load/k6-flow.js<br/>mide error y p95 e2e"] -->|"X-Api-Key + X-Trace-Id"| COORD["Coordinador / punto de entrada<br/>(api-fastify, Azure)"]
 
     subgraph AZ["Azure — api-fastify (AKS)"]
         AF["API Artículos"]
-        FA["⚡ Fallo a: latencia en llamada saliente<br/>(por confirmar con el equipo)"]
+        FA["⚡ Fallo a: latencia en llamada saliente"]
         AF --- FA
     end
 
     subgraph OCI["OCI — Inventario-U"]
         INV["API SKUs"]
-        FC["⚡ Fallo c: agotamiento de recurso<br/>(por confirmar con el equipo)"]
+        FC["⚡ Fallo c: agotamiento de concurrencia"]
         INV --- FC
     end
 
@@ -313,7 +313,7 @@ flowchart LR
         subgraph BR["Radio de impacto del experimento (namespace deport-back, datos sintéticos)"]
             API["API Deportistas<br/>Cloud Run / GKE Autopilot"]
             CB["Timeout 5 s + circuit breaker<br/>(3 fallos, 30 s) + degradación<br/>(apis_externas.ok=false, caché 30 s)"]
-            FB["⚡ Fallo b: indisponibilidad de dependencia<br/>Chaos Mesh NetworkChaos o<br/>CHAOS_DEPENDENCY_FAILURE"]
+            FB["⚡ Fallo b: indisponibilidad de dependencia<br/>CHAOS_DEPENDENCY_FAILURE (modo hang)<br/>vía Chaos Toolkit"]
             API --> CB
             FB -.-> CB
         end
@@ -333,15 +333,15 @@ flowchart LR
 Dónde se mide: **k6** mide en el cliente la tasa de error (`http_req_failed`) y el p95
 (`http_req_duration`) del flujo extremo a extremo; **Cloud Monitoring** (GCP) mide el
 comportamiento interno de `deport-back` (peticiones, errores, latencia y `dependency_failures`
-desde logs JSON). Por ahora no hay medición propia en Azure ni en OCI: por confirmar con el equipo.
+desde logs JSON). Azure (`api-fastify`) reporta sus propios resultados; Inventario-U (OCI) está pendiente de repetir su medición en OCI.
 
 ### Matriz integrante – fallo – métrica – patrón
 
 | Integrante | Servicio / nube | Fallo | Métrica objetivo | Patrón de resiliencia |
 |---|---|---|---|---|
 | Integrante GCP | `deport-back` (GCP) | **b**: indisponibilidad de dependencia externa | p95 de latencia e2e de `GET /api/v2/deportistas/:id` < 1000 ms (guardarraíl: tasa de error < 1 %) | Timeout de 5 s por dependencia + circuit breaker (3 fallos, 30 s de cooldown, toggle `RESILIENCE_CIRCUIT_BREAKER_ENABLED`) + degradación elegante (respuesta parcial con `apis_externas.ok=false`, caché de 30 s) |
-| Integrante Azure | `api-fastify` (Azure/AKS) | **a**: latencia en llamada saliente | Por confirmar con el equipo | Por confirmar con el equipo |
-| Integrante OCI | `Inventario-U` (OCI) | **c**: agotamiento de recurso | Por confirmar con el equipo | Por confirmar con el equipo |
+| Integrante Azure | `api-fastify` (Azure/AKS) | **a**: latencia en llamada saliente | p95 de latencia: R0 3312 ms → R1 496 ms (−85 %), reportado por el integrante | Por confirmar con el integrante |
+| Integrante OCI | `Inventario-U` (OCI) | **c**: agotamiento de concurrencia | Tasa de éxito ≥ 99 %; resultado pendiente de repetir en OCI | Bulkhead + control de admisión |
 
 Los umbrales de `deport-back` son objetivos, no resultados medidos.
 
@@ -356,19 +356,23 @@ El interruptor controlado para pruebas aisladas es:
 
 ```text
 CHAOS_DEPENDENCY_FAILURE=true
-CHAOS_DEPENDENCY_TARGET=api-fastify
+CHAOS_DEPENDENCY_TARGET=inventario-u
+CHAOS_DEPENDENCY_MODE=hang
 ```
 
 Está desactivado por defecto y no existe un endpoint administrativo para
 activarlo. El flujo conserva el `X-Trace-Id` y devuelve la respuesta degradada
-de la dependencia junto con el deportista local.
+de la dependencia junto con el deportista local. El experimento medido apunta a
+Inventario-U (`/api/v2/skus`) y usa el modo `hang` (la llamada se cuelga hasta el timeout).
 
 El perfil reproducible de carga está en [`load/k6-flow.js`](load/k6-flow.js) y
 la especificación declarativa está en
 [`chaos/experiments/dependency-unavailable.yaml`](chaos/experiments/dependency-unavailable.yaml).
-El manifiesto de Chaos Mesh requiere que el grupo etiquete explícitamente una
-dependencia propia en Kubernetes; hasta acordar ese recurso no debe aplicarse
-contra servicios externos. Las instrucciones y condiciones de reversión están
+La inyección **medida** usó el interruptor en código
+`CHAOS_DEPENDENCY_FAILURE/TARGET/MODE=hang`, accionado por el experimento declarativo
+(Chaos Toolkit, `chaos/experiments/dependency-unavailable.experiment.json`). El manifiesto
+NetworkChaos `dependency-unavailable.yaml` está versionado pero **no se aplicó**: GKE
+Autopilot no admite Chaos Mesh. Las instrucciones y condiciones de reversión están
 en [`chaos/README.md`](chaos/README.md).
 Las Rondas 0 y 1 se ejecutan únicamente sobre GKE/GCP con datos sintéticos y
 una ventana acordada; una prueba local no constituye evidencia del experimento.
@@ -395,7 +399,7 @@ con la misma carga, y exige tasa de error < 1 % y p95 < 1000 ms (valores por def
 - Experimentos: [`chaos/experiments/`](chaos/experiments/)
 - Carga: [`load/k6-flow.js`](load/k6-flow.js)
 - Chaos gate: [`.github/workflows/chaos-gate.yml`](.github/workflows/chaos-gate.yml)
-- Informe del experimento: `docs/informe-caos.md` — **pendiente de resultados reales** (el archivo aún no existe en el repo).
+- Informe del experimento: [`docs/informe-caos.md`](docs/informe-caos.md).
 
 ## Despliegue en Google Cloud (GKE)
 

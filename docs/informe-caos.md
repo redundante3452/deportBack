@@ -68,6 +68,18 @@ Misma carga, mismo fallo, misma duración, mismo instrumento.
 
 Modo de fallo: **saturación por un timeout demasiado largo**. Con el breaker desactivado, cada petición espera los 5 s del timeout por dependencia antes de degradar (las 361 peticiones registran *tiempo de espera agotado*). Como k6 es un modelo cerrado, cada VU queda bloqueado 5 s y el throughput cae de 30,3 a 1,3 req/s. No hay errores HTTP: la degradación devuelve 200 con `apis_externas.inventario_u` en error, pero tarde. Bajo una carga abierta (tráfico real), esa espera acumularía conexiones y workers ocupados hasta agotar la capacidad del pod: un fallo en cascada hacia el coordinador.
 
+#### Evidencia correlacionada (ensayo, Ronda 0)
+
+Cloud Logging, GKE, namespace `deport-back`, 2026-11-17 UTC (ensayo `ensayo-b-20261117`):
+
+| Hora UTC | Evento | trace_id | Detalle |
+|---|---|---|---|
+| 06:29:28.862 | `dependency_failure` | `ensayo-b-20261117-r0-5-10` | dependency `inventario-u`, error_type `timeout`: "tiempo de espera agotado llamando a …/api/v2/skus (caos)" |
+| 06:29:28.863 | `http_request` | (no lo incluye) | GET `/api/v2/deportistas/296f5b48-…`, status 200, duration_ms **5003** |
+| 06:29:28.639 | `dependency_failure` | `ensayo-b-20261117-r0-3-13` | timeout; su `http_request` registra **5001** ms |
+
+El `http_request` aparece 1 ms después del `dependency_failure`, en el mismo pod: es la misma petición. Hoy el evento `http_request` no lleva `trace_id`, así que la correlación se hace por marca de tiempo y pod (limitación registrada en el backlog). Mecanismo: con el breaker apagado, cada petición espera los 5 s completos del timeout, los VU de k6 quedan bloqueados y el throughput cae a ~1,3 req/s con p95 ≈ 5 s. Contraste en la Ronda 1 (ventana 06:34:19–06:38:51): el primer `circuit_breaker_opened` es a las 06:34:32.254, 13 s después de iniciar la inyección; desde entonces las respuestas degradadas (`circuit_open`) tardan milisegundos. Consulta usada en Cloud Logging: `jsonPayload.trace_id="ensayo-b-20261117-r0-5-10"`.
+
 ### Mejora aplicada y comportamiento en la Ronda 1
 
 Patrones: **timeout por dependencia (5 s)**, **circuit breaker** (abre tras 3 fallos consecutivos, cooldown 30 s) y **degradación elegante** (respuesta parcial). En la Ronda 1 el circuito se abrió al tercer timeout y rechazó **30 640** llamadas al instante. Cada 30 s dejó pasar una sonda que volvió a fallar (los 60 timeouts restantes y el máximo de 5276 ms).
@@ -94,6 +106,7 @@ Patrones: **timeout por dependencia (5 s)**, **circuit breaker** (abre tras 3 fa
 - Caché del último valor bueno de Inventario-U para degradar con datos y no con error.
 - Bulkhead/límite de concurrencia por dependencia y prueba con carga abierta (arrival-rate) para observar la cascada.
 - URL estable para Inventario-U (el túnel temporal cambia al reiniciarse) y HTTPS en api-fastify.
+- Propagar `trace_id` al evento `http_request` para correlacionar por id y no por marca de tiempo y pod.
 - Unificar los manifiestos de `k8s/` con `terraform/gke_workloads.tf` (hoy duplicados con valores distintos).
 
 ## 9. Tablero
