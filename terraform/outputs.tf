@@ -43,3 +43,8 @@ output "gke_load_balancer_ip" {
   description = "IP externa del LoadBalancer de Kubernetes, disponible después del apply."
   value       = try(kubernetes_service.app.status[0].load_balancer[0].ingress[0].ip, "")
 }
+
+output "e4_bucket_name" {
+  description = "Bucket de copia aislada del experimento E4 (null si enable_db_backups=false)."
+  value       = try(google_storage_bucket.e4_copias[0].name, null)
+}

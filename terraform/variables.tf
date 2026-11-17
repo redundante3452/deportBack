@@ -75,3 +75,9 @@ variable "team_api_key" {
   sensitive   = true
   default     = ""
 }
+
+variable "enable_db_backups" {
+  description = "Activa backups, PITR y el bucket de copia aislada del experimento E4. false = estado de la Ronda 0."
+  type        = bool
+  default     = false
+}
