@@ -1,0 +1,53 @@
+{
+  "execution_id": "gd-exp4-neg-20261118T035358Z",
+  "tipo": "caso-negativo",
+  "umbral": "10 borrados en 5 min",
+  "borrados_planificados": 5,
+  "t_primer_borrado": "2026-11-18T03:54:19Z",
+  "t_fin": "2026-11-18T04:00:34Z",
+  "t_disparo": null,
+  "ids_sembrados": [
+    "a10384ff-b4af-4d55-bbc9-7638beccca96",
+    "b9f90730-7f53-4224-af7e-fdb3e1160810",
+    "eef090be-c6b1-4f51-8f20-e1e88258b8a8",
+    "957520e4-3ad2-45ac-89e4-0b55c2c2b1a7",
+    "69d3b4b9-f160-4cf4-9abe-3fc53dc0c2c9"
+  ],
+  "ids_borrados": [],
+  "codigos_http": [
+    "200",
+    "200",
+    "200",
+    "200",
+    "200"
+  ],
+  "estados_alerta_observados": [
+    "2026-11-18T03:54:19Z=normal",
+    "2026-11-18T03:54:36Z=normal",
+    "2026-11-18T03:54:52Z=normal",
+    "2026-11-18T03:55:09Z=normal",
+    "2026-11-18T03:55:26Z=normal",
+    "2026-11-18T03:55:42Z=normal",
+    "2026-11-18T03:55:57Z=normal",
+    "2026-11-18T03:56:14Z=normal",
+    "2026-11-18T03:56:29Z=normal",
+    "2026-11-18T03:56:46Z=normal",
+    "2026-11-18T03:57:02Z=normal",
+    "2026-11-18T03:57:18Z=normal",
+    "2026-11-18T03:57:34Z=normal",
+    "2026-11-18T03:57:50Z=normal",
+    "2026-11-18T03:58:06Z=normal",
+    "2026-11-18T03:58:23Z=normal",
+    "2026-11-18T03:58:38Z=normal",
+    "2026-11-18T03:58:55Z=normal",
+    "2026-11-18T03:59:14Z=normal",
+    "2026-11-18T03:59:29Z=normal",
+    "2026-11-18T03:59:46Z=normal",
+    "2026-11-18T04:00:02Z=normal",
+    "2026-11-18T04:00:17Z=normal",
+    "2026-11-18T04:00:34Z=normal"
+  ],
+  "alerta_disparada": false,
+  "veredicto": "PASA",
+  "motivo": "la alerta nunca paso a firing durante 360s con 5 borrados"
+}

@@ -13,4 +13,10 @@ Workflow "Game Day E4", run 44232516003, execution_id `gd-exp4-neg-20261118T0345
 
 ## Intento 2
 
-[pendiente]
+Workflow "Game Day E4", run 44233528772 (exito), execution_id `gd-exp4-neg-20261118T035358Z`. Carpeta: `intento2/`.
+
+- Arranque 03:53:58Z con la alerta en `normal` (ventana limpia: ultimo borrado previo 03:45-03:46Z, mas de 5 min antes).
+- Siembra de 5 deportistas `e4-<n>-neg035358@example.com`; borrados 03:54:19, 03:55:24, 03:56:29, 03:57:33 y 03:58:21Z, todos HTTP 200.
+- Observacion del estado de la alerta cada 15 s durante 360 s (24 lecturas, todas `normal`; fin 04:00:34Z).
+- **Veredicto: PASA** (`alerta_disparada: false`, la alerta nunca paso a firing).
+- **Conclusion**: el trafico legitimo bajo el umbral (5 borrados en ~4 min < 10 en 5 min) no genera falso positivo en infraestructura real.

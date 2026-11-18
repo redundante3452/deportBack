@@ -1,0 +1,30 @@
+hora_utc,evento,detalle
+2026-11-18T03:54:19Z,delete,a10384ff-b4af-4d55-bbc9-7638beccca96 200
+2026-11-18T03:54:19Z,alerta,normal
+2026-11-18T03:54:36Z,alerta,normal
+2026-11-18T03:54:52Z,alerta,normal
+2026-11-18T03:55:09Z,alerta,normal
+2026-11-18T03:55:24Z,delete,b9f90730-7f53-4224-af7e-fdb3e1160810 200
+2026-11-18T03:55:26Z,alerta,normal
+2026-11-18T03:55:42Z,alerta,normal
+2026-11-18T03:55:57Z,alerta,normal
+2026-11-18T03:56:14Z,alerta,normal
+2026-11-18T03:56:29Z,delete,eef090be-c6b1-4f51-8f20-e1e88258b8a8 200
+2026-11-18T03:56:29Z,alerta,normal
+2026-11-18T03:56:46Z,alerta,normal
+2026-11-18T03:57:02Z,alerta,normal
+2026-11-18T03:57:18Z,alerta,normal
+2026-11-18T03:57:33Z,delete,957520e4-3ad2-45ac-89e4-0b55c2c2b1a7 200
+2026-11-18T03:57:34Z,alerta,normal
+2026-11-18T03:57:50Z,alerta,normal
+2026-11-18T03:58:06Z,alerta,normal
+2026-11-18T03:58:21Z,delete,69d3b4b9-f160-4cf4-9abe-3fc53dc0c2c9 200
+2026-11-18T03:58:23Z,alerta,normal
+2026-11-18T03:58:38Z,alerta,normal
+2026-11-18T03:58:55Z,alerta,normal
+2026-11-18T03:59:14Z,alerta,normal
+2026-11-18T03:59:29Z,alerta,normal
+2026-11-18T03:59:46Z,alerta,normal
+2026-11-18T04:00:02Z,alerta,normal
+2026-11-18T04:00:17Z,alerta,normal
+2026-11-18T04:00:34Z,alerta,normal
