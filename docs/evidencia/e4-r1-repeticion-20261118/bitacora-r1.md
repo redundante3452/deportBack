@@ -1,0 +1,42 @@
+# Bitacora E4 ronda 1 (gd-exp4-r1-20261118T030801Z)
+- 2026-11-18T03:08:01Z == a. Estado estable ==
+- 2026-11-18T03:08:01Z Deportistas (API): 3
+- 2026-11-18T03:08:02Z Backups=true PITR=true
+- 2026-11-18T03:08:02Z Control SECURITY_DELETE_LIMIT_ENABLED previo: false
+- 2026-11-18T03:08:05Z Regla de alerta 'E4 - Borrado masivo de deportistas': existe
+- 2026-11-18T03:08:06Z == b. Ronda 1: activando control de contencion ==
+- 2026-11-18T03:09:52Z == c. Siembra de 50 registros sinteticos ==
+- 2026-11-18T03:09:57Z Sembrados: 50. T_siembra_fin=2026-11-18T03:09:57Z
+- 2026-11-18T03:09:57Z Exportando copia aislada a gs://deport-back-e4-copias-542943328704/e4/r1030801.sql.gz
+- 2026-11-18T03:10:15Z Export OK
+- 2026-11-18T03:10:15Z Espera de 120 s (log de transacciones posterior a la siembra para el PITR)
+- 2026-11-18T03:12:15Z == d. Ataque: borrado masivo con credencial valida (ATT&CK T1078 + T1485) ==
+- 2026-11-18T03:12:19Z Ataque fin 2026-11-18T03:12:19Z: borrados=20 bloqueados(429)=30 otros=0
+- 2026-11-18T03:12:19Z == e. Deteccion (hasta 10 min, cada 15 s) ==
+- 2026-11-18T03:14:23Z Detectado en 2026-11-18T03:14:23Z. MTTD=128.7s (resolucion de sondeo 15 s)
+- 2026-11-18T03:14:23Z Contenido: primer 429 en 2026-11-18T03:12:16Z. MTTC=1.5s
+- 2026-11-18T03:14:23Z == g. Recuperacion ==
+- 2026-11-18T03:14:23Z Clonando a 2026-11-18T03:12:14Z -> deport-back-sql-e4-clone-r1-0314
+- 2026-11-18T03:34:05Z Filas a restaurar desde el clon: 20
+- 2026-11-18T03:34:37Z Restaurados 20/20. RPO=0 registros (ventana PITR 1 s antes del ataque). RTO=1311s
+- 2026-11-18T03:34:38Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (1/60)
+- 2026-11-18T03:35:09Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (2/60)
+- 2026-11-18T03:35:39Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (3/60)
+- 2026-11-18T03:36:10Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (4/60)
+- 2026-11-18T03:36:40Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (5/60)
+- 2026-11-18T03:37:11Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (6/60)
+- 2026-11-18T03:37:41Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (7/60)
+- 2026-11-18T03:38:12Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (8/60)
+- 2026-11-18T03:38:43Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (9/60)
+- 2026-11-18T03:39:13Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (10/60)
+- 2026-11-18T03:39:44Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (11/60)
+- 2026-11-18T03:40:14Z Clon deport-back-sql-e4-clone-r1-0314 con operaciones pendientes, esperando 30 s (12/60)
+- 2026-11-18T03:40:45Z Borrando clon deport-back-sql-e4-clone-r1-0314
+- 2026-11-18T03:42:41Z Retencion del bucket: {  "retention_policy": {    "effectiveTime": "2026-11-17T19:40:57.537000+00:00",    "retentionPeriod": "21600"  }}
+- 2026-11-18T03:42:42Z Borrado logico del export permitido, pero la version queda retenida (versionado + retencion): gs://deport-back-e4-copias-542943328704/e4/r1030801.sql.gz#1794971399758216
+- 2026-11-18T03:42:42Z Resultado escrito en /home/runner/work/deportBack/deportBack/resultados/e4/resultado-r1.json
+- 2026-11-18T03:42:42Z Limpieza final (trap EXIT, codigo original 0)
+- 2026-11-18T03:42:42Z == Reversion E4 (ronda 1) ==
+- 2026-11-18T03:42:42Z Restaurando SECURITY_DELETE_LIMIT_ENABLED=false (estaba 'true')
+- 2026-11-18T03:43:52Z Registros sinteticos eliminados en la reversion: 50
+- 2026-11-18T03:44:03Z REVERSION OK
