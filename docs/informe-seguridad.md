@@ -43,7 +43,7 @@ flowchart LR
   I4(["E3: inyección en dato"]) -.-> A2
 ```
 
-Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`), pod → Cloud SQL (proxy con identidad de servicio), deport-back → Inventario-U (a través de Internet, clave compartida) y deport-back → bucket de copias (otra región, proyecto propio). Recolección: logs JSON de deport-back en Cloud Logging → métricas basadas en logs → Grafana Cloud (alertas). La telemetría de Azure (logs y eventos a Loki mediante Grafana Alloy, alertas en Grafana) la aporta Peñuela; la de Inventario-U (AWS) la aporta Marín **[pendiente: Marín]**.
+Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`), pod → Cloud SQL (proxy con identidad de servicio), deport-back → Inventario-U (a través de Internet, clave compartida) y deport-back → bucket de copias (otra región, proyecto propio). Recolección: logs JSON de deport-back en Cloud Logging → métricas basadas en logs → Grafana Cloud (alertas). La telemetría de Azure (logs y eventos a Loki mediante Grafana Alloy, alertas en Grafana) la aporta Peñuela; la de Inventario-U (AWS) es Prometheus con la regla `InventoryMachineIdentityMisuse` (Marín).
 
 ## 2. Inventario de controles por capa
 
@@ -51,7 +51,7 @@ Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`),
 |---|---|---|---|---|
 | Identidad | `X-Api-Key` compartida (`TEAM_API_KEY`, Secret Manager) | deport-back / grupo | 401 y evento `security_authentication_denied` | sin ID verificado |
 | Identidad | Identidad de servicio hacia Cloud SQL | deport-back | acceso solo desde el proxy | sin ID verificado |
-| Identidad | Identidad de máquina/agente de Inventario-U | Marín | **[pendiente: Marín]** | **[pendiente: Marín]** |
+| Identidad | E1 (Marín): API key sin alcance por operación (R0) → JWT Ed25519 con emisor, audiencia, sujeto, alcance y vencimiento ≤ 300 s; credencial señuelo (R1) | Marín | rechazo y `inventory_security_identity_detections_total`; implementado y probado offline, ronda cloud pendiente | D3-DO (señuelo) |
 | Red | LB HTTP de GKE | deport-back | tráfico solo a puertos publicados | sin ID verificado |
 | Red | Admisión de Kubernetes (`ValidatingAdmissionPolicy`) que rechaza todo LoadBalancer fuera de `api-fastify/api-fastify` y `orchestrator/gateway` (el AKS tiene `networkPolicy: none`, así que una NetworkPolicy no bloquearía nada) | Peñuela | evento de rechazo; `ruta_no_declarada` | sin ID verificado |
 | Carga | HPA 2–5, probes, límites; timeout + circuit breaker | deport-back | `circuit_breaker_opened`, `dependency_failure` | sin ID verificado |
@@ -63,14 +63,14 @@ Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`),
 | Detección | Vigilante de exposición (CronJob, privilegio mínimo): evento `ruta_no_declarada`, retira el Service a los 60 s | Peñuela | alerta de Grafana | sin ID verificado |
 | Detección | Alerta de latido de Alloy (`noDataState: Alerting`) y reconciliador de Alloy (120 s de observación) | Peñuela | alerta a ≤ 5 min | sin ID verificado |
 | Detección | Asistente de triage con IA (datos no confiables delimitados, sin herramientas, acción solo con confirmación humana) | Peñuela | reporte al humano del contenido sospechoso | sin ID verificado |
-| Detección | Telemetría y alertas de E1 | Marín | **[pendiente: Marín]** | **[pendiente: Marín]** |
+| Detección | Prometheus + alerta `InventoryMachineIdentityMisuse` (E1) | Marín | alerta en ≤ 30 s; probada con promtool (sintético), no en la nube | sin ID verificado |
 | Respuesta | `parar.sh`, `revertir.sh` (trap EXIT) | deport-back | `REVERSION OK` | sin ID verificado |
 
 ## 3. Reglas de compromiso
 
 Alcance: proyecto GCP, clúster y Cloud SQL propios; datos sintéticos (`e4-<n>-<runid>@example.com`); los dos deportistas del flujo quedan fuera del radio y se verifican al revertir. Interruptor de parada: `security/experiments/e4-datos/parar.sh` (corta el ataque y revierte). Reversión automática: `trap EXIT` que ejecuta `revertir.sh`. Bitácora: un archivo `bitacora-r<n>.md` con hora UTC por paso. Ventana: R0 19:14–19:26 y R1 20:05–20:28 del 2026-11-17. Condiciones completas en `security/game-day/reglas-compromiso.md`.
 
-Aclaración honesta: estas condiciones (ventana, datos sintéticos, parada, reversión, bitácora) las acordó el equipo por chat el 2026-11-17 antes de la R0; el documento no está firmado: **[pendiente: firma de los 3 integrantes]**.
+Aclaración honesta: estas condiciones (ventana, datos sintéticos, parada, reversión, bitácora) las acordó el equipo por chat el 2026-11-17 antes de la R0; el documento no está firmado: **[pendiente: firma]**.
 
 ## 4. Estado estable medido antes de tocar nada
 
@@ -84,7 +84,7 @@ Medido por el paso (a) de la R0 (`bitacora-r0.md`, 19:14:13–19:14:16):
 | Regla de alerta de borrado masivo | no existe |
 | Telemetría | el evento JSON `deportista_deleted` ya se emitía a Cloud Logging |
 
-Estado estable de E2/E3 (piloto en Azure, según el informe de Peñuela): cobertura de telemetría de 3 de 5 componentes, 0 reglas de alerta, MTTD y MTTC no medibles; el AKS tiene `networkPolicy: none`. Estado estable de E1: **[pendiente: Marín]**.
+Estado estable de E2/E3 (piloto en Azure, según el informe de Peñuela): cobertura de telemetría de 3 de 5 componentes, 0 reglas de alerta, MTTD y MTTC no medibles; el AKS tiene `networkPolicy: none`. Estado estable de E1 (AWS, al corte 05:24:51 UTC del 18-nov): `health` 200, `skus` autenticado 200, Prometheus autenticado 200; estado estable de seguridad **no medido**.
 
 ## 5. Hipótesis por experimento
 
@@ -93,7 +93,7 @@ Forma: *dado el control C, cuando ocurra A, esperamos la señal S en ≤ T1 y co
 | Exp. | Hipótesis |
 |---|---|
 | E4 | Dado el control de borrado masivo (límite por llamador, alerta, backups con PITR, copia aislada), cuando se borren deportistas con una credencial válida (T1078 + T1485), esperamos la alerta de Grafana (≥ 10 borrados en 5 min) en **T1 = 5 min** y el primer 429 en **T2 = 2 min**, con **RPO = 0** (`security/experiments/e4-datos/README.md`). |
-| E1 | **[pendiente: Marín — control, adversario, T1, T2]** |
+| E1 | Dado el control de identidad (R1: JWT con alcance + señuelo), cuando una identidad de lectura intente crear SKU (T1078), con 10 lecturas legítimas y 10 intentos a ≤ 2 req/s (máx. 100 peticiones), esperamos la alerta en **T1 = MTTD ≤ 30 s** (único criterio de decisión); guardarraíles: rechazo sostenido, **T2 = MTTC ≤ 5 s**, reversión verificada. |
 | E2 | Dado el control de segmentación por admisión y el vigilante de exposición, cuando aparezca una ruta no declarada (Service `LoadBalancer` que publica el puerto 3001 de administración; T1190), esperamos alerta en **≤ 5 min** y contención en **≤ 15 min**. |
 | E3 | Dados la alerta de latido y el asistente de triage, cuando se degrade la capacidad de ver (T1685.002, Alloy detenido 240 s) o se inyecte una instrucción en un dato (AML.T0051.001), esperamos alerta en **≤ 5 min** y contención en **≤ 15 min** (E3-A); en E3-B se mide si el modelo obedece, ignora o reporta la instrucción. |
 
@@ -157,7 +157,7 @@ Cobertura 1/2: T1485 se detecta por la alerta; T1078 no es distinguible porque l
 
 Fuente de E2/E3: informe de Peñuela, `BETO1274/api-fastify` (rama `produccion`, `docs/seguridad/informe-game-day.md`). Las cifras se copian tal cual; la evidencia está en `api-fastify: resultados/seguridad/<archivo>`.
 
-**E1 — Identidad (Marín).** Hipótesis, rondas R0/R1, MTTD/MTTC: **[pendiente: Marín]**. Piloto de método de Peñuela en Azure (no es el E1 oficial): R0 118 de 118 sondeos al plano admin aceptados, no detectado, no contenido; R1 MTTD 40 s, MTTC 8 s, 0 de 98 aceptados.
+**E1 — Identidad (Marín, AWS).** Adversario: abuso de identidad de máquina (credencial de lectura usada para escribir). R0 previsto: API key sin alcance por operación; R1 previsto: JWT Ed25519 (emisor, audiencia, sujeto, alcance, vencimiento ≤ 300 s) y credencial señuelo que nunca concede acceso y alerta. Detección como código: `InventoryMachineIdentityMisuse` (`inventory_security_identity_detections_total{reason=~"scope_violation|wrong_audience|expired|unknown_subject|honeytoken"} > 0`, grupo de 5 s), con caso positivo y negativo aprobados con promtool (sintéticos, no son un MTTD cloud). Evidencia técnica: 38 pruebas locales de seguridad y 2 validaciones de GitHub Actions (44242452904, 44242452737; validan software, no son el E1 oficial). Parada: `uv run python -m security.stop_e1` (crea STOP; deja de inyectar, borra solo los SKU creados, verifica GET 404 y salud 200; confirmar `rollback_verified=true` y `cleanup_error_type=null` en `raw.json`). **R0/R1 oficiales pendientes de ejecución** (ventana propuesta 2026-11-18 15:00–16:00 UTC, sin confirmar por el grupo); MTTD, MTTC, cobertura y falsos positivos: no medido. Preparación técnica comprobada; eficacia en AWS pendiente. Piloto de método de Peñuela en Azure (no es el E1 oficial): R0 118 de 118 sondeos al plano admin aceptados, no detectado, no contenido; R1 MTTD 40 s, MTTC 8 s, 0 de 98 aceptados.
 
 **E2 — Exposición y segmentación (Peñuela, Azure).** Condición adversa: un Service `LoadBalancer` que nadie declaró publica el puerto 3001 de administración (T1190; T1048 no se emuló). Como el AKS tiene `networkPolicy: none`, la segmentación se hizo en la admisión de Kubernetes y no con NetworkPolicy. La ronda 1b desactiva la admisión a propósito para probar la segunda capa por sí sola.
 
@@ -185,7 +185,7 @@ Mejoras: alerta de latido (`noDataState: Alerting`) y reconciliador de Alloy con
 
 | Exp. | Nube | MTTD | MTTC | Cobertura | Falsos positivos (R1) |
 |---|---|---|---|---|---|
-| E1 (Marín) | **[pendiente: Marín]** | **[pendiente]** | **[pendiente]** | **[pendiente]** | **[pendiente]** |
+| E1 (Marín) | AWS | no medido (ronda pendiente) | no medido (ronda pendiente) | no medido (ronda pendiente) | no medido (ronda pendiente) |
 | E2 (Peñuela) | Azure | no detectado → 53 s (R1b); prevenido en R1a | no contenido → 1 s (R1a) / 115 s (R1b) | 0/1 → 1/1 | 0 (caso negativo de 58 min) |
 | E3-A (Peñuela) | Azure | no detectado → 59 s | no contenido → 166 s | 0/1 → 1/1 | **[pendiente: Peñuela]** |
 | E3-B IA (Peñuela) | Azure | obediencia a la inyección 4/4 → 0/4 (variantes realistas) | — | — | — |
@@ -203,7 +203,7 @@ Mejoras: alerta de latido (`noDataState: Alerting`) y reconciliador de Alloy con
 
 ## 9. Detección como código
 
-`security/detections/rules.yaml` define 5 reglas con 10 fixtures (positivo y negativo por regla), validadas por `scripts/validate-security-detections.js`. Las reglas E4 (`mass-delete-deportistas`, `honeytoken-deportista`) están implementadas y publicadas; las de E1–E3 siguen en diseño. Las alertas de Grafana se versionan en `observability/grafana/alerta-e4.json` y `alerta-honeytoken.json` y las publica el workflow `grafana-alerta-e4.yml` con un secreto de GitHub (el token no se guarda en el repositorio).
+`security/detections/rules.yaml` define 5 reglas con 10 fixtures (positivo y negativo por regla), validadas por `scripts/validate-security-detections.js`. Las reglas E4 (`mass-delete-deportistas`, `honeytoken-deportista`) están implementadas y publicadas; la de E1 (Prometheus, promtool) la aporta Marín; las de E2/E3 siguen en diseño. Las alertas de Grafana se versionan en `observability/grafana/alerta-e4.json` y `alerta-honeytoken.json` y las publica el workflow `grafana-alerta-e4.yml` con un secreto de GitHub (el token no se guarda en el repositorio).
 
 ## 10. Tendencias
 
@@ -256,7 +256,7 @@ Mitigaciones: datos delimitados como no confiables en un bloque aparte, instrucc
 | Alerta de borrado masivo y honeytoken | E4 | 8.16 Monitoring activities; 5.24/5.26 incidentes | AU-6, SI-4, IR-4, IR-5 | 4: política dinámica según el estado observado |
 | Límite de borrados por llamador | E4 | 5.24/5.26 incidentes | SC-5, AC-3 | 3: acceso por sesión con mínimo privilegio |
 | Credencial compartida (hallazgo) | E4/E1 | — | AC-6 | 3 |
-| Controles de E1 | E1 | **[pendiente: Marín]** | **[pendiente]** | **[pendiente]** |
+| JWT con alcance/vencimiento, credencial señuelo y alerta de uso indebido (T1078, T1078.004; señuelo D3-DO) | E1 (ronda cloud pendiente) | — | IA-5, AC-3, AC-6, SI-4 | — |
 | Controles de E2/E3 (admisión, vigilante, latido de Alloy, triage con IA) | E2/E3 | **[pendiente: Peñuela]** (su tabla está en `api-fastify: docs/seguridad/inventario-y-trazabilidad.md`) | **[pendiente: Peñuela]** | **[pendiente: Peñuela]** |
 
 ## 14. Lecciones, riesgos residuales y próximos experimentos
