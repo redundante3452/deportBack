@@ -48,5 +48,30 @@
     "inicio": "2026-11-17T21:17:22Z",
     "fin": null,
     "texto": "Honeytoken: alerta firing (MTTD 63,4 s)"
+  },
+  {
+    "inicio": "2026-11-18T03:12:15Z",
+    "fin": "2026-11-18T03:12:19Z",
+    "texto": "R1 repetición ataque: 20 borrados, 30 x 429"
+  },
+  {
+    "inicio": "2026-11-18T03:14:23Z",
+    "fin": null,
+    "texto": "R1 repetición: alerta E4 firing (MTTD 128,7 s)"
+  },
+  {
+    "inicio": "2026-11-18T03:34:37Z",
+    "fin": null,
+    "texto": "R1 repetición: restauración PITR 20/20 (RTO 1311 s)"
+  },
+  {
+    "inicio": "2026-11-18T03:42:42Z",
+    "fin": null,
+    "texto": "R1 repetición: reversión borró 50 (actividad propia)"
+  },
+  {
+    "inicio": "2026-11-18T03:45:27Z",
+    "fin": null,
+    "texto": "Caso negativo intento 1 invalidado: alerta por la reversión previa"
   }
 ]

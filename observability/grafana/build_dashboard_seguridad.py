@@ -50,30 +50,31 @@ def text(pid, title, md, x, y, w, h):
 
 RESULTADOS = """**E4 — resiliencia de datos (Cloud SQL).** Ataque simulado: borrado masivo de 50 deportistas sintéticos `e4-*` con credencial válida (ATT&CK **T1078** + **T1485**). Mismo ataque en las dos rondas.
 
-| Métrica | Ronda 0 (controles de partida) | Ronda 1 (con mejoras) |
-|---|---|---|
-| Borrados | **50 / 50** | **20 / 50** (30 × HTTP 429) |
-| **MTTD** (detección) | **No detectado en 10 min** (no había alerta) | **37,5 s** (alerta Grafana firing 20:10:19) |
-| **MTTC** (contención) | **No contenido** | **1,9 s** (primer 429 a las 20:09:43) |
-| **RPO** (datos perdidos) | **50 registros (100 %)** | **0** (20/20 restaurados) |
-| **RTO** (recuperación) | **No recuperable** (sin backups ni PITR) | **1043 s** (~17 min; casi todo es crear el clon PITR) |
-| Cobertura de detección | **0 / 2** | **1 / 2** (T1485 detectada; T1078 no distinguible con clave compartida) |
-| Falsos positivos | n/a (la regla no existía) | **0 de 4 disparos** (2 fueron reversiones propias autorizadas) |
+| Métrica | Ronda 0 (controles de partida) | Ronda 1 (con mejoras) | R1 repetición (18-nov) |
+|---|---|---|---|
+| Borrados | **50 / 50** | **20 / 50** (30 × HTTP 429) | **20 / 50** (30 × HTTP 429) |
+| **MTTD** (detección) | **No detectado en 10 min** (no había alerta) | **37,5 s** (alerta Grafana firing 20:10:19) | **128,7 s** (alerta firing 03:14:23) |
+| **MTTC** (contención) | **No contenido** | **1,9 s** (primer 429 a las 20:09:43) | **1,5 s** |
+| **RPO** (datos perdidos) | **50 registros (100 %)** | **0** (20/20 restaurados) | **0** (20/20 restaurados) |
+| **RTO** (recuperación) | **No recuperable** (sin backups ni PITR) | **1043 s** (~17 min; casi todo es crear el clon PITR) | **1311 s** (clon borrado automáticamente) |
+| Cobertura de detección | **0 / 2** | **1 / 2** (T1485 detectada; T1078 no distinguible con clave compartida) | **1 / 2** (igual que R1) |
+| Falsos positivos | n/a (la regla no existía) | **0 de 4 disparos** (2 fueron reversiones propias autorizadas) | no recalculado |
 
 **Honeytoken** (deportista señuelo con alerta): acceso 21:16:19, alerta firing 21:17:22, **MTTD 63,4 s**, 0 falsos positivos.
 
 **Marcos** (verificados en `security/verificacion-marcos.md`): ATT&CK **T1078**, **T1485**. D3FEND: **D3-RAPA** (límite de borrados por llamador), **D3-RD** Restore Database (clon PITR), **D3-RO** Restore Object (copia en bucket), **D3-DO** Decoy Object (honeytoken).
 
-**Nota:** el panel de 429 aparece vacío en R1: el filtro de la métrica `mass-delete-blocked` usaba un evento inexistente hasta el deploy 44177083535 (posterior a R1) y las métricas log-based no son retroactivas. Los 30 × 429 de R1 están en `docs/evidencia/e4-r1-20261117/ataque-r1.csv`.
+**Nota:** el panel de 429 aparece vacío en R0/R1: el filtro de la métrica `mass-delete-blocked` se corrigió después de R1 (deploy 44177083535) y las métricas log-based no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: `docs/evidencia/e4-r1-20261117/ataque-r1.csv`; repetición: `docs/evidencia/e4-r1-repeticion-20261118/`.
 
 **Hallazgo R1:** el límite es en memoria por pod (2 réplicas), por eso pasaron 20 borrados y no 10; mejora: contador compartido."""
 
-CRONO = """**Línea de tiempo (UTC, 2026-11-17).**
+CRONO = """**Línea de tiempo (UTC, 2026-11-17 y repetición del 2026-11-18).**
 
 - **R0** — ataque 19:16:21–19:16:26: 50/50 borrados, sin alerta.
 - **R1 intento 1** — ataque 19:48:18, alerta firing 19:49:27; la reversión borró 30 a las 20:00:38. La recuperación falló (el clon superó el tiempo del cliente); corregido con clon asíncrono.
 - **R1** — ataque 20:09:41–20:09:46, alerta 20:10:19, restauración lista 20:27:05, reversión 20:28:22.
 - **Honeytoken** — acceso 21:16:19, alerta 21:17:22.
+- **R1 repetición (2026-11-18)** — ataque 03:12:15–03:12:19, alerta 03:14:23 (MTTD 128,7 s), restauración PITR 20/20 03:34:37 (RTO 1311 s), reversión 03:42:42. Caso negativo del intento 1 invalidado a las 03:45:27 (alerta por la reversión previa).
 
 Las barras de los paneles son eventos reales de Cloud Logging (métricas basadas en logs). Las anotaciones marcan cada hito; los enlaces de arriba saltan a cada ronda."""
 
@@ -86,8 +87,8 @@ panels = [
        "Evento deportista_deleted. R0: 50 en 5 s. R1: 20 (el resto bloqueado). Incluye las reversiones del propio script.",
        "Sin borrados en el rango", "red"),
     ts(5, "Borrados bloqueados (HTTP 429) por minuto", q("A", "deport-back-mass-delete-blocked", "bloqueados"), 12, 19, 12, 8,
-       "Evento security_mass_delete_blocked: el límite de borrados por llamador actuando (solo en R1). Sin datos en R0/R1: el filtro de la métrica estaba mal (evento inexistente) y se corrigió después de R1 (deploy 44177083535); las métricas log-based no son retroactivas. Evidencia de los 30 × 429 de R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv",
-       "Sin datos en R0/R1: el filtro de la métrica estaba mal (evento inexistente) y se corrigió después de R1 (deploy 44177083535); las métricas log-based no son retroactivas. Evidencia de los 30 × 429 de R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv", "orange"),
+       "Evento security_mass_delete_blocked: el límite de borrados por llamador actuando. R0/R1 sin datos: el filtro de la métrica se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv",
+       "R0/R1 sin datos: el filtro de la métrica se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv", "orange"),
     ts(6, "Accesos al señuelo (honeytoken)", q("A", "deport-back-honeytoken-triggered", "accesos"), 0, 27, 12, 8,
        "Evento security_honeytoken_triggered: lectura, modificación o borrado del deportista señuelo.",
        "Sin accesos en el rango", "purple"),
@@ -104,6 +105,7 @@ RANGOS = [
     ("R1 intento 1 (19:44-20:04)", "2026-11-17T19:44:00.000Z", "2026-11-17T20:04:00.000Z"),
     ("R1 (20:04-20:35)", "2026-11-17T20:04:00.000Z", "2026-11-17T20:35:00.000Z"),
     ("Honeytoken (21:10-21:30)", "2026-11-17T21:10:00.000Z", "2026-11-17T21:30:00.000Z"),
+    ("R1 repetición (18-nov 03:05-03:50)", "2026-11-18T03:05:00.000Z", "2026-11-18T03:50:00.000Z"),
 ]
 
 dashboard = {
@@ -135,6 +137,11 @@ HITOS = [
     ("2026-11-17T20:28:22Z", None, "R1: reversión borró 50 (actividad propia)"),
     ("2026-11-17T21:16:19Z", None, "Honeytoken: acceso al señuelo"),
     ("2026-11-17T21:17:22Z", None, "Honeytoken: alerta firing (MTTD 63,4 s)"),
+    ("2026-11-18T03:12:15Z", "2026-11-18T03:12:19Z", "R1 repetición ataque: 20 borrados, 30 x 429"),
+    ("2026-11-18T03:14:23Z", None, "R1 repetición: alerta E4 firing (MTTD 128,7 s)"),
+    ("2026-11-18T03:34:37Z", None, "R1 repetición: restauración PITR 20/20 (RTO 1311 s)"),
+    ("2026-11-18T03:42:42Z", None, "R1 repetición: reversión borró 50 (actividad propia)"),
+    ("2026-11-18T03:45:27Z", None, "Caso negativo intento 1 invalidado: alerta por la reversión previa"),
 ]
 
 out = sys.argv[1]

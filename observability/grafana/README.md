@@ -51,4 +51,4 @@ accesos al señuelo, estado de las alertas y anotaciones de cada hito (etiqueta 
 
 - Código: `build_dashboard_seguridad.py` genera `dashboard-seguridad.json` y `dashboard-seguridad-anotaciones.json`.
 - Publicar: workflow manual `grafana-tablero-seguridad.yml` (usa `GRAFANA_TOKEN`; verifica tablero, anotaciones y una consulta real al datasource) o `GRAFANA_URL=... GRAFANA_TOKEN=... bash deploy-tablero-seguridad.sh`.
-- Las cifras y horas (UTC, 2026-11-17) salen de `docs/evidencia/e4-*`, `honeytoken-20261117` y `alertas-historial-20261117`.
+- Las cifras y horas (UTC, 2026-11-17; repetición de R1 el 2026-11-18 en `e4-r1-repeticion-20261118`) salen de `docs/evidencia/e4-*`, `honeytoken-20261117` y `alertas-historial-20261117`.
