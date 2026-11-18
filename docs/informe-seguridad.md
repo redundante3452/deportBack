@@ -57,7 +57,7 @@ Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`),
 | Detección | Evento `deportista_deleted` + alerta “E4 - Borrado masivo de deportistas” | deport-back | alerta firing con ≥ 10 borrados en 5 min | D3-RAPA Resource Access Pattern Analysis |
 | Detección | Honeytoken (deportista señuelo) | deport-back | `security_honeytoken_triggered` | D3-DO Decoy Object |
 | Detección | Vigilante de exposición (CronJob, privilegio mínimo): evento `ruta_no_declarada`, retira el Service a los 60 s | Peñuela | alerta de Grafana | sin ID verificado |
-| Detección | Alerta de latido de Alloy (`noDataState: Alerting`) y reconciliador de Alloy (60 s de observación) | Peñuela | alerta a ≤ 5 min | sin ID verificado |
+| Detección | Alerta de latido de Alloy (`noDataState: Alerting`) y reconciliador de Alloy (120 s de observación) | Peñuela | alerta a ≤ 5 min | sin ID verificado |
 | Detección | Asistente de triage con IA (datos no confiables delimitados, sin herramientas, acción solo con confirmación humana) | Peñuela | reporte al humano del contenido sospechoso | sin ID verificado |
 | Detección | Telemetría y alertas de E1 | Marín | **[pendiente: Marín]** | **[pendiente: Marín]** |
 | Respuesta | `parar.sh`, `revertir.sh` (trap EXIT) | deport-back | `REVERSION OK` | sin ID verificado |
@@ -149,15 +149,15 @@ Cobertura 1/2: T1485 se detecta por la alerta; T1078 no es distinguible porque l
 
 Fuente de E2/E3: informe de Peñuela, `BETO1274/api-fastify` (rama `produccion`, `docs/seguridad/informe-game-day.md`). Las cifras se copian tal cual; la evidencia está en `api-fastify: resultados/seguridad/<archivo>`.
 
-**E1 — Identidad (Marín).** Hipótesis, rondas R0/R1, MTTD/MTTC: **[pendiente: Marín]**. Piloto de método de Peñuela en Azure (no es el E1 oficial): R0 118 de 118 sondeos al plano admin aceptados, no detectado, no contenido; R1 MTTD 58 s, MTTC 4 s, 0 de 102 aceptados.
+**E1 — Identidad (Marín).** Hipótesis, rondas R0/R1, MTTD/MTTC: **[pendiente: Marín]**. Piloto de método de Peñuela en Azure (no es el E1 oficial): R0 118 de 118 sondeos al plano admin aceptados, no detectado, no contenido; R1 MTTD 40 s, MTTC 8 s, 0 de 98 aceptados.
 
 **E2 — Exposición y segmentación (Peñuela, Azure).** Condición adversa: un Service `LoadBalancer` que nadie declaró publica el puerto 3001 de administración (T1190; T1048 no se emuló). Como el AKS tiene `networkPolicy: none`, la segmentación se hizo en la admisión de Kubernetes y no con NetworkPolicy. La ronda 1b desactiva la admisión a propósito para probar la segunda capa por sí sola.
 
 | Medida | R0 | R1a (admisión activa) | R1b (admisión desactivada, 2.ª capa) |
 |---|---|---|---|
-| Ruta efectiva | Sí: IP pública en 22 s, `/admin` respondió 200 **20 veces** | No: Service rechazado | Sí, ~70 s (6 respuestas 200) |
-| MTTD | no detectado | prevenido | 0,40 min (24 s) |
-| MTTC | no contenido (lo borró el experimento al vencer) | 0,03 min (rechazado en 2 s) | 1,55 min (retirado por el vigilante) |
+| Ruta efectiva | Sí: `/admin` respondió 200 **23 veces** | No: Service rechazado | Sí: 10 respuestas 200 antes de que lo retirara el vigilante |
+| MTTD | no detectado | prevenido | 53 s |
+| MTTC | no contenido (lo borró el experimento al vencer) | 1 s (rechazado al crearlo) | 115 s (retirado por el vigilante) |
 | Cobertura | 0 de 1 | 0 de 1 detectada, 1 de 1 prevenida | 1 de 1 |
 
 Falsos positivos: caso negativo de 58 minutos con el vigilante activo y solo los dos Services declarados: 0 eventos, 0 retiradas, 0 alertas (`api-fastify: resultados/seguridad/deteccion-prueba-e2.json`). La política admite operaciones legítimas (modificar un Service declarado, crear uno que no es LoadBalancer) y rechaza un LoadBalancer no declarado. Reversión verificada (`REVERSION OK`). Evidencia: `api-fastify: resultados/seguridad/e2-r0-*`, `e2-r1a-*`, `e2-r1b-*`.
@@ -166,20 +166,20 @@ Falsos positivos: caso negativo de 58 minutos con el vigilante activo y solo los
 
 | Medida | R0 | R1 |
 |---|---|---|
-| MTTD | no detectado | 1,28 min (alerta a los 77 s) |
-| MTTC | no contenido (Alloy volvió solo al vencer el experimento) | 3,08 min (lo restauró el reconciliador) |
+| MTTD | no detectado | 59 s |
+| MTTC | no contenido (Alloy volvió solo al vencer el experimento) | 166 s (lo restauró el reconciliador) |
 | Cobertura | 0 de 1 | 1 de 1 |
-| Ceguera medida en tiempo real | 173 s sin ver nada en Loki | 114 s |
+| Ceguera medida en tiempo real | 176 s sin ver nada en Loki | 95 s |
 
-Mejoras: alerta de latido (`noDataState: Alerting`) y reconciliador de Alloy con privilegio mínimo y 60 s de observación. Hallazgo: Alloy rellena el hueco con retraso al reiniciarse, así que la ceguera solo se ve en tiempo real. Evidencia: `api-fastify: resultados/seguridad/e3-r0-*` y `e3-r1-*`. E3-B (IA) en §12. El informe de Peñuela no da una tasa de falsos positivos por ronda para E3: **[pendiente: Peñuela]**.
+Mejoras: alerta de latido (`noDataState: Alerting`) y reconciliador de Alloy con privilegio mínimo y 120 s de observación (detectar primero, contener después; con 60 s restauraba antes de que la alerta pudiera dispararse). Hallazgo: Alloy rellena el hueco con retraso al reiniciarse, así que la ceguera solo se ve en tiempo real. Evidencia: `api-fastify: resultados/seguridad/e3-r0-*` y `e3-r1-*`. E3-B (IA) en §12. El informe de Peñuela no da una tasa de falsos positivos por ronda para E3: **[pendiente: Peñuela]**.
 
 **Tabla comparativa del game day (R0 → R1).**
 
 | Exp. | Nube | MTTD | MTTC | Cobertura | Falsos positivos (R1) |
 |---|---|---|---|---|---|
 | E1 (Marín) | **[pendiente: Marín]** | **[pendiente]** | **[pendiente]** | **[pendiente]** | **[pendiente]** |
-| E2 (Peñuela) | Azure | no detectado → 24 s (R1b); prevenido en R1a | no contenido → 2 s (R1a) / 93 s (R1b) | 0/1 → 1/1 | 0 (caso negativo de 58 min) |
-| E3-A (Peñuela) | Azure | no detectado → 77 s | no contenido → 3,08 min | 0/1 → 1/1 | **[pendiente: Peñuela]** |
+| E2 (Peñuela) | Azure | no detectado → 53 s (R1b); prevenido en R1a | no contenido → 1 s (R1a) / 115 s (R1b) | 0/1 → 1/1 | 0 (caso negativo de 58 min) |
+| E3-A (Peñuela) | Azure | no detectado → 59 s | no contenido → 166 s | 0/1 → 1/1 | **[pendiente: Peñuela]** |
 | E3-B IA (Peñuela) | Azure | obediencia a la inyección 4/4 → 0/4 (variantes realistas) | — | — | — |
 | E4 (Hernández) | GCP | no detectado (10 min) → 37,5 s | no contenido → 1,9 s | 0/2 → 1/2 | 0 de 4 disparos |
 
