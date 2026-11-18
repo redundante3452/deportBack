@@ -128,14 +128,9 @@ Grafana Cloud, fuente **Google Cloud Monitoring** (service account de solo lectu
 
 - deport-back: <https://niftyivy3144.grafana.net/d/caos-deport-back-b> (carpeta *Caos - Indisponibilidad de dependencia (GCP)*), versionado como código en `observability/grafana/caos-deport-back.json` (generado por `build_dashboard.py`).
 - api-fastify: carpeta *Caos - Latencia saliente (Azure)* en la misma instancia.
-- Muestra las ventanas de inyección del estado estable, la Ronda 0 y la Ronda 1 como anotaciones con `execution_id`, junto a la latencia p95 del servidor, el throughput, los 5xx, los fallos de dependencia por tipo, las aperturas del circuit breaker y la CPU por pod.
-- Limitación detectada: la métrica de latencia original usa buckets lineales hasta 2000 ms y satura en la Ronda 0. Se añadió `http-latency-exp` con buckets exponenciales. El p95 oficial es el de k6.
-- Capturas del tablero `caos-deport-back-b` (vista de 24 h del 17-nov; las franjas punteadas rojas son las anotaciones de inyección del experimento oficial ~05:30 y del ensayo ~06:28–06:38 UTC):
+- Muestra el estado estable, la Ronda 0 y la Ronda 1 como anotaciones (franjas rojas punteadas, con `execution_id`) sobre la latencia p95 del servidor (umbral 1 s), el throughput, los 5xx, los fallos de dependencia por tipo y las aperturas del circuit breaker; arriba, un resumen con los máximos del rango.
+- Limitación detectada: la métrica de latencia original usa buckets lineales hasta 2000 ms y satura en la Ronda 0 (serie punteada). Se añadió `http-latency-exp` con buckets exponenciales. El p95 oficial es el de k6.
 
-![Paneles del tablero: p95 en servidor, throughput, fallos de dependencia por tipo y aperturas del breaker](evidencia/capturas/tablero-paneles-24h.png)
+![Tablero caos-deport-back-b, vista del ensayo (2026-11-17 06:20–06:45 UTC)](evidencia/capturas/tablero-caos-ensayo.png)
 
-En la Ronda 0 el p95 en servidor sube a ~5–6 s (umbral 1 s en rojo) y el throughput cae; en la Ronda 1 aparecen los `circuit_open` (fallos rápidos) y las aperturas del breaker, y el throughput sube porque las respuestas degradadas son inmediatas.
-
-![Errores HTTP 5xx](evidencia/capturas/tablero-5xx-24h.png)
-
-El pico de 5xx de ~05:28 UTC es anterior a las ventanas medidas: corresponde al hallazgo del sidecar `cloud-sql-proxy` durante un rollout (corregido con `preStop`); dentro de las ventanas de inyección los 5xx son 0.
+Lectura: en la Ronda 0 (segunda franja) el p95 en servidor sube a ~6 s y el throughput cae; en la Ronda 1 (tercera franja) el p95 en servidor cae casi a cero (k6: 31 ms), aparecen los `circuit_open` (fallos rápidos) y 30 aperturas del breaker, y el throughput sube porque las respuestas degradadas son inmediatas. Los 5xx son 0 en todo el ensayo. El resumen "p95 máximo 6 s" corresponde a la Ronda 0, donde se esperaba el fallo. La serie `no_url` que acompaña a `circuit_open` en la Ronda 1 es un error de registro (cada respuesta degradada se anotaba además como `no_url`), corregido en el deploy de las 06:49 UTC; desde entonces hay 0 eventos `no_url`.
