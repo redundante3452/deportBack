@@ -64,6 +64,8 @@ RESULTADOS = """**E4 — resiliencia de datos (Cloud SQL).** Ataque simulado: bo
 
 **Marcos** (verificados en `security/verificacion-marcos.md`): ATT&CK **T1078**, **T1485**. D3FEND: **D3-RAPA** (límite de borrados por llamador), **D3-RD** Restore Database (clon PITR), **D3-RO** Restore Object (copia en bucket), **D3-DO** Decoy Object (honeytoken).
 
+**Nota:** el panel de 429 aparece vacío en R1: el filtro de la métrica `mass-delete-blocked` usaba un evento inexistente hasta el deploy 44177083535 (posterior a R1) y las métricas log-based no son retroactivas. Los 30 × 429 de R1 están en `docs/evidencia/e4-r1-20261117/ataque-r1.csv`.
+
 **Hallazgo R1:** el límite es en memoria por pod (2 réplicas), por eso pasaron 20 borrados y no 10; mejora: contador compartido."""
 
 CRONO = """**Línea de tiempo (UTC, 2026-11-17).**
@@ -84,8 +86,8 @@ panels = [
        "Evento deportista_deleted. R0: 50 en 5 s. R1: 20 (el resto bloqueado). Incluye las reversiones del propio script.",
        "Sin borrados en el rango", "red"),
     ts(5, "Borrados bloqueados (HTTP 429) por minuto", q("A", "deport-back-mass-delete-blocked", "bloqueados"), 12, 19, 12, 8,
-       "Evento security_mass_delete_blocked: el límite de borrados por llamador actuando (solo en R1).",
-       "Sin bloqueos en el rango", "orange"),
+       "Evento security_mass_delete_blocked: el límite de borrados por llamador actuando (solo en R1). Sin datos en R0/R1: el filtro de la métrica estaba mal (evento inexistente) y se corrigió después de R1 (deploy 44177083535); las métricas log-based no son retroactivas. Evidencia de los 30 × 429 de R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv",
+       "Sin datos en R0/R1: el filtro de la métrica estaba mal (evento inexistente) y se corrigió después de R1 (deploy 44177083535); las métricas log-based no son retroactivas. Evidencia de los 30 × 429 de R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv", "orange"),
     ts(6, "Accesos al señuelo (honeytoken)", q("A", "deport-back-honeytoken-triggered", "accesos"), 0, 27, 12, 8,
        "Evento security_honeytoken_triggered: lectura, modificación o borrado del deportista señuelo.",
        "Sin accesos en el rango", "purple"),
