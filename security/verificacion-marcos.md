@@ -84,4 +84,5 @@ El texto oficial es de pago; los títulos se tomaron de fuentes secundarias coin
 ## OWASP
 
 - Top 10 for LLM Applications 2025: LLM01:2025 Prompt Injection … LLM10:2025 Unbounded Consumption ✅.
+- **LLM06:2025 Excessive Agency** ✅ (verificado 2026-11-18 en genai.owasp.org/llmrisk/llm062025-excessive-agency/: funcionalidad, permisos o autonomía excesivos de un agente).
 - Top 10 for Agentic Applications (ASI01–ASI10): no verificado en la fuente oficial; no citar hasta confirmarlo.
