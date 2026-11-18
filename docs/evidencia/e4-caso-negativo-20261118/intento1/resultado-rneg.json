@@ -1,0 +1,26 @@
+{
+  "execution_id": "gd-exp4-neg-20261118T034504Z",
+  "tipo": "caso-negativo",
+  "umbral": "10 borrados en 5 min",
+  "borrados_planificados": 5,
+  "t_primer_borrado": "2026-11-18T03:45:26Z",
+  "t_fin": "2026-11-18T03:45:27Z",
+  "t_disparo": "2026-11-18T03:45:27Z",
+  "ids_sembrados": [
+    "8aaa8818-0560-4585-a721-b50e1bdb9e66",
+    "ce4c1b87-62e7-42b7-a1e7-d5421226f769",
+    "f9f6feb7-613e-4580-b668-9ee676a99fa2",
+    "3fa1a854-619c-4f39-bb83-843ede275429",
+    "ded6398b-b0ff-466d-88b3-9a8d8da7a49a"
+  ],
+  "ids_borrados": [],
+  "codigos_http": [
+    "200"
+  ],
+  "estados_alerta_observados": [
+    "2026-11-18T03:45:27Z=firing"
+  ],
+  "alerta_disparada": true,
+  "veredicto": "FALLA",
+  "motivo": "la alerta se disparo con trafico legitimo bajo el umbral"
+}

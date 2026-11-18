@@ -1,0 +1,13 @@
+# Bitacora E4 caso negativo (gd-exp4-neg-20261118T034504Z)
+- 2026-11-18T03:45:04Z == a. Esperando alerta no firing (max 15 min) ==
+- 2026-11-18T03:45:06Z Alerta en estado 'normal' antes de empezar
+- 2026-11-18T03:45:06Z == b. Siembra de 5 deportistas sinteticos (e4-<n>-neg034504@example.com) ==
+- 2026-11-18T03:45:06Z Sembrados: 5
+- 2026-11-18T03:45:26Z == c. Borrado de 5 registros, 1 cada 60s; d. observacion de la alerta cada 15s ==
+- 2026-11-18T03:45:26Z DELETE 8aaa8818-0560-4585-a721-b50e1bdb9e66 -> 200
+- 2026-11-18T03:45:27Z ALERTA FIRING (falso positivo)
+- 2026-11-18T03:45:27Z Veredicto: FALLA. la alerta se disparo con trafico legitimo bajo el umbral
+- 2026-11-18T03:45:27Z Limpieza: DELETE ce4c1b87-62e7-42b7-a1e7-d5421226f769 -> 200
+- 2026-11-18T03:45:27Z Limpieza: DELETE f9f6feb7-613e-4580-b668-9ee676a99fa2 -> 200
+- 2026-11-18T03:45:27Z Limpieza: DELETE 3fa1a854-619c-4f39-bb83-843ede275429 -> 200
+- 2026-11-18T03:45:27Z Limpieza: DELETE ded6398b-b0ff-466d-88b3-9a8d8da7a49a -> 200
