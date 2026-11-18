@@ -9,7 +9,11 @@ curso: Énfasis en Defensa en Profundidad — Evaluación final 2026-2
 fecha: 2026-11-18
 ---
 
-> Todas las horas están en UTC y corresponden al 2026-11-17. Cada cifra proviene de `docs/evidencia/e4-*`; lo que depende de otro integrante figura como **[pendiente: quién/qué]** y no se rellena con supuestos.
+> Todas las horas están en UTC y corresponden al 2026-11-17, salvo la repetición de R1 y el caso negativo (2026-11-18). Cada cifra proviene de `docs/evidencia/e4-*`; lo que depende de otro integrante figura como **[pendiente: quién/qué]** y no se rellena con supuestos.
+
+## 0. Uso de IA (declaración)
+
+Herramienta: **Claude Code** (Anthropic), como asistente de análisis e implementación con revisión humana: exploración del código, scripts de experimento, reglas de detección, tableros y redacción. Cada cifra sale de la evidencia versionada y cada ID de marco se verificó contra fuentes oficiales (`security/verificacion-marcos.md`). Las decisiones, los ataques, los despliegues y los cambios de IAM los aprobó el integrante responsable. Aciertos, errores y descartes de la IA: §11.
 
 ## 1. Arquitectura y alcance
 

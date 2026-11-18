@@ -4,6 +4,14 @@
 > Fecha de ejecución: 2026-11-17 (UTC). Versión: v4.0.0.
 > Las secciones marcadas **[pendiente]** dependen de datos que aún no entrega el integrante; no se rellenan con supuestos.
 
+## 0. Uso de IA (declaración)
+
+Herramienta: **Claude Code** (Anthropic), como asistente de análisis e implementación con revisión humana. Las decisiones, las inyecciones de fallo y los despliegues los aprobó el integrante responsable; cada cifra sale de la evidencia versionada.
+
+- **Propuso y se adoptó:** el modo *hang* del interruptor (el fallo inmediato no reproducía el modo de fallo); decidir el gate por la Ronda 1; el diagnóstico del sidecar a partir de los logs del proxy; la cadena api-fastify → deport-back → Inventario-U para que la dependencia de deport-back fuera la del experimento; la lectura del compromiso de la degradación en la Ronda 1.
+- **Propuso y se descartó:** usar Chaos Mesh como inyección principal (GKE Autopilot no lo admite); llamar desde deport-back a api-fastify (es HTTP y provocaría un bucle con el coordinador).
+- **Errores de la IA corregidos con evidencia:** guardó `TEAM_API_KEY` como `-` en GitHub (`gh secret set --body -`) y recortó un espacio en los filtros de métricas (`ANDjsonPayload`). Ambos se detectaron al contrastar con las respuestas reales (401 inesperado y error 400 de Cloud Logging).
+
 ## 1. Arquitectura y radio de impacto
 
 - **Punto de entrada (coordinador):** api-fastify, `GET /api/v2/articulos/:id` (Azure). Invoca a deport-back y a Inventario-U propagando `X-Trace-Id` y autenticando con `X-Api-Key` (`TEAM_API_KEY`).
@@ -131,11 +139,3 @@ En la Ronda 0 el p95 en servidor sube a ~5–6 s (umbral 1 s en rojo) y el throu
 ![Errores HTTP 5xx](evidencia/capturas/tablero-5xx-24h.png)
 
 El pico de 5xx de ~05:28 UTC es anterior a las ventanas medidas: corresponde al hallazgo del sidecar `cloud-sql-proxy` durante un rollout (corregido con `preStop`); dentro de las ventanas de inyección los 5xx son 0.
-
-## 10. Uso de IA (declaración)
-
-Herramienta: **Claude Code** (Anthropic), como asistente de análisis e implementación con revisión humana.
-
-- **Propuso y se adoptó:** el modo *hang* del interruptor (el fallo inmediato no reproducía el modo de fallo); decidir el gate por la Ronda 1; el diagnóstico del sidecar a partir de los logs del proxy; la cadena api-fastify → deport-back → Inventario-U para que la dependencia de deport-back fuera la del experimento; la lectura del compromiso de la degradación en la Ronda 1.
-- **Propuso y se descartó:** usar Chaos Mesh como inyección principal (GKE Autopilot no lo admite); llamar desde deport-back a api-fastify (es HTTP y provocaría un bucle con el coordinador).
-- **Errores de la IA corregidos con evidencia:** guardó `TEAM_API_KEY` como `-` en GitHub (`gh secret set --body -`) y recortó un espacio en los filtros de métricas (`ANDjsonPayload`). Ambos se detectaron al contrastar con las respuestas reales (401 inesperado y error 400 de Cloud Logging).
