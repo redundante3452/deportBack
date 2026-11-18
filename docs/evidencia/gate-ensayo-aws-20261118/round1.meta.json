@@ -1,0 +1,11 @@
+{
+  "execution_id": "prueba-sslip-20261118-r1",
+  "round": "1",
+  "injection_start_utc": "2026-11-18T05:53:30Z",
+  "injection_end_utc": "2026-11-18T05:58:01Z",
+  "base_url": "http://34.16.0.136",
+  "chaos_target": "sslip.io",
+  "breaker": "on",
+  "k6_exit_code": 0,
+  "trace_id_prefix": "prueba-sslip-20261118-r1"
+}
