@@ -93,10 +93,35 @@ Toda acción destructiva requiere la aprobación explícita del responsable de s
 ## 7. Aceptación
 
 Con su firma, cada integrante declara que conoce y acepta estas reglas, y que los experimentos bajo su
-responsabilidad se ejecutaron dentro de ellas.
+responsabilidad se ejecutaron dentro de ellas. Las firmas van en la hoja siguiente.
 
-| Integrante | Rol | Fecha (UTC) | Firma |
-|---|---|---|---|
-| Alejandro Peñuela | Coordinador · E2 y E3 · api-fastify (Azure) | | |
-| Alejandro Marín | E1 · Inventario-U (AWS) | | |
-| Alejandro Hernández | E4 (grupal) · deport-back (GCP) | | |
+<div style="page-break-before:always;"></div>
+
+<div style="margin-top:120px;font-size:11pt;">
+<p>ESTA HOJA DE FIRMAS PERTENECE A LAS REGLAS DE COMPROMISO DEL GAME DAY DE CAOS DE SEGURIDAD
+(ÉNFASIS EN DEFENSA EN PROFUNDIDAD — EVALUACIÓN FINAL 2026-2) DEL GRUPO: ALEJANDRO PEÑUELA,
+ALEJANDRO MARÍN Y ALEJANDRO HERNÁNDEZ.</p>
+</div>
+
+<div style="margin-top:40px;">
+<div style="width:45%;display:inline-block;vertical-align:top;margin-top:90px;">
+<div style="border-top:1px solid #000;width:90%;"></div>
+<p style="margin:6px 0 0 0;font-size:10pt;">NOMBRE Y FIRMA: ALEJANDRO PEÑUELA</p>
+<p style="margin:2px 0 0 0;font-size:10pt;">COORDINADOR · E2 Y E3 · api-fastify (Azure)</p>
+<p style="margin:2px 0 0 0;font-size:10pt;">FECHA (UTC): ____________________</p>
+</div>
+<div style="width:45%;display:inline-block;vertical-align:top;margin-top:90px;">
+<div style="border-top:1px solid #000;width:90%;"></div>
+<p style="margin:6px 0 0 0;font-size:10pt;">NOMBRE Y FIRMA: ALEJANDRO MARÍN</p>
+<p style="margin:2px 0 0 0;font-size:10pt;">RESPONSABLE E1 · Inventario-U (AWS)</p>
+<p style="margin:2px 0 0 0;font-size:10pt;">FECHA (UTC): ____________________</p>
+</div>
+</div>
+<div>
+<div style="width:45%;display:inline-block;vertical-align:top;margin-top:90px;">
+<div style="border-top:1px solid #000;width:90%;"></div>
+<p style="margin:6px 0 0 0;font-size:10pt;">NOMBRE Y FIRMA: ALEJANDRO HERNÁNDEZ</p>
+<p style="margin:2px 0 0 0;font-size:10pt;">RESPONSABLE E4 (GRUPAL) · deport-back (GCP)</p>
+<p style="margin:2px 0 0 0;font-size:10pt;">FECHA (UTC): ____________________</p>
+</div>
+</div>
