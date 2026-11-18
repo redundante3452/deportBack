@@ -42,9 +42,13 @@ objetivo cualquier IP o cuenta cuya propiedad no se haya confirmado. Hacerlo anu
 | E4 | R1 repetición | 2026-11-18 03:08 – 03:45 | 44228119507 |
 | E4 | Caso negativo (intentos 1 y 2) | 2026-11-18 03:45 – 04:01 | 44232516003 · 44233528772 |
 | E4 | Honeytoken (tendencia) | 2026-11-17 21:16 – 21:18 | 44178025923 |
-| E1 | R0 / R1 | ____________________ | ____________________ |
-| E2 | R0 / R1 / R1b | ____________________ | ____________________ |
-| E3-A / E3-B | R0 / R1 | ____________________ | ____________________ |
+| E1 (oficial, Marín) | R0 / R1 | ____________________ | ____________________ |
+| E1 piloto (Peñuela, Azure) | R0 | 2026-11-17 20:50 – 20:55 | 44173454944 |
+| E1 piloto (Peñuela, Azure) | R1 | 2026-11-18 00:45 – 00:51 | 44210464129 |
+| E2 | R0 | 2026-11-17 23:55 – 2026-11-18 00:01 | 44203595125 |
+| E2 | R1 / R1b | 2026-11-18 00:04 – 00:06 / 00:06 – 00:10 | 44204725933 / 44205109552 |
+| E3-A | R1 / R0 (en ese orden) | 2026-11-18 00:33 – 00:38 / 00:39 – 00:45 | 44208851146 / 44209548922 |
+| E3-B | R0 / R1 (manual, sin pipeline) | 2026-11-17 21:44 – 21:46 / 21:49 – 21:52 | `resultados/seguridad/ia-triage-{naive,seguro}-v{1,2,3}-*.json` |
 
 Canal de comunicación: chat del grupo. El responsable avisa antes de iniciar y al terminar cada ronda.
 
@@ -62,9 +66,15 @@ Se detiene la ronda de inmediato si ocurre cualquiera de estas condiciones:
 | Exp. | Acción de parada documentada |
 |---|---|
 | E4 | `security/experiments/e4-datos/parar.sh` (o `gameday-e4.yml` con `accion=parar`): corta el ataque y revierte |
-| E1 | ______________________________________________ |
-| E2 | ______________________________________________ |
-| E3 | ______________________________________________ |
+| E1 (oficial, Marín) | ______________________________________________ |
+| E1 piloto | `seguridad/experimentos/exp1-identidad/parar.sh` (fichero de parada; el ataque solo lee) · reversión `revertir.sh` |
+| E2 | `seguridad/experimentos/e2-exposicion/parar.sh` (≤ 8 s: borra el Service expuesto) · reversión `revertir.sh` |
+| E3-A | `seguridad/experimentos/e3-telemetria/parar.sh` (5 s: restaura Alloy) · reversión `revertir.sh` (`REVERSION OK`) |
+| E3-B | Sin script: el asistente no ejecuta acciones; parar = no relanzar `triage.mjs --inyectar` |
+
+En las ejecuciones por pipeline (`defensa-gate.yml` de api-fastify y `gameday-e4.yml` de deport-back) la
+parada operativa es **cancelar el run**: la reversión corre siempre (`if: always()` / `trap EXIT`).
+Rutas de E1 piloto, E2 y E3 en el repositorio de api-fastify, rama `produccion`.
 
 ## 5. Reversión
 
