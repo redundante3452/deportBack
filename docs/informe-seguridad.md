@@ -70,7 +70,7 @@ Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`),
 
 Alcance: proyecto GCP, clúster y Cloud SQL propios; datos sintéticos (`e4-<n>-<runid>@example.com`); los dos deportistas del flujo quedan fuera del radio y se verifican al revertir. Interruptor de parada: `security/experiments/e4-datos/parar.sh` (corta el ataque y revierte). Reversión automática: `trap EXIT` que ejecuta `revertir.sh`. Bitácora: un archivo `bitacora-r<n>.md` con hora UTC por paso. Ventana: R0 19:14–19:26 y R1 20:05–20:28 del 2026-11-17. Condiciones completas en `security/game-day/reglas-compromiso.md`.
 
-Aclaración honesta: estas condiciones (ventana, datos sintéticos, parada, reversión, bitácora) las acordó el equipo por chat el 2026-11-17 antes de la R0; el documento no está firmado: **[pendiente: firma]**.
+Aclaración honesta: estas condiciones (ventana, datos sintéticos, parada, reversión, bitácora) las acordó el equipo por chat el 2026-11-17 antes de la R0; el documento las formaliza y lo firmaron los 3 integrantes después de ejecutar los experimentos (`security/game-day/reglas-compromiso-firmada.pdf`).
 
 ## 4. Estado estable medido antes de tocar nada
 
