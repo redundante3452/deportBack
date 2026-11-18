@@ -70,6 +70,19 @@ alerta_firing() { # 0 si la alerta esta firing; 2 si no medible
   [[ "${n:-0}" -gt 0 ]]
 }
 
+alerta_estado() { # estado de la alerta E4 en Grafana: firing|pending|normal|ausente|no-medible
+  if [[ -z "${GRAFANA_URL:-}" || -z "${GRAFANA_TOKEN:-}" ]]; then echo "no-medible"; return; fi
+  local json
+  json="$(curl -s --max-time 20 -H "Authorization: Bearer ${GRAFANA_TOKEN}" \
+    "${GRAFANA_URL%/}/api/prometheus/grafana/api/v1/rules" || true)"
+  jq -r --arg t "$ALERT_TITLE" '
+    [.data.groups[]?.rules[]? | select(.name==$t)] as $r
+    | if ($r|length)==0 then "ausente"
+      else ($r[0].state // "normal" | ascii_downcase
+            | if test("firing|alerting") then "firing" elif test("pending") then "pending" else "normal" end)
+      end' <<<"$json" 2>/dev/null || echo "no-medible"
+}
+
 regla_existe() { # 0 existe, 1 no, 2 no medible
   if [[ -z "${GRAFANA_URL:-}" || -z "${GRAFANA_TOKEN:-}" ]]; then return 2; fi
   curl -s --max-time 20 -H "Authorization: Bearer ${GRAFANA_TOKEN}" \

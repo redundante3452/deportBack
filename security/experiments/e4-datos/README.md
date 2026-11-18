@@ -53,7 +53,9 @@ bash security/experiments/e4-datos/parar.sh      # si hay que cortar
 bash security/experiments/e4-datos/revertir.sh
 ```
 
-Por workflow: `gh workflow run gameday-e4.yml -f ronda=0 -f accion=iniciar` (acciones: iniciar | parar | revertir).
+Por workflow: `gh workflow run gameday-e4.yml -f ronda=0 -f accion=iniciar` (acciones: iniciar | parar | revertir | caso-negativo).
+
+Caso negativo en vivo (`accion=caso-negativo`, `caso-negativo.sh`): siembra 5 `e4-*`, los borra 1 por minuto (bajo el umbral de 10 en 5 min) y observa 6 min que la alerta NO pase a firing (PASA/FALLA = falsos positivos en infraestructura real); sin clon ni export.
 No ejecutar mientras corre otro experimento ni desplegar durante la ronda.
 
 ## Que cambia entre ronda 0 y 1

@@ -14,7 +14,7 @@ on:
         required: true
         default: iniciar
         type: choice
-        options: [iniciar, parar, revertir]
+        options: [iniciar, parar, revertir, caso-negativo]
 
 concurrency:
   group: gameday-e4-${{ github.repository }}
@@ -71,6 +71,7 @@ jobs:
             iniciar)  bash security/experiments/e4-datos/ejecutar.sh ;;
             parar)    bash security/experiments/e4-datos/parar.sh ;;
             revertir) bash security/experiments/e4-datos/revertir.sh ;;
+            caso-negativo) bash security/experiments/e4-datos/caso-negativo.sh ;;
           esac
 
       - name: Resumen
