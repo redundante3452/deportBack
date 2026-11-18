@@ -1,9 +1,15 @@
 name: Grafana - tablero de seguridad
 
 # Publica el tablero "Seguridad - Game day E4 (GCP)" con el secreto GRAFANA_TOKEN y lo verifica.
-# Ejecucion manual.
+# Con tablero=caos publica el tablero DevOps de caos (caos-deport-back-b). Ejecucion manual.
 on:
   workflow_dispatch:
+    inputs:
+      tablero:
+        description: Tablero a publicar
+        type: choice
+        options: [seguridad, caos, ambos]
+        default: seguridad
 
 jobs:
   tablero:
@@ -16,10 +22,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Publicar tablero y anotaciones
+      - name: Publicar tablero de seguridad y anotaciones
+        if: inputs.tablero != 'caos'
         run: bash observability/grafana/deploy-tablero-seguridad.sh
 
-      - name: Verificar que el tablero existe
+      - name: Publicar tablero de caos (solo el dashboard, no toca anotaciones)
+        if: inputs.tablero == 'caos' || inputs.tablero == 'ambos'
+        run: bash observability/grafana/deploy.sh
+
+      - name: Verificar tablero de caos y anotaciones
+        if: inputs.tablero == 'caos' || inputs.tablero == 'ambos'
+        run: |
+          URL="${GRAFANA_URL%/}"
+          curl -fsS -H "Authorization: Bearer $GRAFANA_TOKEN" "$URL/api/dashboards/uid/caos-deport-back-b"             | jq '{titulo: .dashboard.title, paneles: (.dashboard.panels | length), version: .dashboard.version, carpeta: .meta.folderTitle}'
+          curl -fsS -H "Authorization: Bearer $GRAFANA_TOKEN" "$URL/api/annotations?dashboardUID=caos-deport-back-b&limit=1000"             | jq 'length' | tee anot-caos.txt
+          echo "Anotaciones del tablero de caos: $(cat anot-caos.txt)"
+          test "$(cat anot-caos.txt)" -eq 6
+
+      - name: Verificar que el tablero de seguridad existe
+        if: inputs.tablero != 'caos'
         run: |
           URL="${GRAFANA_URL%/}"
           curl -fsS -H "Authorization: Bearer $GRAFANA_TOKEN" "$URL/api/dashboards/uid/seguridad-game-day-e4" \
@@ -30,6 +51,7 @@ jobs:
           test "$(cat anot.txt)" -ge 10
 
       - name: Verificar consulta real al datasource (borrados 19:10-20:35 UTC)
+        if: inputs.tablero != 'caos'
         run: |
           URL="${GRAFANA_URL%/}"
           FROM=$(date -u -d "2026-11-17T19:10:00Z" +%s)000
