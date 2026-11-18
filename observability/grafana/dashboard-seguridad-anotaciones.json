@@ -1,0 +1,52 @@
+[
+  {
+    "inicio": "2026-11-17T19:16:21Z",
+    "fin": "2026-11-17T19:16:26Z",
+    "texto": "R0 ataque: 50/50 borrados, sin detección"
+  },
+  {
+    "inicio": "2026-11-17T19:48:18Z",
+    "fin": "2026-11-17T19:48:23Z",
+    "texto": "R1 intento 1 ataque: 20 borrados, 30 x 429"
+  },
+  {
+    "inicio": "2026-11-17T19:49:27Z",
+    "fin": null,
+    "texto": "R1 intento 1: alerta E4 firing"
+  },
+  {
+    "inicio": "2026-11-17T20:00:38Z",
+    "fin": null,
+    "texto": "R1 intento 1: reversión borró 30 (actividad propia)"
+  },
+  {
+    "inicio": "2026-11-17T20:09:41Z",
+    "fin": "2026-11-17T20:09:46Z",
+    "texto": "R1 ataque: 20 borrados, 30 x 429"
+  },
+  {
+    "inicio": "2026-11-17T20:10:19Z",
+    "fin": null,
+    "texto": "R1: alerta E4 firing (MTTD 37,5 s)"
+  },
+  {
+    "inicio": "2026-11-17T20:27:05Z",
+    "fin": null,
+    "texto": "R1: restauración PITR lista, 20/20 (RTO 1043 s)"
+  },
+  {
+    "inicio": "2026-11-17T20:28:22Z",
+    "fin": null,
+    "texto": "R1: reversión borró 50 (actividad propia)"
+  },
+  {
+    "inicio": "2026-11-17T21:16:19Z",
+    "fin": null,
+    "texto": "Honeytoken: acceso al señuelo"
+  },
+  {
+    "inicio": "2026-11-17T21:17:22Z",
+    "fin": null,
+    "texto": "Honeytoken: alerta firing (MTTD 63,4 s)"
+  }
+]
