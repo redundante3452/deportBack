@@ -24,3 +24,6 @@ figure, img, .mermaid { break-inside: avoid; page-break-inside: avoid; }
 .portada h1 { font-size: 18pt; margin: 0; }
 .portada .sub { font-size: 12pt; font-style: italic; margin: 2pt 0; }
 .portada .meta { font-size: 10pt; margin: 2pt 0; }
+
+/* evita que un token largo desborde y Edge escale toda la página */
+code, td, th, p, li { overflow-wrap: anywhere; }
