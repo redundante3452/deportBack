@@ -108,13 +108,11 @@ ALEJANDRO MARÍN Y ALEJANDRO HERNÁNDEZ.</p>
 <div style="border-top:1px solid #000;width:90%;"></div>
 <p style="margin:6px 0 0 0;font-size:10pt;">NOMBRE Y FIRMA: ALEJANDRO PEÑUELA</p>
 <p style="margin:2px 0 0 0;font-size:10pt;">COORDINADOR · E2 Y E3 · api-fastify (Azure)</p>
-<p style="margin:2px 0 0 0;font-size:10pt;">FECHA (UTC): ____________________</p>
 </div>
 <div style="width:45%;display:inline-block;vertical-align:top;margin-top:90px;">
 <div style="border-top:1px solid #000;width:90%;"></div>
 <p style="margin:6px 0 0 0;font-size:10pt;">NOMBRE Y FIRMA: ALEJANDRO MARÍN</p>
 <p style="margin:2px 0 0 0;font-size:10pt;">RESPONSABLE E1 · Inventario-U (AWS)</p>
-<p style="margin:2px 0 0 0;font-size:10pt;">FECHA (UTC): ____________________</p>
 </div>
 </div>
 <div>
@@ -122,6 +120,5 @@ ALEJANDRO MARÍN Y ALEJANDRO HERNÁNDEZ.</p>
 <div style="border-top:1px solid #000;width:90%;"></div>
 <p style="margin:6px 0 0 0;font-size:10pt;">NOMBRE Y FIRMA: ALEJANDRO HERNÁNDEZ</p>
 <p style="margin:2px 0 0 0;font-size:10pt;">RESPONSABLE E4 (GRUPAL) · deport-back (GCP)</p>
-<p style="margin:2px 0 0 0;font-size:10pt;">FECHA (UTC): ____________________</p>
 </div>
 </div>
