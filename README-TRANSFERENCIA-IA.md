@@ -7,7 +7,7 @@ Este repositorio contiene `deport-back`, una API NestJS/TypeScript con PostgreSQ
 ```text
 api-fastify (Azure/AKS)
         ↓
-Inventario-U (OCI)
+Inventario-U (AWS)
         ↓
 deport-back (GCP)
 ```
@@ -242,7 +242,7 @@ Para este último trabajo de Ingeniería del Caos se necesita un dashboard de Gr
 ```text
 GCP: deport-back
 Azure: api-fastify
-OCI: Inventario-U
+AWS: Inventario-U
 ```
 
 Paneles mínimos:

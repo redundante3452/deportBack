@@ -1,7 +1,7 @@
 # Detección como código
 
 Las reglas se versionarán en el lenguaje que soporte la plataforma confirmada:
-Cloud Monitoring/Logging, Azure Monitor, OCI Logging, Sigma, KQL o SPL. No se
+Cloud Monitoring/Logging, Azure Monitor, Sigma, KQL o SPL. No se
 elige una sintaxis sin conocer el SIEM o servicio real.
 
 La validación local de referencias y fixtures se ejecuta con:

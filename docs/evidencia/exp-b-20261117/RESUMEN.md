@@ -3,7 +3,7 @@
 - Run del chaos gate: https://github.com/redundante3452/deportBack/actions/runs/44024828423 (resultado: **aprobado**)
 - execution_id: `exp-b-20261117` (`-base`, `-r0`, `-r1`); trace ids `exp-b-20261117-<ronda>-<vu>-<iter>`
 - Objetivo: GKE `http://34.16.0.136`, `GET /api/v2/deportistas/296f5b48-cada-460d-9b8b-fd5dc2ac972e`
-- Fallo: `CHAOS_DEPENDENCY_FAILURE=true`, `CHAOS_DEPENDENCY_MODE=hang`, objetivo `trycloudflare` (Inventario-U `/api/v2/skus`), durante toda la ronda (4 m 30 s)
+- Fallo: `CHAOS_DEPENDENCY_FAILURE=true`, `CHAOS_DEPENDENCY_MODE=hang`, objetivo el host de Inventario-U (túnel temporal en ese momento) (Inventario-U `/api/v2/skus`), durante toda la ronda (4 m 30 s)
 - Perfil de carga: `perfil-p1-v1` (k6, escalones 5→10 VUs, 4 m 30 s), idéntico en las tres mediciones
 - Hipótesis: p95 < 1000 ms (guardarraíl: error < 1 %)
 

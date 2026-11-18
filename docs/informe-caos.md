@@ -1,6 +1,6 @@
 # Informe de experimento — Ingeniería del Caos (Seguimiento #4)
 
-> Flujo multinube **api-fastify (Azure/AKS) → deport-back (GCP/GKE) → Inventario-U (OCI)**.
+> Flujo multinube **api-fastify (Azure/AKS) → deport-back (GCP/GKE) → Inventario-U (AWS)**.
 > Fecha de ejecución: 2026-11-17 (UTC). Versión: v4.0.0.
 > Las secciones marcadas **[pendiente]** dependen de datos que aún no entrega el integrante; no se rellenan con supuestos.
 
@@ -8,7 +8,7 @@
 
 - **Punto de entrada (coordinador):** api-fastify, `GET /api/v2/articulos/:id` (Azure). Invoca a deport-back y a Inventario-U propagando `X-Trace-Id` y autenticando con `X-Api-Key` (`TEAM_API_KEY`).
 - **deport-back (GCP):** `GET /api/v2/deportistas/:id`, desplegado en Cloud Run y en GKE Autopilot (2–5 réplicas con HPA, probes de liveness/readiness, requests/limits, sidecar Cloud SQL Proxy). Llama a Inventario-U `GET /api/v2/skus` como dependencia.
-- **Inventario-U (OCI):** expuesto por HTTPS (túnel Cloudflare).
+- **Inventario-U (AWS):** expuesto por HTTPS (URL en la variable `INVENTARIO_U_URL`).
 - **Trazabilidad verificada:** con `X-Trace-Id: verif-cadena-002` (2026-11-17 05:22 UTC) el coordinador obtuvo 200 en 1,06 s y deport-back devolvió el mismo `trace_id` junto con los datos de Inventario-U.
 - Diagrama con puntos de inyección y fronteras: ver `README.md` → *Ingeniería del Caos — Seguimiento #4*.
 
@@ -16,7 +16,7 @@
 |---|---|---|
 | deport-back (GCP) | **b** — indisponibilidad de la dependencia Inventario-U | Solo el deployment `deport-back` en GKE y su llamada saliente a `/api/v2/skus`. Cloud Run, Inventario-U y api-fastify no se tocan. Datos sintéticos. |
 | api-fastify (Azure) | **a** — latencia de 3000 ms en la llamada saliente hacia deport-back durante 60 s | Llamada saliente de api-fastify en AKS. |
-| Inventario-U (OCI) | **c** — agotamiento de recurso **[pendiente]** | **[pendiente]** |
+| Inventario-U (AWS) | **c** — agotamiento de recurso **[pendiente]** | **[pendiente]** |
 
 ## 2. Instrumentos y perfil de carga
 

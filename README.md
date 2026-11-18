@@ -288,7 +288,7 @@ un mismo mensaje se puede seguir en `kubectl logs` aunque haya cruzado 3 nubes d
 
 ## Ingeniería del Caos — Seguimiento #4
 
-El flujo multinube es `api-fastify` (Azure/AKS) → `Inventario-U` (OCI) → `deport-back` (GCP).
+El flujo multinube es `api-fastify` (Azure/AKS) → `Inventario-U` (AWS) → `deport-back` (GCP).
 El coordinador del flujo es `api-fastify` (Azure, `http://20.228.125.209`), confirmado.
 
 ### Diagrama del flujo y del radio de impacto
@@ -303,7 +303,7 @@ flowchart LR
         AF --- FA
     end
 
-    subgraph OCI["OCI — Inventario-U"]
+    subgraph AWS["AWS — Inventario-U"]
         INV["API SKUs"]
         FC["⚡ Fallo c: agotamiento de concurrencia"]
         INV --- FC
@@ -333,7 +333,7 @@ flowchart LR
 Dónde se mide: **k6** mide en el cliente la tasa de error (`http_req_failed`) y el p95
 (`http_req_duration`) del flujo extremo a extremo; **Cloud Monitoring** (GCP) mide el
 comportamiento interno de `deport-back` (peticiones, errores, latencia y `dependency_failures`
-desde logs JSON). Azure (`api-fastify`) reporta sus propios resultados; Inventario-U (OCI) está pendiente de repetir su medición en OCI.
+desde logs JSON). Azure (`api-fastify`) reporta sus propios resultados; Inventario-U (AWS) está pendiente de repetir su medición en AWS.
 
 ### Matriz integrante – fallo – métrica – patrón
 
@@ -341,7 +341,7 @@ desde logs JSON). Azure (`api-fastify`) reporta sus propios resultados; Inventar
 |---|---|---|---|---|
 | Integrante GCP | `deport-back` (GCP) | **b**: indisponibilidad de dependencia externa | p95 de latencia e2e de `GET /api/v2/deportistas/:id` < 1000 ms (guardarraíl: tasa de error < 1 %) | Timeout de 5 s por dependencia + circuit breaker (3 fallos, 30 s de cooldown, toggle `RESILIENCE_CIRCUIT_BREAKER_ENABLED`) + degradación elegante (respuesta parcial con `apis_externas.ok=false`, caché de 30 s) |
 | Integrante Azure | `api-fastify` (Azure/AKS) | **a**: latencia en llamada saliente | p95 de latencia: R0 3312 ms → R1 496 ms (−85 %), reportado por el integrante | Timeout 1 s + circuit breaker + degradación (reportado por el integrante) |
-| Integrante OCI | `Inventario-U` (OCI) | **c**: agotamiento de concurrencia | Tasa de éxito ≥ 99 %; resultado pendiente de repetir en OCI | Bulkhead + control de admisión |
+| Integrante AWS | `Inventario-U` (AWS) | **c**: agotamiento de concurrencia | Tasa de éxito ≥ 99 %; resultado pendiente de repetir en AWS | Bulkhead + control de admisión |
 
 Los umbrales de `deport-back` son objetivos, no resultados medidos.
 

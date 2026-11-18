@@ -3,7 +3,7 @@ title: Game day de Caos de Seguridad — Defensa en Profundidad multinube
 subtitle: Informe del game day (E1–E4)
 autores:
   - Alejandro Peñuela (api-fastify, Azure) — E2 y E3
-  - Alejandro Marín (Inventario-U, OCI) — E1
+  - Alejandro Marín (Inventario-U, AWS) — E1
   - Alejandro Hernández (deport-back, GCP) — E4 (grupal)
 curso: Énfasis en Defensa en Profundidad — Evaluación final 2026-2
 fecha: 2026-11-18
@@ -13,7 +13,7 @@ fecha: 2026-11-18
 
 ## 1. Arquitectura y alcance
 
-El flujo atraviesa tres nubes. El punto de entrada es api-fastify (Azure/AKS), que llama a deport-back (GCP/GKE) y a Inventario-U (OCI) propagando `X-Trace-Id` y `X-Api-Key`. Este informe cubre la superficie de seguridad de ese flujo, no su rendimiento.
+El flujo atraviesa tres nubes. El punto de entrada es api-fastify (Azure/AKS), que llama a deport-back (GCP/GKE) y a Inventario-U (AWS) propagando `X-Trace-Id` y `X-Api-Key`. Este informe cubre la superficie de seguridad de ese flujo, no su rendimiento.
 
 ```mermaid
 flowchart LR
@@ -26,7 +26,7 @@ flowchart LR
     G3 -.->|export| G4[("Bucket US-EAST1 versionado")]
     G2 -->|logs JSON| G5["Cloud Logging y métricas"]
   end
-  subgraph OCI["OCI - Inventario-U (E1)"]
+  subgraph AWS["AWS - Inventario-U (E1)"]
     O1["API /skus"]
   end
   A1 -->|X-Api-Key| G1
@@ -39,7 +39,7 @@ flowchart LR
   I4(["E3: inyección en dato"]) -.-> A2
 ```
 
-Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`), pod → Cloud SQL (proxy con identidad de servicio), deport-back → Inventario-U (a través de Internet, clave compartida) y deport-back → bucket de copias (otra región, proyecto propio). Recolección: logs JSON de deport-back en Cloud Logging → métricas basadas en logs → Grafana Cloud (alertas). La telemetría de Azure (logs y eventos a Loki mediante Grafana Alloy, alertas en Grafana) la aporta Peñuela; la de Inventario-U (OCI **[pendiente: Marín confirma nube]**) la aporta Marín **[pendiente: Marín]**.
+Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`), pod → Cloud SQL (proxy con identidad de servicio), deport-back → Inventario-U (a través de Internet, clave compartida) y deport-back → bucket de copias (otra región, proyecto propio). Recolección: logs JSON de deport-back en Cloud Logging → métricas basadas en logs → Grafana Cloud (alertas). La telemetría de Azure (logs y eventos a Loki mediante Grafana Alloy, alertas en Grafana) la aporta Peñuela; la de Inventario-U (AWS) la aporta Marín **[pendiente: Marín]**.
 
 ## 2. Inventario de controles por capa
 
