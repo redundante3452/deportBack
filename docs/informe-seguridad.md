@@ -13,7 +13,7 @@ fecha: 2026-11-18
 
 ## 0. Uso de IA (declaración)
 
-Herramienta: **Claude Code** (Anthropic), como asistente de análisis e implementación con revisión humana: exploración del código, scripts de experimento, reglas de detección, tableros y redacción. Cada cifra sale de la evidencia versionada y cada ID de marco se verificó contra fuentes oficiales (`security/verificacion-marcos.md`). Las decisiones, los ataques, los despliegues y los cambios de IAM los aprobó el integrante responsable. Aciertos, errores y descartes de la IA: §11.
+Herramienta: **Claude Code** (Anthropic), como asistente de análisis e implementación con revisión humana: exploración del código, scripts de experimento, reglas de detección, tableros y redacción. Cada cifra sale de la evidencia versionada y cada ID de marco se verificó contra fuentes oficiales (`security/verificacion-marcos.md`). Las decisiones, los ataques, los despliegues y los cambios de IAM los aprobó el integrante responsable. Aciertos, errores y descartes de la IA: §11. Aparte, **Gemini** (`gemini-3.1-flash-lite`, API) forma parte del sistema evaluado: es el asistente de triage de Peñuela, sin herramientas y con decisión humana (§11–§12).
 
 ## 1. Arquitectura y alcance
 
