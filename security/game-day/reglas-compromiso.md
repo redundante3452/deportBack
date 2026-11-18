@@ -7,8 +7,8 @@ subtitle: Énfasis en Defensa en Profundidad — Evaluación final 2026-2
 **Arquitectura:** api-fastify (Azure/AKS) → deport-back (GCP) → Inventario-U (AWS)
 
 > **Declaración de vigencia.** Las condiciones de este documento las acordó el grupo por chat el
-> 2026-11-17, antes de la primera ronda (R0 del E4, 19:14 UTC). Este documento las formaliza; las
-> firmas se registran en la fecha indicada en cada una y no pretenden ser anteriores a ella.
+> 2026-11-17, antes de la primera ronda (R0 del E4, 19:14 UTC). Este documento las formaliza
+> y se firmó después de ejecutar los experimentos.
 
 ## 1. Responsables y alcance autorizado
 
