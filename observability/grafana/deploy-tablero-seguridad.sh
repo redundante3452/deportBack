@@ -45,4 +45,6 @@ while IFS= read -r a; do
   N=$((N+1))
 done < <(jq -c '.[]' "$DIR/dashboard-seguridad-anotaciones.json")
 echo "Anotaciones creadas: $N"
+echo "Anotaciones con etiqueta e4-tablero en el tablero (inicio-fin UTC):"
+api "$URL/api/annotations?dashboardUID=$UID_TABLERO&tags=e4-tablero&limit=1000"   | jq -r 'sort_by(.time)[] | "\(.time/1000|todate) -> \(.timeEnd/1000|todate) | \(.text)"'
 echo "Tablero publicado: $URL/d/$UID_TABLERO"
