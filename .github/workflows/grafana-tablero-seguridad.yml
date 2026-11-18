@@ -1,0 +1,49 @@
+name: Grafana - tablero de seguridad
+
+# Publica el tablero "Seguridad - Game day E4 (GCP)" con el secreto GRAFANA_TOKEN y lo verifica.
+# Ejecucion manual.
+on:
+  workflow_dispatch:
+
+jobs:
+  tablero:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publicar tablero y anotaciones
+        run: bash observability/grafana/deploy-tablero-seguridad.sh
+
+      - name: Verificar que el tablero existe
+        run: |
+          URL="${GRAFANA_URL%/}"
+          curl -fsS -H "Authorization: Bearer $GRAFANA_TOKEN" "$URL/api/dashboards/uid/seguridad-game-day-e4" \
+            | jq '{titulo: .dashboard.title, paneles: (.dashboard.panels | length), carpeta: .meta.folderTitle}' | tee tablero.json
+          jq -e '.paneles >= 7' tablero.json
+          curl -fsS -H "Authorization: Bearer $GRAFANA_TOKEN" "$URL/api/annotations?dashboardUID=seguridad-game-day-e4&tags=e4-tablero&limit=1000" \
+            | jq 'length' | tee anot.txt
+          test "$(cat anot.txt)" -ge 10
+
+      - name: Verificar consulta real al datasource (borrados 19:10-20:35 UTC)
+        run: |
+          URL="${GRAFANA_URL%/}"
+          FROM=$(date -u -d "2026-11-17T19:10:00Z" +%s)000
+          TO=$(date -u -d "2026-11-17T20:35:00Z" +%s)000
+          for M in deportistas-deleted mass-delete-blocked; do
+            jq -n --arg f "$FROM" --arg t "$TO" --arg m "logging.googleapis.com/user/deport-back-$M" '{
+              from:$f, to:$t,
+              queries:[{refId:"A", datasource:{type:"stackdriver", uid:"gcp-deport-back"}, queryType:"timeSeriesList",
+                timeSeriesList:{projectName:"deport-back", filters:["metric.type","=",$m], perSeriesAligner:"ALIGN_DELTA",
+                  crossSeriesReducer:"REDUCE_SUM", alignmentPeriod:"+60s", groupBys:[], view:"FULL"}}]}' \
+              | curl -fsS -X POST -H "Authorization: Bearer $GRAFANA_TOKEN" -H "Content-Type: application/json" \
+                  "$URL/api/ds/query" --data-binary @- > "q-$M.json"
+            PUNTOS=$(jq '[.results.A.frames[]?.data.values[1][]? | select(. != null)] | length' "q-$M.json")
+            SUMA=$(jq '[.results.A.frames[]?.data.values[1][]? | select(. != null)] | add // 0' "q-$M.json")
+            echo "$M: puntos=$PUNTOS suma=$SUMA"
+            if [ "$M" = "deportistas-deleted" ]; then test "$PUNTOS" -gt 0 && [ "$SUMA" != "0" ]; fi
+          done
