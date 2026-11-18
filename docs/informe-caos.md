@@ -96,7 +96,7 @@ Patrones: **timeout por dependencia (5 s)**, **circuit breaker** (abre tras 3 fa
 
 ## 6. Resultados de los compañeros
 
-**api-fastify (fallo a, reportado por el integrante):** estado estable p95 441 ms · Ronda 0 p95 **3312 ms** (refuta; timeout de 5 s mayor que la latencia inyectada de 3 s → timeouts demasiado largos) · Ronda 1 p95 **496 ms** (−85 %) con timeout de 1 s + circuit breaker + degradación; 26 % de respuestas degradadas y 0 errores HTTP. Reversión verificada en 2 s.
+**api-fastify (fallo a, reportado por el integrante; runs r0-44032278558 y r1-44033208745):** p95 en la ventana de inyección: Ronda 0 **3494 ms** (refuta; el timeout de 5 s era mayor que los 3 s inyectados) → Ronda 1 **317 ms** (−90,9 %) con timeout de 1 s + circuit breaker (3 fallos, 30 s) + degradación. p95 de toda la corrida: estado estable 441 ms · R0 3461 ms · R1 522 ms. 0 errores HTTP; 27,1 % de respuestas degradadas en R1; 4 aperturas del breaker (2 por réplica); gate R0 FALLÓ, R1 APROBADO; reversión verificada (MTTR 2 s).
 
 ![api-fastify: métrica objetivo p95 extremo a extremo (umbral 2 s) y latencia por nube durante la inyección](evidencia/capturas/api-fastify-metrica-objetivo.png)
 

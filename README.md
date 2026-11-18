@@ -340,7 +340,7 @@ desde logs JSON). Azure (`api-fastify`) reporta sus propios resultados; Inventar
 | Integrante | Servicio / nube | Fallo | Métrica objetivo | Patrón de resiliencia |
 |---|---|---|---|---|
 | Integrante GCP | `deport-back` (GCP) | **b**: indisponibilidad de dependencia externa | p95 de latencia e2e de `GET /api/v2/deportistas/:id` < 1000 ms (guardarraíl: tasa de error < 1 %) | Timeout de 5 s por dependencia + circuit breaker (3 fallos, 30 s de cooldown, toggle `RESILIENCE_CIRCUIT_BREAKER_ENABLED`) + degradación elegante (respuesta parcial con `apis_externas.ok=false`, caché de 30 s) |
-| Integrante Azure | `api-fastify` (Azure/AKS) | **a**: latencia en llamada saliente | p95 de latencia: R0 3312 ms → R1 496 ms (−85 %), reportado por el integrante | Timeout 1 s + circuit breaker + degradación (reportado por el integrante) |
+| Integrante Azure | `api-fastify` (Azure/AKS) | **a**: latencia en llamada saliente | p95 en la ventana de inyección: R0 3494 ms → R1 317 ms (−90,9 %), reportado por el integrante | Timeout 1 s + circuit breaker + degradación (reportado por el integrante) |
 | Integrante AWS | `Inventario-U` (AWS) | **c**: agotamiento de concurrencia | Tasa de éxito ≥ 99 %: R0 0 % → R1 100 % (p95 2128,8 → 82,6 ms), run AWS 44209628616, reportado por el integrante | Bulkhead + control de admisión |
 
 Los umbrales de `deport-back` son objetivos, no resultados medidos.

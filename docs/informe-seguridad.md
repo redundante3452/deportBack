@@ -187,7 +187,7 @@ Mejoras: alerta de latido (`noDataState: Alerting`) y reconciliador de Alloy con
 |---|---|---|---|---|---|
 | E1 (Marín) | AWS | no medido (ronda pendiente) | no medido (ronda pendiente) | no medido (ronda pendiente) | no medido (ronda pendiente) |
 | E2 (Peñuela) | Azure | no detectado → 53 s (R1b); prevenido en R1a | no contenido → 1 s (R1a) / 115 s (R1b) | 0/1 → 1/1 | 0 (caso negativo de 58 min) |
-| E3-A (Peñuela) | Azure | no detectado → 59 s | no contenido → 166 s | 0/1 → 1/1 | **[pendiente: Peñuela]** |
+| E3-A (Peñuela) | Azure | no detectado → 59 s | no contenido → 166 s | 0/1 → 1/1 | no medido (sin prueba negativa dedicada, según Peñuela) |
 | E3-B IA (Peñuela) | Azure | obediencia a la inyección 4/4 → 0/4 (variantes realistas) | — | — | — |
 | E4 (Hernández) | GCP | no detectado (10 min) → 37,5 s | no contenido → 1,9 s | 0/2 → 1/2 | 0 de 4 disparos; caso negativo 0 FP |
 
