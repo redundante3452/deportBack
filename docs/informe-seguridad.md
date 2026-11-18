@@ -9,7 +9,7 @@ curso: Énfasis en Defensa en Profundidad — Evaluación final 2026-2
 fecha: 2026-11-18
 ---
 
-> Todas las horas están en UTC y corresponden al 2026-11-17, salvo la repetición de R1 y el caso negativo (2026-11-18). Cada cifra proviene de `docs/evidencia/e4-*`; lo que depende de otro integrante figura como **[pendiente: quién/qué]** y no se rellena con supuestos.
+> Todas las horas están en UTC y corresponden al 17 y 18 de noviembre de 2026 (cada tabla indica la fecha). Cada cifra proviene de `docs/evidencia/e4-*`; las cifras de E1–E3 provienen de los informes y la evidencia de cada integrante.
 
 ## 0. Uso de IA (declaración)
 
@@ -257,7 +257,11 @@ Mitigaciones: datos delimitados como no confiables en un bloque aparte, instrucc
 | Límite de borrados por llamador | E4 | 5.24/5.26 incidentes | SC-5, AC-3 | 3: acceso por sesión con mínimo privilegio |
 | Credencial compartida (hallazgo) | E4/E1 | — | AC-6 | 3 |
 | JWT con alcance/vencimiento, credencial señuelo y alerta de uso indebido (T1078, T1078.004; señuelo D3-DO) | E1 (R1 MTTD 5,5 s) | — | IA-5, AC-3, AC-6, SI-4 | — |
-| Controles de E2/E3 (admisión, vigilante, latido de Alloy, triage con IA) | E2/E3 | **[pendiente: Peñuela]** (su tabla está en `api-fastify: docs/seguridad/inventario-y-trazabilidad.md`) | **[pendiente: Peñuela]** | **[pendiente: Peñuela]** |
+| Admisión que rechaza LoadBalancer no declarados + vigilante de exposición | E2 | 8.20, 8.22* | SC-7, SI-4 | microsegmentación* |
+| Alerta de latido + reconciliador de Alloy | E3-A | 8.15, 8.16 | AU-6, AU-9 | 7 |
+| Triage con IA: datos separados de instrucciones, sin herramientas, confirmación humana | E3-B | 8.28*, 5.24 | SI-10* | — |
+
+\* Según la tabla de Peñuela (`api-fastify: docs/seguridad/inventario-y-trazabilidad.md`, commit 85d6ac3), sin verificación propia. Su NetworkPolicy (SC-7, 8.22) no se trazó porque no aplica (`networkPolicy: none`).
 
 ## 14. Lecciones, riesgos residuales y próximos experimentos
 
