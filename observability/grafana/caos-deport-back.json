@@ -14,6 +14,7 @@
     "from": "2026-11-17T06:20:00.000Z",
     "to": "2026-11-17T06:45:00.000Z"
   },
+  "graphTooltip": 1,
   "refresh": "",
   "annotations": {
     "list": [
@@ -50,61 +51,19 @@
   "panels": [
     {
       "id": 1,
-      "type": "row",
-      "title": "Experimento b — indisponibilidad de Inventario-U (deport-back · GCP)",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 2,
-      "type": "text",
-      "title": "Resultados k6: oficial y ensayo",
-      "gridPos": {
-        "x": 0,
-        "y": 1,
-        "w": 14,
-        "h": 12
-      },
-      "options": {
-        "mode": "markdown",
-        "content": "**Métrica objetivo:** p95 extremo a extremo de `GET /api/v2/deportistas/:id` medido por **k6** (cliente), umbral **< 1000 ms**.\nMismo perfil `perfil-p1-v1` (4 m 30 s, 5→10 VUs), mismo fallo, misma duración en cada ejecución.\n\n| Ejecución | Medición | Breaker | p95 (k6) | Error HTTP | req/s |\n|---|---|---|---|---|---|\n| **Oficial** `exp-b-20261117` | Estado estable | on | 291 ms | 0 % | 30,3 |\n| | **Ronda 0** | **off** | **5126 ms** ❌ refuta | 0 % | 1,3 |\n| | **Ronda 1** | **on** | **50 ms** ✅ cumple | 0 % | 113,7 |\n| **Ensayo** `ensayo-b-20261117` | Estado estable | on | 259 ms | 0 % | 32,9 |\n| | **Ronda 0** | **off** | **5027 ms** ❌ refuta | 0 % | 1,3 |\n| | **Ronda 1** | **on** | **31 ms** ✅ cumple | 0,01 % | 172,5 |\n\nVariación p95 R0 → R1: **−99,0 %** (oficial) y **−99,4 %** (ensayo). Ambos chaos gates **aprobados**.\nEn la Ronda 1 casi todas las respuestas son **degradadas** (`circuit_open`): el patrón cambia completitud por latencia.\nEvidencia: `docs/evidencia/` en el repo. Usa los enlaces de arriba para ir a cada ejecución."
-      }
-    },
-    {
-      "id": 3,
-      "type": "text",
-      "title": "Experimento",
-      "gridPos": {
-        "x": 14,
-        "y": 1,
-        "w": 10,
-        "h": 12
-      },
-      "options": {
-        "mode": "markdown",
-        "content": "**Fallo b — indisponibilidad de dependencia.** Interruptor `CHAOS_DEPENDENCY_FAILURE=true`, modo `hang`, objetivo Inventario-U (`/api/v2/skus`).\n**Radio de impacto:** solo el deployment `deport-back` en GKE. **Patrones:** timeout 5 s · circuit breaker (3 fallos, 30 s) · degradación.\nLas franjas sombreadas son las ventanas de inyección (anotaciones con `execution_id`)."
-      }
-    },
-    {
-      "id": 4,
-      "type": "timeseries",
-      "title": "Latencia p95 en el servidor (GKE)",
-      "description": "p95 de duration_ms de los logs http_request en GKE. La serie lineal satura en 2000 ms (en la Ronda 0 oficial el real fue ~5000 ms según k6); la exponencial (desde el ensayo) muestra la cola completa.",
+      "type": "stat",
+      "title": "p95 máximo en el servidor",
+      "description": "Mayor p95 de latencia del servidor en el rango. Rojo si supera el umbral de 1000 ms del experimento. La serie lineal satura en 2000 ms; la exponencial muestra la cola completa.",
       "datasource": {
         "type": "stackdriver",
         "uid": "gcp-deport-back"
       },
+      "transparent": true,
       "gridPos": {
         "x": 0,
-        "y": 13,
-        "w": 12,
-        "h": 8
+        "y": 0,
+        "w": 6,
+        "h": 4
       },
       "targets": [
         {
@@ -163,25 +122,129 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 15,
-            "spanNulls": false,
-            "thresholdsStyle": {
-              "mode": "line+area"
-            }
+          "noValue": "Sin datos en el rango",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
           },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "#73BF69",
                 "value": null
               },
               {
-                "color": "red",
+                "color": "#F2495C",
                 "value": 1000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "lineal (tope 2 s)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "exponencial"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "max"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Errores 5xx (pico)",
+      "description": "Pico de respuestas 5xx por segundo. Debe ser 0: la degradación responde 200. Preocupa cualquier valor mayor que 0.",
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-deport-back"
+      },
+      "transparent": true,
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-deport-back"
+          },
+          "queryType": "timeSeriesList",
+          "timeSeriesList": {
+            "projectName": "deport-back",
+            "filters": [
+              "metric.type",
+              "=",
+              "logging.googleapis.com/user/deport-back-http-errors-by-track",
+              "AND",
+              "resource.type",
+              "=",
+              "k8s_container"
+            ],
+            "perSeriesAligner": "ALIGN_RATE",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "alignmentPeriod": "+60s",
+            "groupBys": [],
+            "view": "FULL"
+          },
+          "aliasBy": "5xx/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "noValue": "0",
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null
+              },
+              {
+                "color": "#F2495C",
+                "value": 0.001
               }
             ]
           }
@@ -189,29 +252,381 @@
         "overrides": []
       },
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
+        "reduceOptions": {
+          "calcs": [
+            "max"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "multi"
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Fallos de dependencia (pico)",
+      "description": "Pico de fallos al llamar a Inventario-U por tipo: timeout (espera completa) y circuit_open (rechazo rápido del breaker).",
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-deport-back"
+      },
+      "transparent": true,
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-deport-back"
+          },
+          "queryType": "timeSeriesList",
+          "timeSeriesList": {
+            "projectName": "deport-back",
+            "filters": [
+              "metric.type",
+              "=",
+              "logging.googleapis.com/user/deport-back-dependency-failures",
+              "AND",
+              "resource.type",
+              "=",
+              "k8s_container"
+            ],
+            "perSeriesAligner": "ALIGN_RATE",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "alignmentPeriod": "+60s",
+            "groupBys": [
+              "metric.label.error_type"
+            ],
+            "view": "FULL"
+          },
+          "aliasBy": "{{metric.label.error_type}}"
         }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "noValue": "Sin eventos",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FF9830"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "timeout"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "circuit_open"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FADE2A"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(?!timeout$|circuit_open$).*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "max"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Aperturas del breaker",
+      "description": "Total de veces que el circuit breaker se abrió en el rango (al tercer fallo consecutivo).",
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-deport-back"
+      },
+      "transparent": true,
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-deport-back"
+          },
+          "queryType": "timeSeriesList",
+          "timeSeriesList": {
+            "projectName": "deport-back",
+            "filters": [
+              "metric.type",
+              "=",
+              "logging.googleapis.com/user/deport-back-circuit-breaker-opened",
+              "AND",
+              "resource.type",
+              "=",
+              "k8s_container"
+            ],
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "alignmentPeriod": "+60s",
+            "groupBys": [],
+            "view": "FULL"
+          },
+          "aliasBy": "aperturas"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Sin aperturas",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B877D9"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "auto"
       }
     },
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Throughput (peticiones/s)",
-      "description": "En la Ronda 0 cae a ~1 req/s: los VUs de k6 quedan bloqueados 5 s por petición (timeout demasiado largo).",
+      "title": "Latencia p95 en el servidor",
+      "description": "p95 de duration_ms de los logs http_request en GKE. La línea marca el umbral de 1000 ms. La serie lineal satura en 2000 ms (en la Ronda 0 oficial el real fue ~5000 ms según k6); la exponencial (desde el ensayo) muestra la cola completa. Preocupa si cruza la línea fuera de la Ronda 0.",
       "datasource": {
         "type": "stackdriver",
         "uid": "gcp-deport-back"
       },
       "gridPos": {
-        "x": 12,
-        "y": 13,
-        "w": 12,
-        "h": 8
+        "x": 0,
+        "y": 4,
+        "w": 16,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-deport-back"
+          },
+          "queryType": "timeSeriesList",
+          "timeSeriesList": {
+            "projectName": "deport-back",
+            "filters": [
+              "metric.type",
+              "=",
+              "logging.googleapis.com/user/deport-back-http-latency-by-track",
+              "AND",
+              "resource.type",
+              "=",
+              "k8s_container"
+            ],
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_PERCENTILE_95",
+            "alignmentPeriod": "+60s",
+            "groupBys": [],
+            "view": "FULL"
+          },
+          "aliasBy": "p95 servidor (buckets lineales, tope 2000 ms)"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-deport-back"
+          },
+          "queryType": "timeSeriesList",
+          "timeSeriesList": {
+            "projectName": "deport-back",
+            "filters": [
+              "metric.type",
+              "=",
+              "logging.googleapis.com/user/deport-back-http-latency-exp",
+              "AND",
+              "resource.type",
+              "=",
+              "k8s_container"
+            ],
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_PERCENTILE_95",
+            "alignmentPeriod": "+60s",
+            "groupBys": [],
+            "view": "FULL"
+          },
+          "aliasBy": "p95 servidor (buckets exponenciales)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null
+              },
+              {
+                "color": "#F2495C",
+                "value": 1000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "lineal (tope 2 s)"
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "exponencial"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Peticiones por segundo",
+      "description": "En la Ronda 0 cae a ~1 req/s: los VUs de k6 quedan bloqueados 5 s por petición (timeout demasiado largo). Una caída sostenida indica saturación del cliente o del servicio.",
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-deport-back"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 8,
+        "h": 9
       },
       "targets": [
         {
@@ -244,27 +659,37 @@
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 15,
-            "spanNulls": false
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0
           }
         },
         "overrides": []
       },
       "options": {
         "legend": {
+          "showLegend": false,
           "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "multi",
+          "sort": "desc"
         }
       }
     },
     {
-      "id": 6,
+      "id": 7,
       "type": "timeseries",
       "title": "Fallos de dependencia por tipo",
       "description": "timeout = espera completa a la dependencia; circuit_open = rechazo rápido del circuit breaker. Disponible desde la corrección de logs JSON (ejecuciones posteriores al experimento oficial).",
@@ -274,7 +699,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 21,
+        "y": 13,
         "w": 12,
         "h": 8
       },
@@ -311,28 +736,88 @@
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 15,
-            "spanNulls": false
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0
           },
-          "noValue": "Sin eventos en el rango (métrica disponible desde 2026-11-17 06:00 UTC)"
+          "noValue": "Sin eventos en el rango (métrica desde 2026-11-17 06:00 UTC)"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "timeout"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "circuit_open"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FADE2A"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(?!timeout$|circuit_open$).*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "max",
+            "lastNotNull"
+          ]
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "multi",
+          "sort": "desc"
         }
       }
     },
     {
-      "id": 7,
+      "id": 8,
       "type": "timeseries",
       "title": "Aperturas del circuit breaker",
       "description": "Evento circuit_breaker_opened (al tercer fallo consecutivo). Disponible desde la corrección de logs JSON.",
@@ -342,7 +827,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 21,
+        "y": 13,
         "w": 12,
         "h": 8
       },
@@ -377,40 +862,66 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
           "custom": {
             "drawStyle": "bars",
-            "lineWidth": 2,
-            "fillOpacity": 15,
-            "spanNulls": false
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0
           },
-          "noValue": "Sin aperturas en el rango (métrica disponible desde 2026-11-17 06:00 UTC)"
+          "noValue": "Sin aperturas en el rango (métrica desde 2026-11-17 06:00 UTC)"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "aperturas"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#B877D9"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
+          "showLegend": false,
           "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "multi",
+          "sort": "desc"
         }
       }
     },
     {
-      "id": 8,
+      "id": 9,
       "type": "timeseries",
-      "title": "Errores HTTP 5xx (peticiones/s)",
-      "description": "Debe ser 0: la degradación responde 200 con apis_externas.inventario_u en error.",
+      "title": "Errores HTTP 5xx",
+      "description": "Debe ser 0: la degradación responde 200 con apis_externas.inventario_u en error. Preocupa cualquier barra.",
       "datasource": {
         "type": "stackdriver",
         "uid": "gcp-deport-back"
       },
       "gridPos": {
         "x": 0,
-        "y": 29,
+        "y": 21,
         "w": 24,
-        "h": 8
+        "h": 6
       },
       "targets": [
         {
@@ -443,24 +954,93 @@
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 15,
-            "spanNulls": false
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0
           },
           "noValue": "0"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx/s"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
+          "showLegend": false,
           "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "multi",
+          "sort": "desc"
         }
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Detalle del experimento b: Inventario-U (deport-back · GCP)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 11,
+      "type": "text",
+      "title": "Resultados k6: oficial y ensayo",
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 14,
+        "h": 12
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Métrica objetivo:** p95 extremo a extremo de `GET /api/v2/deportistas/:id` medido por **k6** (cliente), umbral **< 1000 ms**.\nMismo perfil `perfil-p1-v1` (4 m 30 s, 5→10 VUs), mismo fallo, misma duración en cada ejecución.\n\n| Ejecución | Medición | Breaker | p95 (k6) | Error HTTP | req/s |\n|---|---|---|---|---|---|\n| **Oficial** `exp-b-20261117` | Estado estable | on | 291 ms | 0 % | 30,3 |\n| | **Ronda 0** | **off** | **5126 ms** ❌ refuta | 0 % | 1,3 |\n| | **Ronda 1** | **on** | **50 ms** ✅ cumple | 0 % | 113,7 |\n| **Ensayo** `ensayo-b-20261117` | Estado estable | on | 259 ms | 0 % | 32,9 |\n| | **Ronda 0** | **off** | **5027 ms** ❌ refuta | 0 % | 1,3 |\n| | **Ronda 1** | **on** | **31 ms** ✅ cumple | 0,01 % | 172,5 |\n\nVariación p95 R0 → R1: **−99,0 %** (oficial) y **−99,4 %** (ensayo). Ambos chaos gates **aprobados**.\nEn la Ronda 1 casi todas las respuestas son **degradadas** (`circuit_open`): el patrón cambia completitud por latencia.\nEvidencia: `docs/evidencia/` en el repo. Usa los enlaces de arriba para ir a cada ejecución."
+      }
+    },
+    {
+      "id": 12,
+      "type": "text",
+      "title": "Experimento",
+      "gridPos": {
+        "x": 14,
+        "y": 28,
+        "w": 10,
+        "h": 12
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Fallo b — indisponibilidad de dependencia.** Interruptor `CHAOS_DEPENDENCY_FAILURE=true`, modo `hang`, objetivo Inventario-U (`/api/v2/skus`).\n**Radio de impacto:** solo el deployment `deport-back` en GKE. **Patrones:** timeout 5 s · circuit breaker (3 fallos, 30 s) · degradación.\nLas franjas sombreadas son las ventanas de inyección (anotaciones con `execution_id`)."
       }
     }
   ]

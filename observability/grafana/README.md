@@ -23,16 +23,22 @@ export GRAFANA_TOKEN=...   # token de service account (Editor); nunca en el repo
 bash observability/grafana/deploy.sh
 ```
 
+O con el workflow manual `grafana-tablero-seguridad.yml` (`tablero=caos`). `deploy.sh` solo publica el tablero (no toca las anotaciones, así que es idempotente).
+
 ## Paneles
+
+Cabecera de estado (stats), tendencias y detalle. Paleta fija: latencia azul, errores rojo, timeout naranja,
+`circuit_open` amarillo, breaker abierto morado; rojo/verde solo para estado. El umbral de 1000 ms es el del experimento.
 
 | Panel | Requisito de la rúbrica |
 |---|---|
-| Resultados k6 (estable / Ronda 0 / Ronda 1) | Comparación de las dos rondas |
-| Latencia p95 frente al umbral de 1000 ms | Métrica objetivo y ventana de inyección |
-| Throughput | Mecanismo del fallo (VUs bloqueados en la Ronda 0) |
+| Stats: p95 máximo, 5xx (pico), fallos de dependencia (pico), aperturas del breaker | Estado de un vistazo |
+| Latencia p95 en el servidor (línea de 1000 ms) | Métrica objetivo y ventana de inyección |
+| Peticiones por segundo | Mecanismo del fallo (VUs bloqueados en la Ronda 0) |
 | Fallos de dependencia por tipo | Patrón actuando (`timeout` → `circuit_open`) |
 | Aperturas del circuit breaker | Patrón actuando |
-| Errores 5xx | Guardarraíl (debe ser 0) |
+| Errores HTTP 5xx | Guardarraíl (debe ser 0) |
+| Detalle: resultados k6 oficial y ensayo + descripción del experimento | Comparación de las dos rondas |
 
 Las ventanas de inyección se cargan como anotaciones del tablero desde los `*.meta.json`
 del chaos gate (`docs/evidencia/<execution_id>/`).
