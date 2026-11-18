@@ -17,7 +17,7 @@ done
 
 "$PY" "$DIR/build_dashboard_seguridad.py" "$DIR/dashboard-seguridad.json"
 
-api() { curl -fsS -H "Authorization: Bearer $GRAFANA_TOKEN" -H "Content-Type: application/json" "$@"; }
+api() { curl -fsS --retry 6 --retry-delay 5 --retry-all-errors -H "Authorization: Bearer $GRAFANA_TOKEN" -H "Content-Type: application/json" "$@"; }
 
 FOLDER_UID="$(api "$URL/api/folders" | jq -r --arg t "$FOLDER_TITLE" '[.[] | select(.title==$t) | .uid][0] // ""')"
 if [[ -z "$FOLDER_UID" ]]; then
@@ -41,6 +41,7 @@ while IFS= read -r a; do
   jq -n --arg uid "$UID_TABLERO" --arg t "$(jq -r .texto <<<"$a")" --argjson s "$(ms "$ini")" --argjson e "$(ms "$fin")" \
     '{dashboardUID:$uid, time:$s, timeEnd:$e, text:$t, tags:["e4","e4-tablero"]}' \
     | api -X POST "$URL/api/annotations" --data-binary @- >/dev/null
+  sleep 2
   N=$((N+1))
 done < <(jq -c '.[]' "$DIR/dashboard-seguridad-anotaciones.json")
 echo "Anotaciones creadas: $N"
