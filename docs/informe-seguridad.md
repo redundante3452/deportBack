@@ -131,19 +131,23 @@ Forma: *dado el control C, cuando ocurra A, esperamos la señal S en ≤ T1 y co
 
 | Métrica | R0 | R1 |
 |---|---|---|
-| MTTD | no detectado (10 min) | 37,5 s |
-| MTTC | no contenido | 1,9 s |
-| Borrados | 50/50 | 20/50 (30 × 429) |
+| MTTD | no detectado (10 min) | 37,5 s (rep.: 128,7 s) |
+| MTTC | no contenido | 1,9 s (rep.: 1,5 s) |
+| Borrados | 50/50 | 20/50 (30 × 429; rep. igual) |
 | Cobertura de detección | 0/2 | 1/2 |
-| Falsos positivos | n/a (la regla no existía) | 0 de 4 disparos (ver nota) |
-| RPO | 50 registros (100 %) | 0 (20/20 restaurados; punto PITR 20:09:40Z, 1 s antes del ataque) |
-| RTO | no recuperable | 1043 s |
+| Falsos positivos | n/a (la regla no existía) | 0 de 4 disparos; caso negativo en vivo: 0 FP |
+| RPO | 50 registros (100 %) | 0 (20/20 restaurados; PITR 1 s antes del ataque; rep. igual) |
+| RTO | no recuperable | 1043 s (rep.: 1311 s) |
 
-**Falsos positivos** (historial de estados de Grafana del 17-nov, 18:00–23:26 UTC; `docs/evidencia/alertas-historial-20261117/`). La alerta E4 pasó a *Alerting* 4 veces: 19:49:10 (ataque del intento 1, 19:48:18), 20:01:10 (la reversión del intento 1 borró 30 registros a las 20:00:38), 20:10:10 (ataque de R1, 20:09:41) y 20:29:10 (la reversión de R1 borró 50 registros a las 20:28:22). Los 4 disparos corresponden a borrados masivos reales, así que hay **0 falsos positivos**. Sin embargo, 2 de los 4 fueron actividad autorizada del propio equipo. Mejora: silenciar la regla durante la ventana de reversión o excluir la identidad del operador cuando exista una credencial propia. El honeytoken se disparó 1 vez (21:17:10), con la prueba de las 21:16:19, y tampoco tuvo falsos positivos.
+**Falsos positivos** (historial del 17-nov, `docs/evidencia/alertas-historial-20261117/`). La alerta pasó a *Alerting* 4 veces (19:49, 20:01, 20:10, 20:29): todas por borrados masivos reales, así que 0 FP, aunque 2 fueron reversiones autorizadas del propio equipo. Mejora: silenciar la regla durante la reversión. El honeytoken se disparó 1 vez (prueba de las 21:16) sin FP.
+
+**Repetición de R1** (run 44228119507, 18-nov 03:12 UTC; `docs/evidencia/e4-r1-repeticion-20261118/`): 20 borrados y 30 × 429, MTTC 1,5 s, RPO 0, RTO 1311 s, y el clon se borró solo (valida el fix). Contención, RPO y restauración son idénticos; el MTTD pasó de 37,5 a 128,7 s porque depende de la métrica basada en logs, la evaluación cada 30 s y el sondeo de 15 s. Riesgo: MTTD no estable; mejora: leer logs directamente o acortar el intervalo.
+
+**Caso negativo en vivo** (`docs/evidencia/e4-caso-negativo-20261118/`). Intento 1 (run 44232516003) invalidado: la reversión de la repetición (50 borrados, 03:43) disparó la alerta, otra instancia del FP conocido. Intento 2 (run 44233528772) PASA: 5 borrados en ~4 min con ventana limpia, todos 200, alerta *normal* durante 360 s. El tráfico legítimo bajo el umbral no genera FP.
 
 Cobertura 1/2: T1485 se detecta por la alerta; T1078 no es distinguible porque la clave válida es compartida por el equipo, de modo que un uso legítimo y uno malicioso producen la misma identidad.
 
-**Inmutabilidad de la copia.** En R1 el paso de ataque borró el export `r1200522.sql.gz`; al listar versiones del objeto, la versión no vigente `#1794946045190266` seguía retenida (versionado + retención de 6 h). La retención se dejó sin bloquear a propósito para que `terraform destroy` siempre funcione (ver §11 y §14). El mensaje original del script “no hay inmutabilidad” era incorrecto y se corrigió.
+**Inmutabilidad de la copia.** En R1 el ataque borró el export, pero la versión no vigente siguió retenida (versionado + retención de 6 h). La retención no se bloquea a propósito para que `terraform destroy` siempre funcione (§14).
 
 ## 7. E1, E2 y E3
 
@@ -181,7 +185,7 @@ Mejoras: alerta de latido (`noDataState: Alerting`) y reconciliador de Alloy con
 | E2 (Peñuela) | Azure | no detectado → 53 s (R1b); prevenido en R1a | no contenido → 1 s (R1a) / 115 s (R1b) | 0/1 → 1/1 | 0 (caso negativo de 58 min) |
 | E3-A (Peñuela) | Azure | no detectado → 59 s | no contenido → 166 s | 0/1 → 1/1 | **[pendiente: Peñuela]** |
 | E3-B IA (Peñuela) | Azure | obediencia a la inyección 4/4 → 0/4 (variantes realistas) | — | — | — |
-| E4 (Hernández) | GCP | no detectado (10 min) → 37,5 s | no contenido → 1,9 s | 0/2 → 1/2 | 0 de 4 disparos |
+| E4 (Hernández) | GCP | no detectado (10 min) → 37,5 s | no contenido → 1,9 s | 0/2 → 1/2 | 0 de 4 disparos; caso negativo 0 FP |
 
 ## 8. Mejoras aplicadas (deport-back)
 
