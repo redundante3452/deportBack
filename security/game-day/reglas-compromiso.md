@@ -42,7 +42,7 @@ objetivo cualquier IP o cuenta cuya propiedad no se haya confirmado. Hacerlo anu
 | E4 | R1 repetición | 2026-11-18 03:08 – 03:45 | 44228119507 |
 | E4 | Caso negativo (intentos 1 y 2) | 2026-11-18 03:45 – 04:01 | 44232516003 · 44233528772 |
 | E4 | Honeytoken (tendencia) | 2026-11-17 21:16 – 21:18 | 44178025923 |
-| E1 (oficial, Marín) | R0 / R1 | propuesta 2026-11-18 15:00 – 16:00 UTC (sin confirmar) | pendiente |
+| E1 (oficial, Marín) | R0 / R1 | 2026-11-18 05:39:24 – 05:40:17 / 05:41:04 – 05:41:44 | `f5c0fde6…` / `8f1e8c3e…` (verificación: run 44247381296) |
 | E1 piloto (Peñuela, Azure) | R0 | 2026-11-17 20:50 – 20:55 | 44173454944 |
 | E1 piloto (Peñuela, Azure) | R1 | 2026-11-18 00:45 – 00:51 | 44210464129 |
 | E2 | R0 | 2026-11-17 23:55 – 2026-11-18 00:01 | 44203595125 |
@@ -66,7 +66,7 @@ Se detiene la ronda de inmediato si ocurre cualquiera de estas condiciones:
 | Exp. | Acción de parada documentada |
 |---|---|
 | E4 | `security/experiments/e4-datos/parar.sh` (o `gameday-e4.yml` con `accion=parar`): corta el ataque y revierte |
-| E1 (oficial, Marín) | `uv run python -m security.stop_e1` (crea STOP; el ejecutor deja de inyectar, borra solo los SKU creados y verifica GET 404 y salud 200) |
+| E1 (oficial, Marín) | `uv run python -m deploy.security.aws_e1 stop` (detiene la carga; borra solo sus SKU y verifica GET 404 y salud 200) |
 | E1 piloto | `seguridad/experimentos/exp1-identidad/parar.sh` (fichero de parada; el ataque solo lee) · reversión `revertir.sh` |
 | E2 | `seguridad/experimentos/e2-exposicion/parar.sh` (≤ 8 s: borra el Service expuesto) · reversión `revertir.sh` |
 | E3-A | `seguridad/experimentos/e3-telemetria/parar.sh` (5 s: restaura Alloy) · reversión `revertir.sh` (`REVERSION OK`) |

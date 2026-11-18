@@ -51,7 +51,7 @@ Fronteras de confianza: Internet → LB de GKE (autenticación por `X-Api-Key`),
 |---|---|---|---|---|
 | Identidad | `X-Api-Key` compartida (`TEAM_API_KEY`, Secret Manager) | deport-back / grupo | 401 y evento `security_authentication_denied` | sin ID verificado |
 | Identidad | Identidad de servicio hacia Cloud SQL | deport-back | acceso solo desde el proxy | sin ID verificado |
-| Identidad | E1 (Marín): API key sin alcance por operación (R0) → JWT Ed25519 con emisor, audiencia, sujeto, alcance y vencimiento ≤ 300 s; credencial señuelo (R1) | Marín | rechazo y `inventory_security_identity_detections_total`; implementado y probado offline, ronda cloud pendiente | D3-DO (señuelo) |
+| Identidad | E1 (Marín): API key sin alcance por operación (R0) → JWT Ed25519 con emisor, audiencia, sujeto, alcance y vencimiento ≤ 300 s; credencial señuelo (R1) | Marín | 403 y alerta `InventoryMachineIdentityMisuse`; medido en AWS (R1 MTTD 5,5 s) | D3-DO (señuelo) |
 | Red | LB HTTP de GKE | deport-back | tráfico solo a puertos publicados | sin ID verificado |
 | Red | Admisión de Kubernetes (`ValidatingAdmissionPolicy`) que rechaza todo LoadBalancer fuera de `api-fastify/api-fastify` y `orchestrator/gateway` (el AKS tiene `networkPolicy: none`, así que una NetworkPolicy no bloquearía nada) | Peñuela | evento de rechazo; `ruta_no_declarada` | sin ID verificado |
 | Carga | HPA 2–5, probes, límites; timeout + circuit breaker | deport-back | `circuit_breaker_opened`, `dependency_failure` | sin ID verificado |
@@ -157,7 +157,7 @@ Cobertura 1/2: T1485 se detecta por la alerta; T1078 no es distinguible porque l
 
 Fuente de E2/E3: informe de Peñuela, `BETO1274/api-fastify` (rama `produccion`, `docs/seguridad/informe-game-day.md`). Las cifras se copian tal cual; la evidencia está en `api-fastify: resultados/seguridad/<archivo>`.
 
-**E1 — Identidad (Marín, AWS).** Adversario: credencial de lectura usada para escribir (T1078). R0: API key sin alcance por operación; R1: JWT Ed25519 (audiencia, sujeto, alcance, vencimiento ≤ 300 s) y credencial señuelo. Detección como código: alerta Prometheus `InventoryMachineIdentityMisuse` (grupo de 5 s) con caso positivo y negativo aprobados con promtool; 38 pruebas locales y 2 validaciones en Actions (44242452904, 44242452737). Parada: `security.stop_e1` (borra solo los SKU creados y verifica la reversión). **R0/R1 oficiales pendientes de ejecución** (ventana propuesta 18-nov 15:00–16:00 UTC): MTTD, MTTC, cobertura y FP no medidos. Piloto de método de Peñuela en Azure (no es el E1 oficial): R0 118/118 sondeos al plano admin aceptados, sin detección ni contención; R1 MTTD 40 s, MTTC 8 s, 0/98 aceptados.
+**E1 — Identidad (Marín, AWS, 18-nov).** Adversario: una identidad de lectura intenta crear SKU sintéticos (T1078); mismo perfil en las dos rondas: 10 lecturas legítimas y 10 escrituras, ≤ 2 req/s, observación de 30 s. R0 (05:39:24–05:40:17 UTC, API key sin alcance por operación): **10/10 escrituras indebidas aceptadas, sin detección en 30,8 s ni contención**. R1 (05:41:04–05:41:44 UTC, JWT Ed25519 con emisor, audiencia, sujeto, alcance y vencimiento ≤ 300 s): 10/10 intentos rechazados con 403, 10/10 lecturas legítimas con 200, alerta Prometheus `InventoryMachineIdentityMisuse` (`scope_violation`) en **MTTD 5,484 s**, primer rechazo en **MTTC 0,500 s** y rechazo sostenido; la credencial señuelo alertó en 1,688 s. Reversión verificada en ambas (SKU borrados, GET 404, salud 200). Regla con caso positivo y negativo en promtool; mediciones verificadas por el pipeline 44247381296. Límites declarados por Marín: muestra pequeña, el MTTD es cota superior (recolección y evaluación cada 5 s) y la ejecución la autorizó él individualmente. Piloto previo de Peñuela en Azure (no es el E1 oficial): R0 118/118 sondeos al plano admin aceptados; R1 MTTD 40 s, MTTC 8 s.
 
 **E2 — Exposición y segmentación (Peñuela, Azure).** Condición adversa: un Service `LoadBalancer` que nadie declaró publica el puerto 3001 de administración (T1190; T1048 no se emuló). Como el AKS tiene `networkPolicy: none`, la segmentación se hizo en la admisión de Kubernetes y no con NetworkPolicy. La ronda 1b desactiva la admisión a propósito para probar la segunda capa por sí sola.
 
@@ -185,7 +185,7 @@ Mejoras: alerta de latido (`noDataState: Alerting`) y reconciliador de Alloy con
 
 | Exp. | Nube | MTTD | MTTC | Cobertura | Falsos positivos (R1) |
 |---|---|---|---|---|---|
-| E1 (Marín) | AWS | no medido (ronda pendiente) | no medido (ronda pendiente) | no medido (ronda pendiente) | no medido (ronda pendiente) |
+| E1 (Marín) | AWS | no detectado en 30,8 s → 5,5 s | no contenido → 0,5 s | 0/1 → 1/1 | 0/10 lecturas legítimas rechazadas (no es tasa de falsas alertas) |
 | E2 (Peñuela) | Azure | no detectado → 53 s (R1b); prevenido en R1a | no contenido → 1 s (R1a) / 115 s (R1b) | 0/1 → 1/1 | 0 (caso negativo de 58 min) |
 | E3-A (Peñuela) | Azure | no detectado → 59 s | no contenido → 166 s | 0/1 → 1/1 | no medido (sin prueba negativa dedicada, según Peñuela) |
 | E3-B IA (Peñuela) | Azure | obediencia a la inyección 4/4 → 0/4 (variantes realistas) | — | — | — |
@@ -256,7 +256,7 @@ Mitigaciones: datos delimitados como no confiables en un bloque aparte, instrucc
 | Alerta de borrado masivo y honeytoken | E4 | 8.16 Monitoring activities; 5.24/5.26 incidentes | AU-6, SI-4, IR-4, IR-5 | 4: política dinámica según el estado observado |
 | Límite de borrados por llamador | E4 | 5.24/5.26 incidentes | SC-5, AC-3 | 3: acceso por sesión con mínimo privilegio |
 | Credencial compartida (hallazgo) | E4/E1 | — | AC-6 | 3 |
-| JWT con alcance/vencimiento, credencial señuelo y alerta de uso indebido (T1078, T1078.004; señuelo D3-DO) | E1 (ronda cloud pendiente) | — | IA-5, AC-3, AC-6, SI-4 | — |
+| JWT con alcance/vencimiento, credencial señuelo y alerta de uso indebido (T1078, T1078.004; señuelo D3-DO) | E1 (R1 MTTD 5,5 s) | — | IA-5, AC-3, AC-6, SI-4 | — |
 | Controles de E2/E3 (admisión, vigilante, latido de Alloy, triage con IA) | E2/E3 | **[pendiente: Peñuela]** (su tabla está en `api-fastify: docs/seguridad/inventario-y-trazabilidad.md`) | **[pendiente: Peñuela]** | **[pendiente: Peñuela]** |
 
 ## 14. Lecciones, riesgos residuales y próximos experimentos
