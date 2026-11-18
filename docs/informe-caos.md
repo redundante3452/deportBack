@@ -2,7 +2,6 @@
 
 > Flujo multinube **api-fastify (Azure/AKS) → deport-back (GCP/GKE) → Inventario-U (AWS)**.
 > Fecha de ejecución: 2026-11-17 (UTC). Versión: v4.0.0.
-> Las secciones marcadas **[pendiente]** dependen de datos que aún no entrega el integrante; no se rellenan con supuestos.
 
 ## 0. Uso de IA (declaración)
 
@@ -24,7 +23,7 @@ Herramienta: **Claude Code** (Anthropic), como asistente de análisis e implemen
 |---|---|---|
 | deport-back (GCP) | **b** — indisponibilidad de la dependencia Inventario-U | Solo el deployment `deport-back` en GKE y su llamada saliente a `/api/v2/skus`. Cloud Run, Inventario-U y api-fastify no se tocan. Datos sintéticos. |
 | api-fastify (Azure) | **a** — latencia de 3000 ms en la llamada saliente hacia deport-back durante 60 s | Llamada saliente de api-fastify en AKS. |
-| Inventario-U (AWS) | **c** — agotamiento de recurso **[pendiente]** | **[pendiente]** |
+| Inventario-U (AWS) | **c** — agotamiento de concurrencia: 6 tareas de fondo ocupan los 6 trabajadores compartidos | Solo la API de Inventario-U en su VM de AWS (`/api/v2/skus`), datos sintéticos (`sku_id=1`); reversión verificada en cada ronda. |
 
 ## 2. Instrumentos y perfil de carga
 
@@ -52,7 +51,7 @@ Ventana: 2026-11-17 05:34:34–05:39:04 UTC, sin fallo, breaker activo.
 
 **api-fastify:** *Dado su perfil fijo, cuando se inyecten 3000 ms de latencia hacia deport-back durante 60 s, el flujo mantendrá un p95 < 2000 ms.*
 
-**Inventario-U:** **[pendiente]**
+**Inventario-U:** *Con un perfil fijo de 5 solicitudes/s durante 120 s, cuando 6 tareas de fondo agoten los 6 trabajadores compartidos, el endpoint de negocio mantendrá un éxito ≥ 99 % (métrica única de decisión).*
 
 ## 5. Resultados de deport-back
 
@@ -103,7 +102,19 @@ Patrones: **timeout por dependencia (5 s)**, **circuit breaker** (abre tras 3 fa
 
 *Captura del tablero de api-fastify (Azure), aportada por el integrante. Más paneles en `docs/evidencia/capturas/api-fastify-*.png`.*
 
-**Inventario-U (fallo c):** **[pendiente]**
+**Inventario-U (fallo c, reportado por el integrante; run AWS 44209628616, 2026-11-18 00:40–00:46 UTC):** mismo perfil en las tres rondas (5 sol./s × 120 s; se evalúan las 300 peticiones entre t = 30 y 90 s; timeout 2 s; Chaos Toolkit).
+
+| Ronda | Éxito | p95 del cliente |
+|---|---|---|
+| Estado estable | 100 % | 82,8 ms |
+| Ronda 0 (sin patrón) | **0 %** (refuta) | 2128,8 ms |
+| Ronda 1 (bulkhead + control de admisión) | **100 %** (300/300, cumple ≥ 99 %) | 82,6 ms |
+
+En la Ronda 1 las tareas de fondo quedan aisladas y la admisión acepta 4 de 6, rechazando 2 sin cola. Recuperación de 100 puntos porcentuales (no se calcula mejora relativa desde 0 %). Límite declarado por el integrante: una sola ejecución, en una VM anterior a la actual; no demuestra capacidad máxima ni resiliencia de la cadena completa.
+
+![Inventario-U: resultados archivados en AWS y servicio actual](evidencia/capturas/inventario-u-resultados-aws.png)
+
+*Tablero "Inventario-U | AWS: evidencia y servicio actual" en la misma instancia de Grafana (Prometheus de Inventario-U conectado a Grafana Cloud), aportado por el integrante.*
 
 ## 7. Hallazgos inesperados
 
