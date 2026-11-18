@@ -31,15 +31,36 @@ def q(ref, metric, alias):
     }
 
 
+RED, ORANGE, PURPLE, BLUE = "#F2495C", "#FF9830", "#B877D9", "#5794F2"
+
+
 def ts(pid, title, target, x, y, w, h, desc, no_value, color):
     return {
         "id": pid, "type": "timeseries", "title": title, "description": desc,
         "datasource": DS, "gridPos": {"x": x, "y": y, "w": w, "h": h}, "targets": [target],
         "fieldConfig": {"defaults": {
-            "unit": "short", "noValue": no_value, "color": {"mode": "fixed", "fixedColor": color},
-            "custom": {"drawStyle": "bars", "lineWidth": 1, "fillOpacity": 60, "spanNulls": False},
+            "unit": "short", "decimals": 0, "min": 0, "noValue": no_value,
+            "color": {"mode": "fixed", "fixedColor": color},
+            "custom": {"drawStyle": "bars", "lineWidth": 1, "fillOpacity": 70, "showPoints": "never",
+                       "spanNulls": False, "axisSoftMin": 0, "barAlignment": 0},
         }, "overrides": []},
-        "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+        "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": False},
+                    "tooltip": {"mode": "single", "sort": "none"}},
+    }
+
+
+def stat(pid, title, target, x, y, w, h, desc, no_value, color):
+    return {
+        "id": pid, "type": "stat", "title": title, "description": desc, "transparent": True,
+        "datasource": DS, "gridPos": {"x": x, "y": y, "w": w, "h": h}, "targets": [target],
+        "fieldConfig": {"defaults": {
+            "unit": "short", "decimals": 0, "noValue": no_value,
+            "color": {"mode": "thresholds"},
+            "thresholds": {"mode": "absolute", "steps": [{"color": color, "value": None}]},
+        }, "overrides": []},
+        "options": {"reduceOptions": {"calcs": ["sum"], "fields": "", "values": False},
+                    "colorMode": "value", "graphMode": "none", "textMode": "value", "justifyMode": "center",
+                    "orientation": "auto"},
     }
 
 
@@ -78,26 +99,36 @@ CRONO = """**Línea de tiempo (UTC, 2026-11-17 y repetición del 2026-11-18).**
 
 Las barras de los paneles son eventos reales de Cloud Logging (métricas basadas en logs). Las anotaciones marcan cada hito; los enlaces de arriba saltan a cada ronda."""
 
+NOTE429 = "El filtro de la métrica mass-delete-blocked se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas: R0/R1 no tienen datos. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv"
+NV429 = "Sin 429: el límite solo está activo durante la R1 (ver 'R1 repetición')"
+
 panels = [
-    {"id": 1, "type": "row", "title": "Game day E4 y honeytoken — resultados (deport-back · GCP)", "collapsed": False,
-     "gridPos": {"x": 0, "y": 0, "w": 24, "h": 1}, "panels": []},
-    text(2, "Resultados: Ronda 0 vs Ronda 1", RESULTADOS, 0, 1, 15, 18),
-    text(3, "Cronología", CRONO, 15, 1, 9, 18),
-    ts(4, "Borrados de deportistas por minuto", q("A", "deport-back-deportistas-deleted", "borrados"), 0, 19, 12, 8,
-       "Evento deportista_deleted. R0: 50 en 5 s. R1: 20 (el resto bloqueado). Incluye las reversiones del propio script.",
-       "Sin borrados en el rango", "red"),
-    ts(5, "Borrados bloqueados (HTTP 429) por minuto", q("A", "deport-back-mass-delete-blocked", "bloqueados"), 12, 19, 12, 8,
-       "Evento security_mass_delete_blocked: el límite de borrados por llamador actuando. R0/R1 sin datos: el filtro de la métrica se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv",
-       "R0/R1 sin datos: el filtro de la métrica se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv", "orange"),
-    ts(6, "Accesos al señuelo (honeytoken)", q("A", "deport-back-honeytoken-triggered", "accesos"), 0, 27, 12, 8,
-       "Evento security_honeytoken_triggered: lectura, modificación o borrado del deportista señuelo.",
-       "Sin accesos en el rango", "purple"),
-    {"id": 7, "type": "alertlist", "title": "Estado actual de las alertas (carpeta Seguridad - Game day)",
-     "gridPos": {"x": 12, "y": 27, "w": 12, "h": 8},
-     "options": {"viewMode": "list", "groupMode": "default", "groupBy": [], "maxItems": 20, "sortOrder": 1,
+    stat(1, "Borrados en el rango", q("A", "deport-back-deportistas-deleted", "borrados"), 0, 0, 4, 5,
+         "Suma de eventos deportista_deleted en el rango. Incluye las reversiones del propio script. Preocupa si crece sin una operación planificada.",
+         "0", RED),
+    stat(2, "Bloqueados 429 en el rango", q("A", "deport-back-mass-delete-blocked", "bloqueados"), 4, 0, 4, 5,
+         "Suma de security_mass_delete_blocked: borrados frenados por el límite. " + NOTE429, NV429, ORANGE),
+    stat(3, "Accesos al señuelo", q("A", "deport-back-honeytoken-triggered", "accesos"), 8, 0, 4, 5,
+         "Suma de security_honeytoken_triggered. Cualquier valor mayor que 0 es sospechoso: nadie legítimo usa el señuelo.",
+         "0", PURPLE),
+    {"id": 7, "type": "alertlist", "title": "Estado de las alertas",
+     "description": "Reglas de la carpeta Seguridad - Game day. Firing significa que la detección disparó; Normal, que está armada y en reposo.",
+     "gridPos": {"x": 12, "y": 0, "w": 12, "h": 5},
+     "options": {"viewMode": "list", "groupMode": "default", "groupBy": [], "maxItems": 5, "sortOrder": 1,
                  "dashboardAlerts": False, "alertName": "", "showInstances": False,
                  "folder": {"title": "Seguridad - Game day"},
                  "stateFilter": {"firing": True, "pending": True, "noData": True, "normal": True, "error": True}}},
+    ts(4, "Borrados por minuto", q("A", "deport-back-deportistas-deleted", "borrados"), 0, 5, 8, 8,
+       "Evento deportista_deleted. R0: 50 en 5 s. R1: 20 (el resto bloqueado). Incluye las reversiones del propio script.",
+       "Sin borrados en el rango", RED),
+    ts(5, "Bloqueados (429) por minuto", q("A", "deport-back-mass-delete-blocked", "bloqueados"), 8, 5, 8, 8,
+       "Evento security_mass_delete_blocked: el límite de borrados por llamador actuando. " + NOTE429,
+       NV429, ORANGE),
+    ts(6, "Accesos al señuelo por minuto", q("A", "deport-back-honeytoken-triggered", "accesos"), 16, 5, 8, 8,
+       "Evento security_honeytoken_triggered: lectura, modificación o borrado del deportista señuelo.",
+       "Sin accesos en el rango", PURPLE),
+    text(8, "Resultados: Ronda 0 vs Ronda 1", RESULTADOS, 0, 13, 16, 15),
+    text(9, "Cronología", CRONO, 16, 13, 8, 15),
 ]
 
 RANGOS = [
@@ -117,6 +148,7 @@ dashboard = {
     "editable": True,
     "time": {"from": "2026-11-17T19:00:00.000Z", "to": "2026-11-17T21:35:00.000Z"},
     "refresh": "",
+    "graphTooltip": 1,
     "annotations": {"list": [{
         "builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": True, "hide": False,
         "iconColor": "rgba(255, 96, 96, 1)", "name": "Hitos del game day", "type": "dashboard"}]},

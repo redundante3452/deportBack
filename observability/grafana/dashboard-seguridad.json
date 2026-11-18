@@ -16,6 +16,7 @@
     "to": "2026-11-17T21:35:00.000Z"
   },
   "refresh": "",
+  "graphTooltip": 1,
   "annotations": {
     "list": [
       {
@@ -77,51 +78,265 @@
   "panels": [
     {
       "id": 1,
-      "type": "row",
-      "title": "Game day E4 y honeytoken — resultados (deport-back · GCP)",
-      "collapsed": false,
+      "type": "stat",
+      "title": "Borrados en el rango",
+      "description": "Suma de eventos deportista_deleted en el rango. Incluye las reversiones del propio script. Preocupa si crece sin una operación planificada.",
+      "transparent": true,
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-deport-back"
+      },
       "gridPos": {
         "x": 0,
         "y": 0,
-        "w": 24,
-        "h": 1
+        "w": 4,
+        "h": 5
       },
-      "panels": []
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-deport-back"
+          },
+          "queryType": "timeSeriesList",
+          "aliasBy": "borrados",
+          "timeSeriesList": {
+            "projectName": "deport-back",
+            "filters": [
+              "metric.type",
+              "=",
+              "logging.googleapis.com/user/deport-back-deportistas-deleted"
+            ],
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "alignmentPeriod": "+60s",
+            "groupBys": [],
+            "view": "FULL"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#F2495C",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      }
     },
     {
       "id": 2,
-      "type": "text",
-      "title": "Resultados: Ronda 0 vs Ronda 1",
+      "type": "stat",
+      "title": "Bloqueados 429 en el rango",
+      "description": "Suma de security_mass_delete_blocked: borrados frenados por el límite. El filtro de la métrica mass-delete-blocked se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas: R0/R1 no tienen datos. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv",
+      "transparent": true,
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-deport-back"
+      },
       "gridPos": {
-        "x": 0,
-        "y": 1,
-        "w": 15,
-        "h": 18
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-deport-back"
+          },
+          "queryType": "timeSeriesList",
+          "aliasBy": "bloqueados",
+          "timeSeriesList": {
+            "projectName": "deport-back",
+            "filters": [
+              "metric.type",
+              "=",
+              "logging.googleapis.com/user/deport-back-mass-delete-blocked"
+            ],
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "alignmentPeriod": "+60s",
+            "groupBys": [],
+            "view": "FULL"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "Sin 429: el límite solo está activo durante la R1 (ver 'R1 repetición')",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF9830",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
       },
       "options": {
-        "mode": "markdown",
-        "content": "**E4 — resiliencia de datos (Cloud SQL).** Ataque simulado: borrado masivo de 50 deportistas sintéticos `e4-*` con credencial válida (ATT&CK **T1078** + **T1485**). Mismo ataque en las dos rondas.\n\n| Métrica | Ronda 0 (controles de partida) | Ronda 1 (con mejoras) | R1 repetición (18-nov) |\n|---|---|---|---|\n| Borrados | **50 / 50** | **20 / 50** (30 × HTTP 429) | **20 / 50** (30 × HTTP 429) |\n| **MTTD** (detección) | **No detectado en 10 min** (no había alerta) | **37,5 s** (alerta Grafana firing 20:10:19) | **128,7 s** (alerta firing 03:14:23) |\n| **MTTC** (contención) | **No contenido** | **1,9 s** (primer 429 a las 20:09:43) | **1,5 s** |\n| **RPO** (datos perdidos) | **50 registros (100 %)** | **0** (20/20 restaurados) | **0** (20/20 restaurados) |\n| **RTO** (recuperación) | **No recuperable** (sin backups ni PITR) | **1043 s** (~17 min; casi todo es crear el clon PITR) | **1311 s** (clon borrado automáticamente) |\n| Cobertura de detección | **0 / 2** | **1 / 2** (T1485 detectada; T1078 no distinguible con clave compartida) | **1 / 2** (igual que R1) |\n| Falsos positivos | n/a (la regla no existía) | **0 de 4 disparos** (2 fueron reversiones propias autorizadas) | no recalculado |\n\n**Honeytoken** (deportista señuelo con alerta): acceso 21:16:19, alerta firing 21:17:22, **MTTD 63,4 s**, 0 falsos positivos.\n\n**Marcos** (verificados en `security/verificacion-marcos.md`): ATT&CK **T1078**, **T1485**. D3FEND: **D3-RAPA** (límite de borrados por llamador), **D3-RD** Restore Database (clon PITR), **D3-RO** Restore Object (copia en bucket), **D3-DO** Decoy Object (honeytoken).\n\n**Nota:** el panel de 429 aparece vacío en R0/R1: el filtro de la métrica `mass-delete-blocked` se corrigió después de R1 (deploy 44177083535) y las métricas log-based no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: `docs/evidencia/e4-r1-20261117/ataque-r1.csv`; repetición: `docs/evidencia/e4-r1-repeticion-20261118/`.\n\n**Hallazgo R1:** el límite es en memoria por pod (2 réplicas), por eso pasaron 20 borrados y no 10; mejora: contador compartido."
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
       }
     },
     {
       "id": 3,
-      "type": "text",
-      "title": "Cronología",
+      "type": "stat",
+      "title": "Accesos al señuelo",
+      "description": "Suma de security_honeytoken_triggered. Cualquier valor mayor que 0 es sospechoso: nadie legítimo usa el señuelo.",
+      "transparent": true,
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "gcp-deport-back"
+      },
       "gridPos": {
-        "x": 15,
-        "y": 1,
-        "w": 9,
-        "h": 18
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "stackdriver",
+            "uid": "gcp-deport-back"
+          },
+          "queryType": "timeSeriesList",
+          "aliasBy": "accesos",
+          "timeSeriesList": {
+            "projectName": "deport-back",
+            "filters": [
+              "metric.type",
+              "=",
+              "logging.googleapis.com/user/deport-back-honeytoken-triggered"
+            ],
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "alignmentPeriod": "+60s",
+            "groupBys": [],
+            "view": "FULL"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#B877D9",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
       },
       "options": {
-        "mode": "markdown",
-        "content": "**Línea de tiempo (UTC, 2026-11-17 y repetición del 2026-11-18).**\n\n- **R0** — ataque 19:16:21–19:16:26: 50/50 borrados, sin alerta.\n- **R1 intento 1** — ataque 19:48:18, alerta firing 19:49:27; la reversión borró 30 a las 20:00:38. La recuperación falló (el clon superó el tiempo del cliente); corregido con clon asíncrono.\n- **R1** — ataque 20:09:41–20:09:46, alerta 20:10:19, restauración lista 20:27:05, reversión 20:28:22.\n- **Honeytoken** — acceso 21:16:19, alerta 21:17:22.\n- **R1 repetición (2026-11-18)** — ataque 03:12:15–03:12:19, alerta 03:14:23 (MTTD 128,7 s), restauración PITR 20/20 03:34:37 (RTO 1311 s), reversión 03:42:42. Caso negativo del intento 1 invalidado a las 03:45:27 (alerta por la reversión previa).\n\nLas barras de los paneles son eventos reales de Cloud Logging (métricas basadas en logs). Las anotaciones marcan cada hito; los enlaces de arriba saltan a cada ronda."
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 7,
+      "type": "alertlist",
+      "title": "Estado de las alertas",
+      "description": "Reglas de la carpeta Seguridad - Game day. Firing significa que la detección disparó; Normal, que está armada y en reposo.",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "options": {
+        "viewMode": "list",
+        "groupMode": "default",
+        "groupBy": [],
+        "maxItems": 5,
+        "sortOrder": 1,
+        "dashboardAlerts": false,
+        "alertName": "",
+        "showInstances": false,
+        "folder": {
+          "title": "Seguridad - Game day"
+        },
+        "stateFilter": {
+          "firing": true,
+          "pending": true,
+          "noData": true,
+          "normal": true,
+          "error": true
+        }
       }
     },
     {
       "id": 4,
       "type": "timeseries",
-      "title": "Borrados de deportistas por minuto",
+      "title": "Borrados por minuto",
       "description": "Evento deportista_deleted. R0: 50 en 5 s. R1: 20 (el resto bloqueado). Incluye las reversiones del propio script.",
       "datasource": {
         "type": "stackdriver",
@@ -129,8 +344,8 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 19,
-        "w": 12,
+        "y": 5,
+        "w": 8,
         "h": 8
       },
       "targets": [
@@ -160,16 +375,21 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "decimals": 0,
+          "min": 0,
           "noValue": "Sin borrados en el rango",
           "color": {
             "mode": "fixed",
-            "fixedColor": "red"
+            "fixedColor": "#F2495C"
           },
           "custom": {
             "drawStyle": "bars",
             "lineWidth": 1,
-            "fillOpacity": 60,
-            "spanNulls": false
+            "fillOpacity": 70,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0
           }
         },
         "overrides": []
@@ -177,26 +397,28 @@
       "options": {
         "legend": {
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": false
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "single",
+          "sort": "none"
         }
       }
     },
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Borrados bloqueados (HTTP 429) por minuto",
-      "description": "Evento security_mass_delete_blocked: el límite de borrados por llamador actuando. R0/R1 sin datos: el filtro de la métrica se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv",
+      "title": "Bloqueados (429) por minuto",
+      "description": "Evento security_mass_delete_blocked: el límite de borrados por llamador actuando. El filtro de la métrica mass-delete-blocked se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas: R0/R1 no tienen datos. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv",
       "datasource": {
         "type": "stackdriver",
         "uid": "gcp-deport-back"
       },
       "gridPos": {
-        "x": 12,
-        "y": 19,
-        "w": 12,
+        "x": 8,
+        "y": 5,
+        "w": 8,
         "h": 8
       },
       "targets": [
@@ -226,16 +448,21 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "noValue": "R0/R1 sin datos: el filtro de la métrica se corrigió después de R1 (deploy 44177083535) y las métricas basadas en logs no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: docs/evidencia/e4-r1-20261117/ataque-r1.csv",
+          "decimals": 0,
+          "min": 0,
+          "noValue": "Sin 429: el límite solo está activo durante la R1 (ver 'R1 repetición')",
           "color": {
             "mode": "fixed",
-            "fixedColor": "orange"
+            "fixedColor": "#FF9830"
           },
           "custom": {
             "drawStyle": "bars",
             "lineWidth": 1,
-            "fillOpacity": 60,
-            "spanNulls": false
+            "fillOpacity": 70,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0
           }
         },
         "overrides": []
@@ -243,26 +470,28 @@
       "options": {
         "legend": {
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": false
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "single",
+          "sort": "none"
         }
       }
     },
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Accesos al señuelo (honeytoken)",
+      "title": "Accesos al señuelo por minuto",
       "description": "Evento security_honeytoken_triggered: lectura, modificación o borrado del deportista señuelo.",
       "datasource": {
         "type": "stackdriver",
         "uid": "gcp-deport-back"
       },
       "gridPos": {
-        "x": 0,
-        "y": 27,
-        "w": 12,
+        "x": 16,
+        "y": 5,
+        "w": 8,
         "h": 8
       },
       "targets": [
@@ -292,16 +521,21 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "decimals": 0,
+          "min": 0,
           "noValue": "Sin accesos en el rango",
           "color": {
             "mode": "fixed",
-            "fixedColor": "purple"
+            "fixedColor": "#B877D9"
           },
           "custom": {
             "drawStyle": "bars",
             "lineWidth": 1,
-            "fillOpacity": 60,
-            "spanNulls": false
+            "fillOpacity": 70,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0
           }
         },
         "overrides": []
@@ -309,42 +543,43 @@
       "options": {
         "legend": {
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": false
         },
         "tooltip": {
-          "mode": "multi"
+          "mode": "single",
+          "sort": "none"
         }
       }
     },
     {
-      "id": 7,
-      "type": "alertlist",
-      "title": "Estado actual de las alertas (carpeta Seguridad - Game day)",
+      "id": 8,
+      "type": "text",
+      "title": "Resultados: Ronda 0 vs Ronda 1",
       "gridPos": {
-        "x": 12,
-        "y": 27,
-        "w": 12,
-        "h": 8
+        "x": 0,
+        "y": 13,
+        "w": 16,
+        "h": 15
       },
       "options": {
-        "viewMode": "list",
-        "groupMode": "default",
-        "groupBy": [],
-        "maxItems": 20,
-        "sortOrder": 1,
-        "dashboardAlerts": false,
-        "alertName": "",
-        "showInstances": false,
-        "folder": {
-          "title": "Seguridad - Game day"
-        },
-        "stateFilter": {
-          "firing": true,
-          "pending": true,
-          "noData": true,
-          "normal": true,
-          "error": true
-        }
+        "mode": "markdown",
+        "content": "**E4 — resiliencia de datos (Cloud SQL).** Ataque simulado: borrado masivo de 50 deportistas sintéticos `e4-*` con credencial válida (ATT&CK **T1078** + **T1485**). Mismo ataque en las dos rondas.\n\n| Métrica | Ronda 0 (controles de partida) | Ronda 1 (con mejoras) | R1 repetición (18-nov) |\n|---|---|---|---|\n| Borrados | **50 / 50** | **20 / 50** (30 × HTTP 429) | **20 / 50** (30 × HTTP 429) |\n| **MTTD** (detección) | **No detectado en 10 min** (no había alerta) | **37,5 s** (alerta Grafana firing 20:10:19) | **128,7 s** (alerta firing 03:14:23) |\n| **MTTC** (contención) | **No contenido** | **1,9 s** (primer 429 a las 20:09:43) | **1,5 s** |\n| **RPO** (datos perdidos) | **50 registros (100 %)** | **0** (20/20 restaurados) | **0** (20/20 restaurados) |\n| **RTO** (recuperación) | **No recuperable** (sin backups ni PITR) | **1043 s** (~17 min; casi todo es crear el clon PITR) | **1311 s** (clon borrado automáticamente) |\n| Cobertura de detección | **0 / 2** | **1 / 2** (T1485 detectada; T1078 no distinguible con clave compartida) | **1 / 2** (igual que R1) |\n| Falsos positivos | n/a (la regla no existía) | **0 de 4 disparos** (2 fueron reversiones propias autorizadas) | no recalculado |\n\n**Honeytoken** (deportista señuelo con alerta): acceso 21:16:19, alerta firing 21:17:22, **MTTD 63,4 s**, 0 falsos positivos.\n\n**Marcos** (verificados en `security/verificacion-marcos.md`): ATT&CK **T1078**, **T1485**. D3FEND: **D3-RAPA** (límite de borrados por llamador), **D3-RD** Restore Database (clon PITR), **D3-RO** Restore Object (copia en bucket), **D3-DO** Decoy Object (honeytoken).\n\n**Nota:** el panel de 429 aparece vacío en R0/R1: el filtro de la métrica `mass-delete-blocked` se corrigió después de R1 (deploy 44177083535) y las métricas log-based no son retroactivas. La R1 repetición (enlace arriba, 18-nov 03:12 UTC) sí muestra los 30 × 429. Evidencia R1: `docs/evidencia/e4-r1-20261117/ataque-r1.csv`; repetición: `docs/evidencia/e4-r1-repeticion-20261118/`.\n\n**Hallazgo R1:** el límite es en memoria por pod (2 réplicas), por eso pasaron 20 borrados y no 10; mejora: contador compartido."
+      }
+    },
+    {
+      "id": 9,
+      "type": "text",
+      "title": "Cronología",
+      "gridPos": {
+        "x": 16,
+        "y": 13,
+        "w": 8,
+        "h": 15
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Línea de tiempo (UTC, 2026-11-17 y repetición del 2026-11-18).**\n\n- **R0** — ataque 19:16:21–19:16:26: 50/50 borrados, sin alerta.\n- **R1 intento 1** — ataque 19:48:18, alerta firing 19:49:27; la reversión borró 30 a las 20:00:38. La recuperación falló (el clon superó el tiempo del cliente); corregido con clon asíncrono.\n- **R1** — ataque 20:09:41–20:09:46, alerta 20:10:19, restauración lista 20:27:05, reversión 20:28:22.\n- **Honeytoken** — acceso 21:16:19, alerta 21:17:22.\n- **R1 repetición (2026-11-18)** — ataque 03:12:15–03:12:19, alerta 03:14:23 (MTTD 128,7 s), restauración PITR 20/20 03:34:37 (RTO 1311 s), reversión 03:42:42. Caso negativo del intento 1 invalidado a las 03:45:27 (alerta por la reversión previa).\n\nLas barras de los paneles son eventos reales de Cloud Logging (métricas basadas en logs). Las anotaciones marcan cada hito; los enlaces de arriba saltan a cada ronda."
       }
     }
   ]
