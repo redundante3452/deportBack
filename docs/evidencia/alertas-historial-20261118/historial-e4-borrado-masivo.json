@@ -1,0 +1,22 @@
+[
+  {
+    "t_utc": "2026-11-18T03:14:10Z",
+    "previous": "Normal (NoData)",
+    "current": "Alerting"
+  },
+  {
+    "t_utc": "2026-11-18T03:18:10Z",
+    "previous": "Alerting",
+    "current": "Normal"
+  },
+  {
+    "t_utc": "2026-11-18T03:45:10Z",
+    "previous": "Normal (NoData)",
+    "current": "Alerting"
+  },
+  {
+    "t_utc": "2026-11-18T03:49:10Z",
+    "previous": "Alerting",
+    "current": "Normal"
+  }
+]
